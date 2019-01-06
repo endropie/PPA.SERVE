@@ -10,12 +10,10 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('@', function(){
-    return view('vue.admin');
-});
 
 Route::get('/', function () {
-    return view('welcome');
+    // return view('welcome');
+    return view('vue.admin');
 });
 
 Auth::routes();
