@@ -1,14 +1,16 @@
 
 // Fonts
 // @import url('https://fonts.googleapis.com/css?family=Nunito');
-@import '~nunito-fontface/css/nunito/nunito-fontface.css';
-@import '~fontface-source-sans-pro/css/source-sans-pro.css';
+// @import '~nunito-fontface/css/nunito/nunito-fontface.css';
+// @import '~fontface-source-sans-pro/css/source-sans-pro.css';
 
 // Fontawesome
 @import '~@fortawesome/fontawesome-free/scss/fontawesome.scss';
 @import '~@fortawesome/fontawesome-free/scss/regular.scss';
 @import '~@fortawesome/fontawesome-free/scss/solid.scss';
 @import '~@fortawesome/fontawesome-free/scss/brands.scss';
+
+@import '~material-design-icons-iconfont/dist/material-design-icons.css';
 
 // Variables
 @import 'variables';
@@ -18,6 +20,11 @@
 
 // AdminLTE
 @import '~admin-lte/build/scss/AdminLTE';
+
+// vuetify.styl
+@import '~vuetify/dist/vuetify.min.css';
+
+@import 'custom.css';
 
 .navbar-laravel {
   background-color: #fff;

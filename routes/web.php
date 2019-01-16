@@ -12,7 +12,7 @@
 */
 
 Route::get('/', function () {
-    // return view('welcome');
+    // return 'test';
     return view('vue.admin');
 });
 

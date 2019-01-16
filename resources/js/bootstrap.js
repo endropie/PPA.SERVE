@@ -16,6 +16,8 @@ try {
 
 
 require('@fortawesome/fontawesome-free');
+require('typeface-nunito')
+require('typeface-roboto')
 require('admin-lte');
 
 /**
