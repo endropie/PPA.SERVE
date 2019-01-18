@@ -70,10 +70,7 @@
                                 <th class="text-nowrap">Date</th>
                                 <th class="text-nowrap">Time</th>
                                 <th class="text-nowrap">Customer</th>
-                                <th class="text-nowrap">Ref. Number</th>
-                                <th class="text-nowrap">Ref. Date</th>
-                                <th class="text-nowrap">No. Pickup</th>
-                                <th class="text-nowrap">Rate</th>
+                                <th class="text-nowrap">Reference</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,10 +91,7 @@
                                 <td class="text-nowrap">{{ item.date }}</td>
                                 <td class="text-nowrap"> {{item.time}}</td>
                                 <td class="text-nowrap"> {{item.customer.name}}</td>
-                                <td class="text-nowrap"> {{item.ref_number}}</td>
-                                <td class="text-nowrap"> {{item.ref_date}}</td>
-                                <td class="text-nowrap"> {{item.pickup.name}}</td>
-                                <td class="text-nowrap"> {{item.rate}}</td>
+                                <td class="text-nowrap"> {{item.reference}}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -124,53 +118,33 @@
                 api : [
                     {
                         id:1, 
-                        number:'INM/2019-01/0001',
+                        number:'FNG/2019-01/0001',
                         date: '2019-01-01',
                         time: '12:00:00',
-                        ref_number: 'xxx',
-                        ref_date: '2019-01-01',
-                        rate:2,
-                        pickup_id:1,
+                        reference: 'xxx',
                         customer_id:1,
-                        pickup:{
-                            id:1,
-                            name:'B 3882 SF'
-                        },
+                        customer_phone:'021-90887612',
+                        customer_address:'Jl. Melati No. 90 \nTambun kab. Bekasi \nJawa Barat 51781',
                         customer:{
                             id:1,
-                            name:'PT ABC'
+                            name:'PT ABC',
+                            phone:'021-90887612',
+                            address_raw:'Jl. Melati No. 90 \nTambun kab. Bekasi \nJawa Barat 51781',
                         },
-
-                        inmaterials_items:[
-                            {id:1, name:"Pre 1st"},
-                            {id:2, name:"Pre 2nd"},
-                            {id:3, name:"Pre 3th"},
-                        ],
                     },
                     {
                         id:2, 
                         number:'INM/2019-01/0002',
                         date: '2019-01-01',
                         time: '11:34:00',
-                        ref_number: 'xxx',
-                        ref_date: '2019-01-05',
-                        rate:2,
-                        pickup_id:1,
+                        reference: 'zzz',
                         customer_id:1,
-                        pickup:{
-                            id:1,
-                            name:'B 6754 VSX'
-                        },
+                        customer_phone:'021-90887612',
+                        customer_address:'Jl. Melati No. 90 \nTambun kab. Bekasi \nJawa Barat 51781',
                         customer:{
-                            id:1,
-                            name:'PT ABC'
+                            id:2,
+                            name:'PT BCD'
                         },
-
-                        inmaterials_items:[
-                            {id:1, name:"Pre 1st"},
-                            {id:2, name:"Pre 2nd"},
-                            {id:3, name:"Pre 3th"},
-                        ],
                     }
 
                 ],
@@ -189,9 +163,11 @@
             }
         },
         created(){
-            this.$route.meta.title = 'Warehouse - Incoming Materials'
-            this.SPA.resources.api = '/api/v1/warehouse/inmaterials'
-            this.SPA.resources.uri = '/admin/warehouse/inmaterials' 
+            this.$route.meta.title = 'Warehouses - Finising Goods'
+            this.SPA.index.title = 'List - Finising Goods'
+            this.SPA.resources.api = '/api/v1/warehouses/finished_goods'
+            this.SPA.resources.uri = '/admin/warehouses/finished_goods'
+
             
         },
         mounted() {
@@ -290,21 +266,3 @@
         }
     }
 </script>
-<style>
-.el-table td{ padding: 4px 0; }
-.el-table th {padding: 8px 0; }
-.el-table .action-dropdown li a{ min-width: 100px; display: block;}
-.el-pager li {min-width: 25px;}
-.el-form--label-top .el-form-item__label{
-    line-height: normal;
-    margin:0;
-    padding: 0px;
-}
-.form-group input.el-input__inner,
-.form-group .el-input__inner.el-date-editor{
-    width: 100%;
-}
-.el-date_range_picker.has-sidebar {
-    width: 625px;
-}
-</style>

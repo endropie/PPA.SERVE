@@ -48,8 +48,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::apiResource('units', 'references\Units');
         Route::apiResource('categories', 'references\Categories');
         Route::apiResource('ordertypes', 'references\OrderTypes');
-        Route::apiResource('atpm', 'references\Atpm');
+        Route::apiResource('brands', 'references\Brands');
         Route::apiResource('colours', 'references\Colours');
-        Route::apiResource('specs', 'references\Specs');
+        Route::apiResource('specifications', 'references\Specifications');
     });
 });

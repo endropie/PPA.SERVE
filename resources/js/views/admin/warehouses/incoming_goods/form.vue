@@ -40,7 +40,7 @@
                     <v-flex xs12>
                         <v-autocomplete v-model="rsForm.customer_id" :items="optionData.customers" label="Select a Customer" 
                         item-value="id" item-text="name" flat small-chips
-                        :rules="ruleset('required', 'Customer')"></v-autocomplete>
+                        :rules="ruleset('required', 'Customer')" @change="onChangeCustomer"></v-autocomplete>
                     </v-flex>
                     <v-flex xs12>
                         <v-text-field label="Contact" v-model="rsForm.contact"></v-text-field>
@@ -76,16 +76,18 @@
                             <th class="" width="120px">Part Name</th>
                             <th class="" width="70px">unit</th>
                             <th class="" width="120px">Price</th>
+                            <!-- Dump Code -->
                             <th class="" width="120px">Total</th>
                             <th class="" width="">Line</th>
                             <th class="" width="">Convertion</th>
                             <th class="" width="">Weight</th>
                             <th class="" width="">Forecase</th>
                             <th class="" width="">PO</th>
+                            <!-- End Code -->
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(itemrow, index) in rsForm.inmaterial_items" :key="index">
+                        <tr v-for="(itemrow, index) in rsForm.incoming_good_items" :key="index">
                             <td class="text-white text-center align-middle">
                                 <span class="btn btn-sm btn-danger"  @click="removeEntry(index)"><i class="fas fa-trash"></i></span>
                             </td>
@@ -96,24 +98,22 @@
                                 <v-autocomplete v-model="itemrow.item_id" :items="optionData.items" label="Select a Items"
                                   item-value="id" item-text="number" flat single-line hide-details small 
                                   :rules="ruleset('required')"
-                                  @change="(val) => onChangeItem(index, val)"></v-autocomplete>
+                                  @input="(val) => onChangeItem(val, index)"></v-autocomplete>
                             </td>
                             <td width="120px">
-                                <!-- <span v-text="itemrow.part_number"></span> -->
                                 <v-text-field v-model="itemrow.part_number"  single-line hide-details readonly></v-text-field>
                             </td>
                             <td  width="200px" class="text-nowrap text-truncate">
-                                <!-- <span v-if="itemrow.part_mtr && itemrow.part_fg" v-text="[itemrow.part_mtr, itemrow.part_fg].join('/')"></span> -->
                                 <v-text-field v-model="itemrow.part_name"  single-line hide-details readonly></v-text-field>
                             </td>
                             <td width="120px">
-                                <!-- <span v-text="itemrow.unit_id"></span> -->
                                 <v-autocomplete v-model="itemrow.unit_id" :items="optionData.units" 
                                   item-value="id" item-text="name" flat single-line hide-details readonly></v-autocomplete>
                             </td>
                             <td width="180px">
                                 <v-text-field v-model="itemrow.price"  single-line hide-details></v-text-field>
                             </td>
+                            <!-- Dump Code -->
                             <td width="200px">
                                 <v-text-field :value="Number(itemrow.quantity || 0) * Number(itemrow.price || 0)" single-line hide-details readonly></v-text-field>
                             </td>
@@ -122,6 +122,7 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
+                            <!-- End Code -->
                         </tr>
                         <tr id="addItem">
                             <td class="text-white text-center align-middle">
@@ -180,72 +181,22 @@
                         name:'PT ABC'
                     },
 
-                    inmaterial_items:[
+                    incoming_good_items:[
                       {
                         id:1, 
-                        number:'KD01',
-                        part_number:"Part 1",
-                        part_mtr:"MTR 11",
-                        part_fg:"FG 111",
-
-                        packing_time:'12:00:00',
-                        sa_area:'test',
-                        price: 50000.00,
-                        price_brl: 25000.00,
-                        price_dm: 60000.00,
-                        category_id:1,
-                        ordertype_id:1,
-                        marketplace_id:1,
-                        unit_id:1,
-                        picture:null,
-                      },
-                      {
-                        id:2, 
+                        item_id:1,
                         number:'KD02',
                         part_no:"part2",
                         part_mtr:"MTR 22",
                         part_fg:"FG 222",
-
-                        customer_id:2,
-                        order_number:2,
-                        enable:true,
-
-                        item_date: '2019-01-01',
-                        item_time: '12:00:00',
-                        spec_id: 2,
-                        spec:{
-                            id:2,
-                            name:'DD-EE-FF'
-                        },
-
-                        pre_productions:[
-                            {id:1, name:"Pre 1st"},
-                            {id:2, name:"Pre 2nd"},
-                            {id:3, name:"Pre 3th"},
-                        ],
-                        sa_treatments:[
-                            {id:1, name:"Treatment 1st"},
-                            {id:2, name:"Treatment 2nd"},
-                            {id:3, name:"Treatment 3th"},
-                            {id:4, name:"Treatment 4th"},
-                            {id:5, name:"Treatment 5th"},
-                            {id:6, name:"Treatment 6th"},
-                            {id:7, name:"Treatment 7th"},
-                            {id:8, name:"Treatment 8th"},
-                        ],
-
-                        packing_time:'12:00:00',
-                        sa_area:'Aare2',
-                        price: 34000.00,
-                        price_brl: 50000.00,
-                        price_dm: 26000.00,
-                        category_id:1,
-                        ordertype_id:1,
-                        marketplace_id:1,
-                        unit_id:1,
-                        picture:null,
+                        quantity: 5,
+                      },
+                      {
+                        id:2, 
+                        item_id:3,
+                        quantity: 10,
                       }
-                      ],
+                    ],
                 },
                 rsForm: {},
                 errors: {},
@@ -272,9 +223,9 @@
             
             // Get Fetch All Data
             this.optionData.customers = [
-                {id:1, name:"PT. ABC"},
-                {id:2, name:"PT. DEF"},
-                {id:3, name:"PT. FGH"},
+                {id:1, name:"PT. ABC", phone:'021-90887612', address_raw:'Jl. Melati No. 90 \nTambun kab. Bekasi \nJawa Barat 51781' },
+                {id:2, name:"PT. DEF", phone:'021-88227738', address_raw:'Jl. Pati Mas No. 82 RT 08/09 \nTambun kab. Bekasi \nJawa Barat 51376' },
+                {id:3, name:"PT. FGH", phone:'021-90885299', address_raw:'Jl. Taman Bunga Bungur\nKomplek Industri No68 Blok F5 \nCisarua kab. Bogor \nJawa Barat 52354' },
             ];
 
             this.optionData.items = [
@@ -411,13 +362,20 @@
             '$route' : 'routing'
         },
         computed: {
-            datamap_itemrows(){
+            datamap_items(){
                 if(!this.optionData.items) return [];
                 return this.optionData.items.reduce(function(map, obj) {
                     map[obj.id] = obj;
                     return map;
                 }, {});
-            }
+            },
+            datamap_customers(){
+                if(!this.optionData.items) return [];
+                return this.optionData.customers.reduce(function(map, obj) {
+                    map[obj.id] = obj;
+                    return map;
+                }, {});
+            },
         },
         methods: {
             routing(){
@@ -459,37 +417,58 @@
                 }
                 else{
                     res = {
-                        inmaterial_items:[],
+                        incoming_good_items:[],
                     };
                 }
                 
                 this.rsForm = res;
 
-                if(this.rsForm.inmaterial_items.length == 0) {
+                if(this.rsForm.incoming_good_items.length == 0) {
                     this.addNewEntry()
                 }
                 
                 this.SPA.form.show = true
                 //this.$bar.finish()
             },
-            onChangeItem(index, item_id){
-                
-                console.log('run => ', index, item_id)
-                console.log('datamap => ', this.datamap_itemrows)
-                if(this.datamap_itemrows[item_id]){
-                    this.rsForm.inmaterial_items[index].number      = this.datamap_itemrows[item_id].number
-                    this.rsForm.inmaterial_items[index].part_number = this.datamap_itemrows[item_id].part_number
-                    this.rsForm.inmaterial_items[index].part_name   = [this.datamap_itemrows[item_id].part_mtr, this.datamap_itemrows[item_id].part_fg].join('/')
-                    this.rsForm.inmaterial_items[index].unit_id     = this.datamap_itemrows[item_id].unit_id
+            onChangeItem(item_id, index){
+                if(id)
+                {
+                    if(this.datamap_items[item_id]){
+                        this.rsForm.finished_good_items[index].number      = this.datamap_items[id].number
+                        this.rsForm.finished_good_items[index].part_number = this.datamap_items[id].part_number
+                        this.rsForm.finished_good_items[index].part_name   = [this.datamap_items[id].part_mtr, this.datamap_items[id].part_fg].join('/')
+                        this.rsForm.finished_good_items[index].unit_id     = this.datamap_items[id].unit_id
+                        this.rsForm.finished_good_items[index].price     = this.datamap_items[id].price
+                    }
+                }
+                else{
+                        this.rsForm.finished_good_items[index].number      = null
+                        this.rsForm.finished_good_items[index].part_number = null
+                        this.rsForm.finished_good_items[index].part_name   = null
+                        this.rsForm.finished_good_items[index].unit_id     = null
+                        this.rsForm.finished_good_items[index].price       = null
+                }
+            },
+            onChangeCustomer(id){
+                if(id)
+                {
+                    if(this.datamap_customers[id]){
+                        this.rsForm.customer_phone   = this.datamap_customers[id].phone
+                        this.rsForm.customer_address = this.datamap_customers[id].address_raw
+                    }
+                }
+                else{
+                        this.rsForm.customer_phone   = null
+                        this.rsForm.customer_address = null
                 }
             },
             addNewEntry(){
                 var newEntri = {id:null};
                 
-                this.rsForm.inmaterial_items.push(newEntri)
+                this.rsForm.incoming_good_items.push(newEntri)
 
                 Vue.nextTick(() => {
-                    let elements = $("input[type!='hidden']").filter("[name^='inmaterial_items']").filter("[name*='account_id']")
+                    let elements = $("input[type!='hidden']").filter("[name^='incoming_good_items']").filter("[name*='account_id']")
                     elements.each(function(index, el){
 
                         if(index === elements.length - 1){
@@ -500,8 +479,8 @@
                 })
             },
             removeEntry(index) {
-                this.rsForm.inmaterial_items.splice(index, 1)
-                if(this.rsForm.inmaterial_items.length < 1) this.addNewProduction()
+                this.rsForm.incoming_good_items.splice(index, 1)
+                if(this.rsForm.incoming_good_items.length < 1) this.addNewProduction()
             },
             saveForm(formName) {
                 var app = this;

@@ -168,20 +168,19 @@ export default {
             });
             
         },
-        indexParameter(query , defalutLimit = false){
+        indexParameter(fields , extra={limit:null,sort:null,order:null}){
             let params = '?mode=index'
             
-            if(typeof query.limit === 'undefined')
-            {
-                if(defalutLimit) query.limit = defalutLimit;
-                else{
-                    query.limit = this.SPA.index.pagenation.limit;
+            if(typeof fields['limit'] === 'undefined') fields['limit'] = this.SPA.index.pagenation.limit
+            if(typeof fields['page'] === 'undefined') fields['page']   = null
+            if(typeof fields['sort'] === 'undefined') fields['sort']   = null
+            if(typeof fields['order'] === 'undefined') fields['order'] = null
+
+            let query = this.$route.query
+            $.each( query, ( key, value ) => {
+                if (typeof fields[key] !== 'undefined'){
+                    params += `&${key}=${value}`
                 }
-            }
-                
-            
-            $.each( query, function( key, value ) {
-                params += `&${key}=${value}`
             });
             
             return params

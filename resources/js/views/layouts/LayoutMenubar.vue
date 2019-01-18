@@ -109,7 +109,7 @@
                         <li class="nav-item">
                             <router-link  to="/admin/warehouses/incoming_goods" class="nav-link ">
                                 <i class="nav-icon fas fa-angle-double-right"></i>
-                                <p class="text">Incoming Material</p>
+                                <p class="text">Incoming Goods</p>
                             </router-link>
                             <router-link  to="/admin/warehouses/finished_goods" class="nav-link ">
                                 <i class="nav-icon fas fa-angle-double-right"></i>
@@ -126,7 +126,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <router-link  to="/admin/references/atpm" class="nav-link ">
+                            <router-link  to="/admin/references/brands" class="nav-link ">
                                 <i class="nav-icon fas fa-angle-double-right"></i>
                                 <p class="text">Agent of Brands
                                     <span class="badge badge-primary right">ATPM</span>

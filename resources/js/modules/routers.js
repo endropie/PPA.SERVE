@@ -81,12 +81,12 @@ const router = new VueRouter({
             { component: require('@/views/admin/references/marketplaces/show.vue').default,  path: ":id",      meta:{auth:false} },
           ]
         },
-        { component: require('@/views/layouts/Parent.vue').default, path: "references/atpm",
+        { component: require('@/views/layouts/Parent.vue').default, path: "references/brands",
           children:[
-            { component: require('@/views/admin/references/atpm/index.vue').default, path: "",        meta:{auth:false} },
-            { component: require('@/views/admin/references/atpm/form.vue').default,  path: "create",   meta:{auth:false} },
-            { component: require('@/views/admin/references/atpm/form.vue').default,  path: ":id/edit", meta:{auth:false, mode: 'edit'} },
-            { component: require('@/views/admin/references/atpm/show.vue').default,  path: ":id",      meta:{auth:false} },
+            { component: require('@/views/admin/references/brands/index.vue').default, path: "",        meta:{auth:false} },
+            { component: require('@/views/admin/references/brands/form.vue').default,  path: "create",   meta:{auth:false} },
+            { component: require('@/views/admin/references/brands/form.vue').default,  path: ":id/edit", meta:{auth:false, mode: 'edit'} },
+            { component: require('@/views/admin/references/brands/show.vue').default,  path: ":id",      meta:{auth:false} },
           ]
         },
         // { component: require('@/views/layouts/Parent.vue').default, path: "references/cars",

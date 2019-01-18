@@ -23,4 +23,9 @@ class Model extends Eloquent
 
         // $this->connection = 'new';
     }
+
+    public function getIsRelatedAttribute()
+    {
+        return false;
+    }
 }

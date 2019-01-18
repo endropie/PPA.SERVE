@@ -55,35 +55,59 @@
                         </v-flex>
                     </v-layout>
                   </v-flex>
-                  <v-flex sm6>
+                  <v-flex xs12>
                     <v-layout row>
-                        <v-flex sm6>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex md6>
+                            <v-layout justify-start>
+                              <v-flex xs4>
+                                <v-switch :label="rsForm.with_ppn ? 'with PPN' : 'None PPN'" v-model="rsForm.with_ppn"></v-switch>
+                              </v-flex>
+                              <v-flex xs4>
+                                <v-text-field label="PPN" v-model="rsForm.ppn" ></v-text-field>
+                              </v-flex>
+                            </v-layout>
                         </v-flex>
-                        <v-flex sm6>
-                            <v-text-field label="" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex md6>
+                            <v-layout justify-start>
+                              <v-flex xs4>
+                                <v-switch :label="rsForm.with_pph ? 'with PPH' : 'None PPH'" v-model="rsForm.with_pph"></v-switch>
+                              </v-flex>
+                              <v-flex xs4>
+                                <v-text-field label="Material" v-model="rsForm.pph_material" ></v-text-field>
+                              </v-flex>
+                              <v-flex xs4>
+                                <v-text-field label="Service" v-model="rsForm.pph_service" ></v-text-field>
+                              </v-flex>
+                            </v-layout>
                         </v-flex>
-                        <v-flex sm6>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                    </v-layout>
+                  </v-flex>
+                  <v-flex sm6 >
+                    <v-layout row>
+                        <v-flex sm12>
+                            <v-autocomplete v-model="rsForm.billing_type" :items="optionData.billing_types" label="Select a Billing Method" 
+                                item-value="value" item-text="name" flat small-chips></v-autocomplete>
                         </v-flex>
-                        <v-flex sm6>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex sm12>
+                            <v-autocomplete v-model="rsForm.delivery_type" :items="optionData.delivery_types" label="Select a Delivery Method" 
+                                item-value="value" item-text="name" flat small-chips></v-autocomplete>
                         </v-flex>
-                        <v-flex sm6>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex sm12>
+                            <v-autocomplete v-model="rsForm.purchase_type" :items="optionData.purchase_types" label="Select a Purchase Method" 
+                                item-value="value" item-text="name" flat small-chips></v-autocomplete>
                         </v-flex>
                     </v-layout>
                   </v-flex>
                   <v-flex sm6>
                     <v-layout row>
-                        <v-flex sm4>
+                        <v-flex sm12>
                             <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
                         </v-flex>
-                        <v-flex sm4>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex sm12>
+                            <v-text-field label="PPIC" v-model="rsForm.ppic" ></v-text-field>
                         </v-flex>
-                        <v-flex sm4>
-                            <v-text-field label="PIC" v-model="rsForm.pic" ></v-text-field>
+                        <v-flex sm12>
+                            <v-text-field label="QC" v-model="rsForm.qc" ></v-text-field>
                         </v-flex>
                     </v-layout>
                   </v-flex>
@@ -128,7 +152,25 @@
             this.routing()
             
             // Get Fetch All Data           
-           
+            this.optionData.billing_types = [
+                {value:'none', name:'service only'},
+                {value:'include_material', name:'with materials'},
+                {value:'include_material_detail', name:'with detail materials'},
+                {value:'exclude_material', name:'with exclude materials'},
+            ]
+
+            this.optionData.delivery_types = [
+                {value:'include_material', name:'with materials'},
+                {value:'exclude_material', name:'with exclude materials'},
+                {value:'include_material_detail', name:'with detail materials'},
+                {value:'include_material_unit', name:'with detail materials'},
+            ]
+
+            this.optionData.purchase_types = [
+                {value:'none', name:'None PO'},
+                {value:'reguler', name:'PO Reguler'},
+                {value:'accumulate', name:'PO Accumulation'},
+            ]
             
             this.$route.meta.title     = 'Incomes - Customers'
             if(this.$route.meta.mode == 'edit'){
