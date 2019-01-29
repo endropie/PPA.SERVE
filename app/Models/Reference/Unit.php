@@ -6,7 +6,7 @@ use App\Models\Model;
 
 class Unit extends Model
 {
-   protected $fillable = ['name', 'description'];
+   protected $fillable = ['code', 'name'];
 
    protected $hidden = ['created_at', 'updated_at'];
 }

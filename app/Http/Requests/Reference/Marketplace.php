@@ -4,7 +4,7 @@ namespace App\Http\Requests\Reference;
 
 use App\Http\Requests\Request;
 
-class Brand extends Request
+class Marketplace extends Request
 {
     public function authorize()
     {
@@ -18,14 +18,13 @@ class Brand extends Request
         
         if ($method == 'PATCH' || $method == 'PUT') 
         {
-            $id = $this->brand;
+            $id = $this->marketplace;
         } else 
         {
             $id = null;
         }
 
         return [
-            'code' => 'required|string|max:191|unique:brands,NULL,' . $id,
             'name' => 'required|string|max:191',
         ];
     }

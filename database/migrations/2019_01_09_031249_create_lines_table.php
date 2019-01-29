@@ -21,7 +21,7 @@ class CreateLinesTable extends Migration
             $table->float('duration')->comment = "Duration of project lines (hours)";
             // $table->float('shift')->comment = "Total shit of project lines";
 
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

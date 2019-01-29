@@ -4,7 +4,7 @@ namespace App\Models\Reference;
 
 use App\Models\Model;
 
-class Category extends Model
+class Color extends Model
 {
    protected $fillable = ['name', 'description'];
 

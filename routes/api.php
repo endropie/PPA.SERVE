@@ -18,7 +18,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::prefix('v1')->namespace('Api')->group(function() {
-     
+
     Route::prefix('auth')->name('auth.')->group(function () {
         // Route::apiResource('admins', 'auth\adminApiController');
         // Route::apiResource('users', 'auth\userApiController');
@@ -38,18 +38,21 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         // Route::get('reports/BalanceSheet', 'Accounting\reports@viewBalanceSheet');
     });
 
-    Route::apiResource('items', 'Items');
+    Route::prefix('common')->name('.common')->group(function () {
+        Route::apiResource('items', 'Common\Items');
+    });
     
-    Route::prefix('income')->name('.setting')->group(function () {
-        Route::apiResource('customer', 'Customer');
+    Route::prefix('incomes')->name('.incomes')->group(function () {
+        Route::apiResource('customers', 'Incomes\Customers');
     });
 
     Route::prefix('references')->name('.references')->group(function () {
-        Route::apiResource('units', 'references\Units');
-        Route::apiResource('categories', 'references\Categories');
-        Route::apiResource('ordertypes', 'references\OrderTypes');
-        Route::apiResource('brands', 'references\Brands');
-        Route::apiResource('colours', 'references\Colours');
-        Route::apiResource('specifications', 'references\Specifications');
+        Route::apiResource('units', 'References\Units');
+        Route::apiResource('sizes', 'References\Sizes');
+        Route::apiResource('brands', 'References\Brands');
+        Route::apiResource('colors', 'References\Colors');
+        Route::apiResource('ordertypes', 'References\OrderTypes');
+        Route::apiResource('marketplaces', 'References\Marketplaces');
+        Route::apiResource('specifications', 'References\Specifications');
     });
 });

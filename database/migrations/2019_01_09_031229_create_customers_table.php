@@ -15,37 +15,39 @@ class CreateCustomersTable extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->increments('id');
-
+            $table->string('code');
             $table->string('name');
-            $table->string('address');
-            $table->string('subdistrict');
-            $table->string('district');
-            $table->integer('province_id');
+            $table->string('address')->nullable();
+            $table->string('subdistrict')->nullable();
+            $table->string('district')->nullable();
+            $table->integer('province_id')->nullable();
 
-            $table->string('npwp');
-            $table->string('pkp');
-            $table->string('phone');
-            $table->string('fax');
+            $table->string('npwp')->nullable();
+            $table->string('pkp')->nullable();
             $table->string('email');
-            $table->string('pic');
-            $table->string('bank_number');
+            $table->string('phone');
+            $table->string('fax')->nullable();
+            $table->string('bank_account')->nullable();
 
-            $table->string('ppic_name');
-            $table->string('ppic_contact');
-            $table->string('qc_name');
-            $table->string('qc_contact');
+            $table->string('cso_name')->nullable();
+            $table->string('cso_phone')->nullable();
+            $table->string('ppic_name')->nullable();
+            $table->string('ppic_phone')->nullable();
+            $table->string('qc_name')->nullable();
+            $table->string('qc_phone')->nullable();
 
-            $table->boolean('with_tax');
-            $table->integer('tax_service');
-            $table->integer('tax_material');
+            $table->boolean('with_tax')->default(0);
+            $table->boolean('with_pph')->default(0);
+            $table->integer('tax')->default(0);
+            $table->integer('tax_service')->default(0);
+            $table->integer('tax_material')->default(0);
 
-            $table->integer('bill_methode');
-            $table->string('shipping_documentation');
-            $table->string('purchase_documentation');
+            $table->integer('bill_mode')->nullable();
+            $table->integer('ship_mode')->nullable();
+            $table->integer('order_mode')->nullable();
 
-
-            $table->text('description');
-            $table->boolean('enable');
+            $table->text('description')->nullable();
+            $table->boolean('enable')->default(1);
             $table->timestamps();
         });
     }

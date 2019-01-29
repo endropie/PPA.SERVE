@@ -18,7 +18,7 @@ class CreateCarsTable extends Migration
             $table->string('code');
             $table->string('police_number');
             $table->string('status');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

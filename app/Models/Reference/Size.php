@@ -4,9 +4,9 @@ namespace App\Models\Reference;
 
 use App\Models\Model;
 
-class Colour extends Model
+class Size extends Model
 {
-   protected $fillable = ['name', 'description'];
+   protected $fillable = ['code', 'name'];
 
    protected $hidden = ['created_at', 'updated_at'];
 }

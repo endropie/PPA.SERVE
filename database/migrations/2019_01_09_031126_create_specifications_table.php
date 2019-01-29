@@ -15,13 +15,23 @@ class CreateSpecificationsTable extends Migration
     {
         Schema::create('specifications', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('code')->unique();
             $table->string('name');
-            $table->text('description');
+            $table->text('description')->nullable();
 
-            $table->integer('colour_id');
-            $table->float('thick');
-            $table->string('spray_white');
-            $table->string('spray_red');
+            $table->integer('color_id');
+            $table->float('times_spray_white');
+            $table->float('times_spray_red');
+
+            // $table->float('thick')->nullable();
+            $table->float('thick_1')->nullable();
+            $table->float('thick_2')->nullable();
+            $table->float('thick_3')->nullable();
+            $table->float('thick_4')->nullable();
+            $table->string('plate_1')->nullable();
+            $table->string('plate_2')->nullable();
+            $table->string('plate_3')->nullable();
+            $table->string('plate_4')->nullable();
 
             $table->timestamps();
         });

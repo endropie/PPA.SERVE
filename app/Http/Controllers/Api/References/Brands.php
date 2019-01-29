@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
 use App\Http\Requests\Reference\Brand as Request;
 use App\Http\Controllers\ApiController;
 
@@ -14,6 +13,10 @@ class Brands extends ApiController
     {
         switch (request('mode')) {
             case 'all':            
+                $brands = Brand::filterable()->get();    
+                break;
+
+            case 'datagrid':
                 $brands = Brand::filterable()->get();
                 
                 break;
@@ -52,6 +55,9 @@ class Brands extends ApiController
 
     public function destroy($id)
     {
-        //
+        $brand = Brand::findOrFail($id);
+        $brand->delete();
+
+        return response()->json(['success' => true]);
     }
 }
