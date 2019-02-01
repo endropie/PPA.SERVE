@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Reference;
+namespace App\Http\Requests\Factory;
 
 use App\Http\Requests\Request;
 
-class Marketplace extends Request
+class Production extends Request
 {
     public function authorize()
     {
@@ -18,7 +18,7 @@ class Marketplace extends Request
         
         if ($method == 'PATCH' || $method == 'PUT') 
         {
-            $id = $this->marketplace;
+            $id = $this->production;
         } else 
         {
             $id = null;

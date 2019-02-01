@@ -17,7 +17,7 @@ class Items extends ApiController
                 break;
 
             case 'datagrid':
-                $items = Item::with(['color'])->filterable()->get();
+                $items = Item::with(['item_productions','brand','customer','specification'])->filterable()->get();
                 
                 break;
 
@@ -33,12 +33,19 @@ class Items extends ApiController
     {
         $item = Item::create($request->all());
 
+        $pre = $request->item_productions;
+        for ($i=0; $i < sizeof($pre); $i++) { 
+
+            // create pre production on the item updated!
+            $item->item_productions()->create($pre[$i]);
+        }
+
         return response()->json($item);
     }
 
     public function show($id)
     {
-        $item = Item::findOrFail($id);
+        $item = Item::with(['item_productions'])->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         return response()->json($item);
@@ -49,6 +56,16 @@ class Items extends ApiController
         $item = Item::findOrFail($id);
 
         $item->update($request->input());
+
+        // Delete pre production on the item updated!
+        $item->item_productions()->delete();
+
+        $pre = $request->item_productions;
+        for ($i=0; $i < sizeof($pre); $i++) { 
+
+            // create pre production on the item updated!
+            $item->item_productions()->create($pre[$i]);
+        }
 
         return response()->json($item);
     }

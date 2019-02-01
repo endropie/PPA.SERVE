@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models\Reference;
+namespace App\Models\Factory;
 
 use App\Models\Model;
 
-class Marketplace extends Model
+class Production extends Model
 {
    protected $fillable = ['name', 'description'];
 

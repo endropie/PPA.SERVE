@@ -8,10 +8,11 @@ use App\Models\Reference\Brand;
 use App\Models\Reference\Color;
 use App\Models\Reference\Size;
 use App\Models\Reference\Unit;
-use App\Models\Reference\Ordertype;
-use App\Models\Reference\Marketplace;
+use App\Models\Reference\TypeItem;
+use App\Models\Reference\CategoryItem;
 use App\Models\Common\Item;
 use App\Models\Income\Customer;
+use App\Models\Factory\Production;
 
 class TestingTableSeeder extends Seeder
 {
@@ -21,11 +22,12 @@ class TestingTableSeeder extends Seeder
 		$this->colors();
 		$this->sizes();
 		$this->units();
-		$this->ordertypes();
-		$this->marketplaces();
+		$this->type_items();
+		$this->category_items();
 		$this->specifications();
 		$this->customers();
 		$this->items();
+		$this->productions();
 	}
 
 	public function items()
@@ -44,11 +46,9 @@ class TestingTableSeeder extends Seeder
 			$customer_id = rand(1,5);
 			$specification_id = rand(1,14);
 
-			print('('. $specification_id .','. $customer_id .','. $brand_id .')');
-
-			$c1 = Brand::find($brand_id); 						print($c1->code);
-			$c2 = Customer::find($customer_id);					print($c2->code);
-			$c3 = Specification::find($specification_id);		print($c3->code);
+			$c1 = Brand::find($brand_id); 						// print($c1->code);
+			$c2 = Customer::find($customer_id);					// print($c2->code);
+			$c3 = Specification::find($specification_id);		// print($c3->code);
 
 			$code = $c1->code .'-'. $c2->code .'-'. $c3->code;
 
@@ -82,6 +82,19 @@ class TestingTableSeeder extends Seeder
 		
 	}
 
+	public function productions()
+    {
+        DB::table('productions')->truncate();
+		
+		Production::create(['id'=> 1,'name'=>'CUTTING CR.4','description'=>'The description for Production 1']);
+		Production::create(['id'=> 2,'name'=>'CUTTING CR.6','description'=>'The description for Production 2']);
+		Production::create(['id'=> 3,'name'=>'POLES TYPE A','description'=>'The description for Production 3']);
+		Production::create(['id'=> 4,'name'=>'POLES TYPE B','description'=>'The description for Production 4']);
+		Production::create(['id'=> 5,'name'=>'POLES TYPE C','description'=>'The description for Production 5']);
+		Production::create(['id'=> 6,'name'=>'CHROMING S28','description'=>'The description for Production 6']);
+		Production::create(['id'=> 7,'name'=>'CHROMING K35','description'=>'The description for Production 7']);
+	}
+
 	public function specifications()
     {
 		DB::table('specifications')->truncate();
@@ -104,21 +117,21 @@ class TestingTableSeeder extends Seeder
 
 	}
 
-	public function marketplaces()
+	public function category_items()
     {
-        DB::table('marketplaces')->truncate();
+        DB::table('category_items')->truncate();
 		
-		Marketplace::create(['id'=> 1,'name'=>'Order 1st','description'=>'This is order primary']);
-		Marketplace::create(['id'=> 2,'name'=>'Order 2nd','description'=>'This is order secondary']);
-
+		CategoryItem::create(['id'=> 1,'name'=>'2-wheel vehicle','description'=>'The description for two-wheel vehicle']);
+		CategoryItem::create(['id'=> 2,'name'=>'3-wheel vehicle','description'=>'The description for three-wheel vehicle']);
+		CategoryItem::create(['id'=> 3,'name'=>'4-wheel vehicle','description'=>'The description for our-wheel vehicle']);
 	}
 	
-	public function ordertypes()
+	public function type_items()
     {
-        DB::table('ordertypes')->truncate();
+        DB::table('type_items')->truncate();
 		
-		Ordertype::create(['id'=> 1,'name'=>'Order-1','description'=>'This is order one']);
-		Ordertype::create(['id'=> 2,'name'=>'Order-2','description'=>'This is order two']);
+		TypeItem::create(['id'=> 1,'name'=>'Regular','description'=>'This is Reguler']);
+		TypeItem::create(['id'=> 2,'name'=>'Non-Reguler','description'=>'This is Non-Reguler']);
 
 	}
 	

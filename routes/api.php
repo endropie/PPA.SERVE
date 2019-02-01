@@ -46,13 +46,17 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::apiResource('customers', 'Incomes\Customers');
     });
 
+    Route::prefix('factories')->name('.factories')->group(function () {
+        Route::apiResource('productions', 'Factories\Productions');
+    });
+
     Route::prefix('references')->name('.references')->group(function () {
         Route::apiResource('units', 'References\Units');
         Route::apiResource('sizes', 'References\Sizes');
         Route::apiResource('brands', 'References\Brands');
         Route::apiResource('colors', 'References\Colors');
-        Route::apiResource('ordertypes', 'References\OrderTypes');
-        Route::apiResource('marketplaces', 'References\Marketplaces');
+        Route::apiResource('type_items', 'References\TypeItems');
+        Route::apiResource('category_items', 'References\CategoryItems');
         Route::apiResource('specifications', 'References\Specifications');
     });
 });

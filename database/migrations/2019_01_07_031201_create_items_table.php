@@ -21,26 +21,24 @@ class CreateItemsTable extends Migration
             $table->integer('brand_id');
             $table->integer('specification_id');
 
-            $table->integer('order_number')->nullable();
             $table->string('part_mtr')->nullable();
             $table->string('part_fg')->nullable();
             $table->string('part_number')->nullable();
 
-            $table->float('times_packing')->default(0);
-            $table->string('sa_area')->nullable();
-            $table->float('weight',20,2)->default(0);
-
+            $table->integer('number_hanger')->nullable()->default(0);
+            $table->integer('packing_duration')->nullable()->default(0);
+            $table->float('sa_area')->nullable()->default(0);
+            $table->float('weight',20,2)->nullable()->default(0);
+            
             $table->float('price', 20, 2)->default(0);
-            $table->float('price_brl', 20, 2)->default(0);
-            $table->float('price_dm', 20, 2)->default(0);
 
-            $table->integer('marketplace_id')->nullable();
-            $table->integer('ordertype_id')->nullable();
+            $table->integer('category_item_id')->nullable();
+            $table->integer('type_item_id')->nullable();
             $table->integer('size_id')->nullable();
             $table->integer('unit_id')->nullable();
 
             $table->text('description')->nullable();
-            $table->boolean('enable')->default(0);
+            $table->boolean('enable')->default(1);
             $table->timestamps();
         });
     }

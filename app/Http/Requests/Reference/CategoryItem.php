@@ -4,7 +4,7 @@ namespace App\Http\Requests\Reference;
 
 use App\Http\Requests\Request;
 
-class Ordertype extends Request
+class CategoryItem extends Request
 {
     public function authorize()
     {
@@ -18,7 +18,7 @@ class Ordertype extends Request
         
         if ($method == 'PATCH' || $method == 'PUT') 
         {
-            $id = $this->ordertype;
+            $id = $this->category_item;
         } else 
         {
             $id = null;

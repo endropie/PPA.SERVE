@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api\References;
+namespace App\Http\Controllers\Api\Incomes;
 
-use App\Http\Requests\Reference\Customer as Request;
+use App\Http\Requests\Income\Customer as Request;
 use App\Http\Controllers\ApiController;
 
-use App\Models\Incomes\Customer;
+use App\Models\Income\Customer;
 
 class Customers extends ApiController
 {
@@ -38,7 +38,7 @@ class Customers extends ApiController
 
     public function show($id)
     {
-        $customer = Customer::findOrFail($id);
+        $customer = Customer::with(['customer_contacts'])->findOrFail($id);
         $customer->is_editable = (!$customer->is_related);
 
         return response()->json($customer);
@@ -49,6 +49,16 @@ class Customers extends ApiController
         $customer = Customer::findOrFail($id);
 
         $customer->update($request->input());
+
+        // Delete all contacts on before the customer updated!
+        $customer->customer_contacts()->delete();
+
+        $pre = $request->customer_contacts;
+        for ($i=0; $i < sizeof($pre); $i++) { 
+
+            // create contacts on the customer updated!
+            $customer->customer_contacts()->create($pre[$i]);
+        }
 
         return response()->json($customer);
     }

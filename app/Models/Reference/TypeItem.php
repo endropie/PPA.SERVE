@@ -4,7 +4,7 @@ namespace App\Models\Reference;
 
 use App\Models\Model;
 
-class Ordertype extends Model
+class TypeItem extends Model
 {
     protected $fillable = ['name', 'description'];
 

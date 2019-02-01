@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateItemProductionsTable extends Migration
+class CreateCustomerContactsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,14 @@ class CreateItemProductionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('item_productions', function (Blueprint $table) {
+        Schema::create('customer_contacts', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('production_id');
-            $table->string('reference')->nullable();
+            $table->integer('customer_id');
+            
+            $table->string('label');
+            $table->string('name');
+            $table->string('phone');
 
-            $table->integer('item_id');  // =>> the field "belongsTo" relation with "Items" table.
             $table->timestamps();
         });
     }
@@ -30,6 +32,6 @@ class CreateItemProductionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('item_productions');
+        Schema::dropIfExists('customer_contacts');
     }
 }

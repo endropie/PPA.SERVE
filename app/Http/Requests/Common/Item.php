@@ -23,19 +23,29 @@ class Item extends Request
 
         return [
             'code' => 'required|string|max:191|unique:items,NULL,' . $id,
-            'name' => 'required|string|max:191',
             'brand_id' => 'required',
             'customer_id' => 'required',
             'specification_id' => 'required',
-            
+            'item_productions.*.production_id' => 'required',
+
+            'item_productions' =>
+            function ($attribute, $value, $fail) {
+                if (sizeof($value) == 0) {
+                    $fail('Pre productions must be select min. 1 process production.');
+                }
+            },
         ];
     }
 
     public function messages()
     {
+        $msg = 'The field is required!';
+
         return [
-            'color_id.required' => 'Color is required!',
-            'color_id.integer' => 'Color is Failed!',
+            'item_productions.*.production_id' => $msg,
+            'brand_id.required'         => $msg,
+            'customer_id.required'      => $msg,
+            'specification_id.required' => $msg,
         ];
     }
 }

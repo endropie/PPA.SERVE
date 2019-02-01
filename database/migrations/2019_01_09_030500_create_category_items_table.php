@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateMarketplacesTable extends Migration
+class CreateCategoryItemsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateMarketplacesTable extends Migration
      */
     public function up()
     {
-        Schema::create('marketplaces', function (Blueprint $table) {
+        Schema::create('category_items', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
             $table->text('description')->nullable();
@@ -28,6 +28,6 @@ class CreateMarketplacesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('marketplaces');
+        Schema::dropIfExists('category_items');
     }
 }
