@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateJournalVouchersTable extends Migration
+class CreateSpecificationDetailsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,11 @@ class CreateJournalVouchersTable extends Migration
      */
     public function up()
     {
-        Schema::create('journal_vouchers', function (Blueprint $table) {
+        Schema::create('specification_details', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('number')->unique();
-            $table->date('date');
-            $table->text('description')->nullable();
+            $table->integer('specification_id');
+            $table->integer('thick');
+            $table->string('plate')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +29,6 @@ class CreateJournalVouchersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('journal_vouchers');
+        Schema::dropIfExists('specification_details');
     }
 }

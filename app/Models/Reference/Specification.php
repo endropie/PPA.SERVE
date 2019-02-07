@@ -7,11 +7,15 @@ use App\Models\Model;
 class Specification extends Model
 {
     protected $fillable = [
-        'code', 'name', 'description', 'thick', 'color_id', 'times_spray_white', 'times_spray_red', 
-        'thick_1', 'thick_2', 'thick_3', 'thick_4', 'plate_1', 'plate_2', 'plate_3', 'plate_4'
+        'code', 'name', 'description', 'thick', 'color_id', 'times_spray_white', 'times_spray_red'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
+    
+    public function specification_details()
+    {
+        return $this->hasMany('App\Models\Reference\SpecificationDetail');
+    }
 
     public function color()
     {

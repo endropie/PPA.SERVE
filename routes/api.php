@@ -46,11 +46,18 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::apiResource('customers', 'Incomes\Customers');
     });
 
+    Route::prefix('warehouses')->name('.warehouses')->group(function () {
+        Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
+        Route::apiResource('finished-goods', 'Warehouses\FinishedGoods');
+    });
+
     Route::prefix('factories')->name('.factories')->group(function () {
         Route::apiResource('productions', 'Factories\Productions');
+        Route::apiResource('workin-processes', 'Factories\WorkinProcesses');
     });
 
     Route::prefix('references')->name('.references')->group(function () {
+        Route::apiResource('provinces', 'References\Provinces');
         Route::apiResource('units', 'References\Units');
         Route::apiResource('sizes', 'References\Sizes');
         Route::apiResource('brands', 'References\Brands');

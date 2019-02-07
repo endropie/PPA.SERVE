@@ -52,7 +52,7 @@ class TestingTableSeeder extends Seeder
 
 			$code = $c1->code .'-'. $c2->code .'-'. $c3->code;
 
-			Item::create([
+			$item = Item::create([
 				'id'=> $i+1, 
 				'code'=> $code, 
 				'brand_id' => $brand_id,
@@ -63,6 +63,7 @@ class TestingTableSeeder extends Seeder
 				'part_fg'=>  'FG-'.  $faker->randomNumber(),
 			]);
 			
+			// $item->item_productions()->create([])
 		}
 		
 	}

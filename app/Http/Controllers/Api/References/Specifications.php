@@ -34,12 +34,22 @@ class Specifications extends ApiController
     {
         $specification = Specification::create($request->all());
 
+        // Delete pre production on the item updated!
+        $specification->specification_details()->delete();
+
+        $details = $request->specification_details;
+        for ($i=0; $i < sizeof($details); $i++) { 
+
+            // create pre production on the item updated!
+            $specification->specification_details()->create($details[$i]);
+        }
+
         return response()->json($specification);
     }
 
     public function show($id)
     {
-        $specification = Specification::findOrFail($id);
+        $specification = Specification::with('specification_details')->findOrFail($id);
         $specification->is_editable = (!$specification->is_related);
 
         return response()->json($specification);
@@ -50,6 +60,16 @@ class Specifications extends ApiController
         $specification = Specification::findOrFail($id);
 
         $specification->update($request->input());
+
+        // Delete pre production on the item updated!
+        $specification->specification_details()->delete();
+
+        $details = $request->specification_details;
+        for ($i=0; $i < sizeof($details); $i++) { 
+
+            // create pre production on the item updated!
+            $specification->specification_details()->create($details[$i]);
+        }
 
         return response()->json($specification);
     }
