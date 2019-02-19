@@ -8,7 +8,71 @@ use App\Models\Sales\SalesInvoice;
 use App\Models\Accounting\Journal;
 
 trait GenerateNumber
-{    
+{
+    public function getNextWorkinProductionNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'WIP/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Factory\WorkinProduction::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextWorkOrderNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'WO/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Factory\WorkOrder::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextIncomingGoodNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'IG/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Warehouse\IncomingGood::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextFinishedGoodNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'FG/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Warehouse\FinishedGood::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextPurchaseInvoiceNumber($date = null)
     {
         $digit = 5;

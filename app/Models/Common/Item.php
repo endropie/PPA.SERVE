@@ -7,7 +7,7 @@ use App\Models\Model;
 class Item extends Model
 {
    protected $fillable = [
-      'code', 'customer_id', 'brand_id', 'specification_id', 'part_mtr', 'part_fg',  'part_number',
+      'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
       'packing_duration', 'sa_area', 'weight', 'number_hanger', 'price', 
       'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description'
    ];
@@ -16,9 +16,9 @@ class Item extends Model
 
    protected $model_relations = ['incoming_good_items'];
 
-   public function item_productions()
+   public function item_prelines()
    {
-      return $this->hasMany('App\Models\Common\ItemProduction');
+      return $this->hasMany('App\Models\Common\ItemPreline');
    }
 
    public function customer()

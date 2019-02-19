@@ -21,8 +21,8 @@ class CreateItemsTable extends Migration
             $table->integer('brand_id');
             $table->integer('specification_id');
 
-            $table->string('part_mtr')->nullable();
-            $table->string('part_fg')->nullable();
+            $table->string('part_name')->nullable();
+            $table->string('part_alias')->nullable();
             $table->string('part_number')->nullable();
 
             $table->integer('number_hanger')->nullable()->default(0);
@@ -41,6 +41,15 @@ class CreateItemsTable extends Migration
             $table->boolean('enable')->default(1);
             $table->timestamps();
         });
+
+        Schema::create('item_prelines', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('line_id');
+            $table->string('note')->nullable();
+
+            $table->integer('item_id');  // =>> the field "belongsTo" relation with "Items" table.
+            $table->timestamps();
+        });
     }
 
     /**
@@ -51,5 +60,6 @@ class CreateItemsTable extends Migration
     public function down()
     {
         Schema::dropIfExists('items');
+        Schema::dropIfExists('item_prelines');
     }
 }

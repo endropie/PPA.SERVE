@@ -4,9 +4,9 @@ namespace App\Models\Common;
 
 use App\Models\Model;
 
-class ItemProduction extends Model
+class ItemPreline extends Model
 {
-   protected $fillable = ['production_id', 'reference'];
+   protected $fillable = ['line_id', 'note'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -17,9 +17,9 @@ class ItemProduction extends Model
       return $this->belongsTo('App\Models\Common\Item');
    }
 
-   public function production()
+   public function line()
    {
-      return $this->belongsTo('App\Models\Factory\Production');
+      return $this->belongsTo('App\Models\Reference\Line');
    }
 }
  

@@ -52,17 +52,21 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     });
 
     Route::prefix('factories')->name('.factories')->group(function () {
-        Route::apiResource('productions', 'Factories\Productions');
-        Route::apiResource('workin-processes', 'Factories\WorkinProcesses');
+        Route::apiResource('workin-productions', 'Factories\WorkinProductions');
+        Route::apiResource('work-orders', 'Factories\WorkOrders');
+        Route::post('work-orders/newgroup', 'Factories\WorkOrders@storeGroup');
     });
 
     Route::prefix('references')->name('.references')->group(function () {
+        Route::apiResource('lines', 'References\Lines');
+        Route::apiResource('shifts', 'References\Shifts');
         Route::apiResource('provinces', 'References\Provinces');
         Route::apiResource('units', 'References\Units');
         Route::apiResource('sizes', 'References\Sizes');
         Route::apiResource('brands', 'References\Brands');
         Route::apiResource('colors', 'References\Colors');
         Route::apiResource('type_items', 'References\TypeItems');
+        Route::apiResource('type_worktimes', 'References\TypeWorktimes');
         Route::apiResource('category_items', 'References\CategoryItems');
         Route::apiResource('specifications', 'References\Specifications');
     });

@@ -13,11 +13,11 @@ class Items extends ApiController
     {
         switch (request('mode')) {
             case 'all':            
-                $items = Item::filterable()->get();    
+                $items = Item::with(['item_prelines'])->filterable()->get();    
                 break;
 
             case 'datagrid':
-                $items = Item::with(['item_productions','brand','customer','specification'])->filterable()->get();
+                $items = Item::with(['item_prelines','brand','customer','specification'])->filterable()->get();
                 
                 break;
 
@@ -33,11 +33,11 @@ class Items extends ApiController
     {
         $item = Item::create($request->all());
 
-        $pre = $request->item_productions;
+        $pre = $request->item_prelines;
         for ($i=0; $i < sizeof($pre); $i++) { 
 
             // create pre production on the item updated!
-            $item->item_productions()->create($pre[$i]);
+            $item->item_prelines()->create($pre[$i]);
         }
 
         return response()->json($item);
@@ -45,7 +45,7 @@ class Items extends ApiController
 
     public function show($id)
     {
-        $item = Item::with(['item_productions'])->findOrFail($id);
+        $item = Item::with(['item_prelines'])->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         return response()->json($item);
@@ -58,13 +58,13 @@ class Items extends ApiController
         $item->update($request->input());
 
         // Delete pre production on the item updated!
-        $item->item_productions()->delete();
+        $item->item_prelines()->delete();
 
-        $pre = $request->item_productions;
+        $pre = $request->item_prelines;
         for ($i=0; $i < sizeof($pre); $i++) { 
 
             // create pre production on the item updated!
-            $item->item_productions()->create($pre[$i]);
+            $item->item_prelines()->create($pre[$i]);
         }
 
         return response()->json($item);

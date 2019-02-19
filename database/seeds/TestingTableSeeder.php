@@ -8,11 +8,10 @@ use App\Models\Reference\Brand;
 use App\Models\Reference\Color;
 use App\Models\Reference\Size;
 use App\Models\Reference\Unit;
-use App\Models\Reference\TypeItem;
-use App\Models\Reference\CategoryItem;
 use App\Models\Common\Item;
 use App\Models\Income\Customer;
-use App\Models\Factory\Production;
+use App\Models\Reference\Line;
+use App\Models\Reference\Shift;
 
 class TestingTableSeeder extends Seeder
 {
@@ -22,12 +21,11 @@ class TestingTableSeeder extends Seeder
 		$this->colors();
 		$this->sizes();
 		$this->units();
-		$this->type_items();
-		$this->category_items();
+		$this->lines();
+		$this->shifts();
 		$this->specifications();
 		$this->customers();
 		$this->items();
-		$this->productions();
 	}
 
 	public function items()
@@ -38,32 +36,42 @@ class TestingTableSeeder extends Seeder
 		// $faker->addProvider(new \Faker\Provider\Fakecar($faker));
 		$faker = Faker\Factory::create();
 
-		$string = array ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','V','X','Y','Z');
-		$number = array (1,2,3,4,5,6,7,8,9,0);
+		$strings = array ("AS", "BU", "GT", "HD", "HJL", "QQ", "WUG", "US", "KD", "EA", "AF");
+		$hangers = array("20", "20", "50", "24", "20");
 
-		for ($i=0; $i < 10; $i++) { 
+		for ($i=0; $i < 15; $i++) { 
 			$brand_id = rand(1,5);
 			$customer_id = rand(1,5);
-			$specification_id = rand(1,14);
+			$specification_id = $i+1;
 
+			$rand_hanger = array_rand($hangers, 2);
+			
 			$c1 = Brand::find($brand_id); 						// print($c1->code);
 			$c2 = Customer::find($customer_id);					// print($c2->code);
 			$c3 = Specification::find($specification_id);		// print($c3->code);
 
 			$code = $c1->code .'-'. $c2->code .'-'. $c3->code;
 
+			$name = $strings[array_rand($strings, 2)[0]] . '-'. $faker->randomNumber(5);
 			$item = Item::create([
-				'id'=> $i+1, 
-				'code'=> $code, 
-				'brand_id' => $brand_id,
-				'customer_id' => $customer_id,
+				'id' => $i+1, 
+				'code' => $code, 
+				'brand_id' 		=> $brand_id,
+				'customer_id' 	=> $customer_id,
 				'specification_id' => $specification_id,
-				'part_number'=> $faker->randomNumber(),
-				'part_mtr'=> 'MTR-'. $faker->randomNumber(),
-				'part_fg'=>  'FG-'.  $faker->randomNumber(),
+				'part_number'	=> $faker->randomNumber(8),
+				'part_name' 	=> $name,
+				'part_alias' 	=> $faker->randomNumber(1) < 5 ? $name .'-'. $faker->randomNumber(2) : null,
+				'number_hanger' => $hangers[$rand_hanger[0]],
+				'unit_id' => 1,
+				'type_item_id' => 1,
+				'category_item_id' => 1,
+				'size_id' => rand(1,5)
 			]);
 			
-			// $item->item_productions()->create([])
+			for ($j=0; $j < rand(2,5); $j++) {
+				$item->item_prelines()->create(['line_id' => rand(1,23)]);
+			}
 		}
 		
 	}
@@ -83,17 +91,44 @@ class TestingTableSeeder extends Seeder
 		
 	}
 
-	public function productions()
+	public function shifts()
     {
-        DB::table('productions')->truncate();
+        DB::table('shifts')->truncate();
 		
-		Production::create(['id'=> 1,'name'=>'CUTTING CR.4','description'=>'The description for Production 1']);
-		Production::create(['id'=> 2,'name'=>'CUTTING CR.6','description'=>'The description for Production 2']);
-		Production::create(['id'=> 3,'name'=>'POLES TYPE A','description'=>'The description for Production 3']);
-		Production::create(['id'=> 4,'name'=>'POLES TYPE B','description'=>'The description for Production 4']);
-		Production::create(['id'=> 5,'name'=>'POLES TYPE C','description'=>'The description for Production 5']);
-		Production::create(['id'=> 6,'name'=>'CHROMING S28','description'=>'The description for Production 6']);
-		Production::create(['id'=> 7,'name'=>'CHROMING K35','description'=>'The description for Production 7']);
+		Shift::create(['id'=> 1,'name'=>'1-A','description'=>'The description for Shifting 1A']);
+		Shift::create(['id'=> 2,'name'=>'1-B','description'=>'The description for Shifting 1B']);
+		Shift::create(['id'=> 3,'name'=>'1-C','description'=>'The description for Shifting 1C']);
+		Shift::create(['id'=> 4,'name'=>'2','description'=>'The description for Shifting 2']);
+		Shift::create(['id'=> 5,'name'=>'3','description'=>'The description for Shifting 3']);
+	}
+
+	public function lines()
+    {
+        DB::table('lines')->truncate();
+		
+		Line::create(['id'=> 1,'name'=>'ED Coating-1 (Epoxy)','description'=>'The description for Line 1']);
+		Line::create(['id'=> 2,'name'=>'Removing 1','description'=>'The description for Line 2']);
+		Line::create(['id'=> 3,'name'=>'Dipping','description'=>'The description for Line 3']);
+		Line::create(['id'=> 4,'name'=>'Chromated Manual K','description'=>'The description for Line 4']);
+		Line::create(['id'=> 5,'name'=>'Zn (Alkali) Rack-1','description'=>'The description for Line 5']);
+		Line::create(['id'=> 6,'name'=>'Greend Chromate','description'=>'The description for Line 6']);
+		Line::create(['id'=> 7,'name'=>'Spray Coating','description'=>'The description for Line 7']);
+		Line::create(['id'=> 8,'name'=>'Treathment Degreasing','description'=>'The description for Line 8']);
+		Line::create(['id'=> 9,'name'=>'Zn Iron','description'=>'The description for Line 9']);
+		Line::create(['id'=> 10,'name'=>'Chromated Automatic','description'=>'The description for Line 10']);
+		Line::create(['id'=> 11,'name'=>'Zn (Acid) Barrel','description'=>'The description for Line 11']);
+		Line::create(['id'=> 12,'name'=>'Chromated Manual Barrel','description'=>'The description for Line 12']);
+		Line::create(['id'=> 13,'name'=>'ZN (Alkali) Rack-2','description'=>'The description for Line 13']);
+		Line::create(['id'=> 14,'name'=>'ED Coating-3 (Acrylic)','description'=>'The description for Line 14']);
+		Line::create(['id'=> 15,'name'=>'ED Coating-4 (Acrylic)','description'=>'The description for Line 15']);
+		Line::create(['id'=> 16,'name'=>'Mangan Phospat','description'=>'The description for Line 16']);
+		Line::create(['id'=> 17,'name'=>'Mini Barrel','description'=>'The description for Line 17']);
+		Line::create(['id'=> 18,'name'=>'Silver Plating','description'=>'The description for Line 18']);
+		Line::create(['id'=> 19,'name'=>'Plasticol Coating','description'=>'The description for Line 19']);
+		Line::create(['id'=> 20,'name'=>'Repair','description'=>'The description for Line 20']);
+		Line::create(['id'=> 21,'name'=>'Removing 2','description'=>'The description for Line 21']);
+		Line::create(['id'=> 22,'name'=>'Touchup','description'=>'The description for Line 22']);
+		Line::create(['id'=> 23,'name'=>'Gudang','description'=>'The description for Line 23']);
 	}
 
 	public function specifications()
@@ -115,24 +150,6 @@ class TestingTableSeeder extends Seeder
 		Specification::create(['id'=>13,'code'=>'FD5396572','name'=>'Found Direct 5','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
 		Specification::create(['id'=>14,'code'=>'CL5454575','name'=>'Calm LAMP 5','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
 		Specification::create(['id'=>15,'code'=>'CB5263654','name'=>'Cyber Bound 5','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
-
-	}
-
-	public function category_items()
-    {
-        DB::table('category_items')->truncate();
-		
-		CategoryItem::create(['id'=> 1,'name'=>'2-wheel vehicle','description'=>'The description for two-wheel vehicle']);
-		CategoryItem::create(['id'=> 2,'name'=>'3-wheel vehicle','description'=>'The description for three-wheel vehicle']);
-		CategoryItem::create(['id'=> 3,'name'=>'4-wheel vehicle','description'=>'The description for our-wheel vehicle']);
-	}
-	
-	public function type_items()
-    {
-        DB::table('type_items')->truncate();
-		
-		TypeItem::create(['id'=> 1,'name'=>'Regular','description'=>'This is Reguler']);
-		TypeItem::create(['id'=> 2,'name'=>'Non-Reguler','description'=>'This is Non-Reguler']);
 
 	}
 	

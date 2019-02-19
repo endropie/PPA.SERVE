@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateWorkinProcessesTables extends Migration
+class CreateWorkOrdersTables extends Migration
 {
     /**
      * Run the migrations.
@@ -13,27 +13,28 @@ class CreateWorkinProcessesTables extends Migration
      */
     public function up()
     {
-        Schema::create('workin_processes', function (Blueprint $table) {
+        Schema::create('work_orders', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('start_date');
-            $table->time('start_time');
-            $table->date('end_date');
-            $table->time('end_time');
-
             $table->integer('customer_id');
-            
+
             $table->text('description')->nullable();
 
             $table->timestamps();
         });
 
-        Schema::create('workin_process_items', function (Blueprint $table) {
+        Schema::create('work_order_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('workin_process_id');
+            $table->integer('work_order_id');
 
             $table->integer('item_id');
             $table->integer('quantity');
+            $table->integer('ngratio')->default(0);
+
+            $table->integer('line_id');
+            $table->integer('shift_id')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
 
             $table->timestamps();
         });
@@ -46,7 +47,7 @@ class CreateWorkinProcessesTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('workin_processes');
-        Schema::dropIfExists('workin_process_items');
+        Schema::dropIfExists('work_orders');
+        Schema::dropIfExists('work_order_items');
     }
 }

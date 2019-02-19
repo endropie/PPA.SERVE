@@ -4,7 +4,7 @@ namespace App\Http\Requests\Factory;
 
 use App\Http\Requests\Request;
 
-class Production extends Request
+class Line extends Request
 {
     public function authorize()
     {
@@ -18,7 +18,7 @@ class Production extends Request
         
         if ($method == 'PATCH' || $method == 'PUT') 
         {
-            $id = $this->production;
+            $id = $this->line;
         } else 
         {
             $id = null;

@@ -6,9 +6,12 @@ use App\Http\Requests\Warehouse\IncomingGood as Request;
 use App\Http\Controllers\ApiController;
 
 use App\Models\Warehouse\IncomingGood; 
+use App\Traits\GenerateNumber;
 
 class IncomingGoods extends ApiController
 {
+    use GenerateNumber;
+
     public function index()
     {
         switch (request('mode')) {
@@ -31,6 +34,8 @@ class IncomingGoods extends ApiController
 
     public function store(Request $request)
     {
+        if(!$request->number) $request->merge(['number'=> $this->getNextIncomingGoodNumber()]);
+
         $incoming_good = IncomingGood::create($request->all());
 
         $item = $request->incoming_good_items;
@@ -45,7 +50,7 @@ class IncomingGoods extends ApiController
 
     public function show($id)
     {
-        $incoming_good = IncomingGood::with(['incoming_good_items'])->findOrFail($id);
+        $incoming_good = IncomingGood::with(['incoming_good_items.item'])->findOrFail($id);
         $incoming_good->is_editable = (!$incoming_good->is_related);
 
         return response()->json($incoming_good);

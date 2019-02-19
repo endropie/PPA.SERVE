@@ -22,7 +22,7 @@ class IncomingGood extends Request
         else $id = null;
 
         return [
-            'number' => 'required|string|max:191|unique:incoming_goods,NULL,' . $id,
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:incoming_goods,NULL,' . $id,
             'date' => 'required',
             'time' => 'required',
             'customer_id' => 'required',

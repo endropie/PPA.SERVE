@@ -6,9 +6,12 @@ use App\Http\Requests\Warehouse\FinishedGood as Request;
 use App\Http\Controllers\ApiController;
 
 use App\Models\Warehouse\FinishedGood; 
+use App\Traits\GenerateNumber;
 
 class FinishedGoods extends ApiController
 {
+    use GenerateNumber;
+
     public function index()
     {
         switch (request('mode')) {
@@ -31,6 +34,8 @@ class FinishedGoods extends ApiController
 
     public function store(Request $request)
     {
+        if(!$request->number) $request->merge(['number'=> $this->getNextFinishedGoodNumber()]);
+
         $finished_good = FinishedGood::create($request->all());
 
         $item = $request->finished_good_items;
@@ -45,7 +50,7 @@ class FinishedGoods extends ApiController
 
     public function show($id)
     {
-        $finished_good = FinishedGood::with(['finished_good_items'])->findOrFail($id);
+        $finished_good = FinishedGood::with(['finished_good_items.item'])->findOrFail($id);
         $finished_good->is_editable = (!$finished_good->is_related);
 
         return response()->json($finished_good);
