@@ -40,7 +40,7 @@ class WorkinProductions extends ApiController
         $workin_production = WorkinProduction::create($request->all());
 
         $item = $request->workin_production_items;
-        for ($i=0; $i < sizeof($item); $i++) { 
+        for ($i=0; $i < count($item); $i++) { 
 
             // create item production on the incoming Goods updated!
             $workin_production->workin_production_items()->create($item[$i]);
@@ -67,7 +67,7 @@ class WorkinProductions extends ApiController
         $workin_production->workin_production_items()->delete();
 
         $item = $request->workin_production_items;
-        for ($i=0; $i < sizeof($item); $i++) { 
+        for ($i=0; $i < count($item); $i++) { 
 
             // create item row on the incoming Goods updated!
             $workin_production->workin_production_items()->create($item[$i]);

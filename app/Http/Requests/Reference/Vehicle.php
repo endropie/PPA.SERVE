@@ -4,7 +4,7 @@ namespace App\Http\Requests\Reference;
 
 use App\Http\Requests\Request;
 
-class Line extends Request
+class Vehicle extends Request
 {
     public function authorize()
     {
@@ -18,14 +18,14 @@ class Line extends Request
         
         if ($method == 'PATCH' || $method == 'PUT') 
         {
-            $id = $this->line;
+            $id = $this->vehicle;
         } else 
         {
             $id = null;
         }
 
         return [
-            'name' => 'required|string|max:191',
+            'name' => ($id ? 'required|string|' : '') .'max:191|unique:vehicles,NULL,' . $id,
         ];
     }
 }

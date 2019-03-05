@@ -3,15 +3,20 @@
 use Illuminate\Database\Seeder;
 use Faker\Factory;
 
+use App\Models\Common\Item;
 use App\Models\Reference\Specification;
 use App\Models\Reference\Brand;
 use App\Models\Reference\Color;
 use App\Models\Reference\Size;
 use App\Models\Reference\Unit;
-use App\Models\Common\Item;
 use App\Models\Income\Customer;
 use App\Models\Reference\Line;
 use App\Models\Reference\Shift;
+use App\Models\Reference\Fault;
+use App\Models\Reference\TypeFault;
+use App\Models\Reference\Operator;
+use App\Models\Reference\Vehicle;
+use App\Models\Reference\Rit;
 
 class TestingTableSeeder extends Seeder
 {
@@ -23,6 +28,9 @@ class TestingTableSeeder extends Seeder
 		$this->units();
 		$this->lines();
 		$this->shifts();
+		$this->faults();
+		$this->vehicles();
+		$this->operators();
 		$this->specifications();
 		$this->customers();
 		$this->items();
@@ -31,6 +39,8 @@ class TestingTableSeeder extends Seeder
 	public function items()
 	{
 		DB::table('items')->truncate();
+		DB::table('item_prelines')->truncate();
+		DB::table('item_units')->truncate();
 
 		// $faker = new \Faker\Generator();
 		// $faker->addProvider(new \Faker\Provider\Fakecar($faker));
@@ -66,29 +76,81 @@ class TestingTableSeeder extends Seeder
 				'unit_id' => 1,
 				'type_item_id' => 1,
 				'category_item_id' => 1,
-				'size_id' => rand(1,5)
+				'size_id' => rand(1,5),
+				'price' => rand(14,60) * 1000
 			]);
 			
+			// Generate Prelines..
 			for ($j=0; $j < rand(2,5); $j++) {
 				$item->item_prelines()->create(['line_id' => rand(1,23)]);
+			}
+			// Generate Prelines..
+			if($faker->randomNumber(1) < 7) {
+				$item->item_units()->create(['unit_id' => 2, 'rate' => rand(0,2) + (1 / rand(2,4))]);
 			}
 		}
 		
 	}
 	public function customers()
     {
-		// $faker = new Faker\Generator();
-		// $faker->addProvider(new Faker\Provider\id_ID\PhoneNumber($faker));
-		// $faker->addProvider(new Faker\Provider\id_ID\Address($faker));
 		$faker = Faker\Factory::create();
 
 		DB::table('customers')->truncate();
-		Customer::create(['id'=> 1,'code'=>'ASJ','name'=>'Alissan Sentral Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber]);
-		Customer::create(['id'=> 2,'code'=>'HII','name'=>'Hipo Intern Indonesia','email'=> $faker->email,'phone'=> $faker->phoneNumber]);
-		Customer::create(['id'=> 3,'code'=>'DKB','name'=>'Duangsa karya Bersama','email'=> $faker->email,'phone'=> $faker->phoneNumber]);
-		Customer::create(['id'=> 4,'code'=>'BJB', 'name'=>'Bersama Jaya Baru','email'=> $faker->email,'phone'=> $faker->phoneNumber]);
-		Customer::create(['id'=> 5,'code'=>'BJ', 'name'=>'Bersama Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber]);
 		
+		Customer::create(['id'=> 1,'code'=>'ASJ','name'=>'Alissan Sentral Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		Customer::create(['id'=> 2,'code'=>'HII','name'=>'Hipo Intern Indonesia','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		Customer::create(['id'=> 3,'code'=>'DKB','name'=>'Duangsa karya Bersama','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		Customer::create(['id'=> 4,'code'=>'BJB', 'name'=>'Bersama Jaya Baru','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		Customer::create(['id'=> 5,'code'=>'BJ', 'name'=>'Bersama Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		
+	}
+
+	public function faults()
+    {
+		DB::table('faults')->truncate();
+		DB::table('type_faults')->truncate();
+		
+		$coating = TypeFault::create(['id'=> 1,'name'=>'ED Coating','description'=>'This Description is Not Good Coating']);
+		$coating->faults()->create(['name'=>'Others']);
+		$coating->faults()->create(['name'=>'Kabut']);
+		$coating->faults()->create(['name'=>'Buram']);
+		$coating->faults()->create(['name'=>'Scratch']);
+		$coating->faults()->create(['name'=>'Jamur']);
+		$coating->faults()->create(['name'=>'No paint']);
+		$coating->faults()->create(['name'=>'Kasar']);
+		$coating->faults()->create(['name'=>'Nempel Jig']);
+		$coating->faults()->create(['name'=>'Water over']);
+
+		$plating = TypeFault::create(['id'=> 2,'name'=>'ZN Plating','description'=>'This Description is Not Good Plating']);
+		$coating->faults()->create(['name'=>'Others']);
+		$plating->faults()->create(['name'=>'Kotor']);
+		$plating->faults()->create(['name'=>'keropos']);
+		$plating->faults()->create(['name'=>'karat']);
+		$plating->faults()->create(['name'=>'Jamur']);
+	}
+
+	public function operators()
+    {
+        DB::table('operators')->truncate();
+		$faker = Faker\Factory::create();
+
+		Operator::create(['id'=> 1,'name'=> $faker->name(),'phone'=> $faker->phoneNumber]);
+		Operator::create(['id'=> 2,'name'=> $faker->name(),'phone'=> $faker->phoneNumber]);
+		Operator::create(['id'=> 3,'name'=> $faker->name(),'phone'=> $faker->phoneNumber]);
+		Operator::create(['id'=> 4,'name'=> $faker->name(),'phone'=> $faker->phoneNumber]);
+		Operator::create(['id'=> 5,'name'=> $faker->name(),'phone'=> $faker->phoneNumber]);
+	}
+
+	public function vehicles()
+    {
+        DB::table('vehicles')->truncate();
+		$faker = Faker\Factory::create();
+
+		Vehicle::create(['name'=> 'B '. rand(1000,9999) . ' SCD']);
+		Vehicle::create(['name'=> 'B '. rand(1000,9999) . ' FRT']);
+		Vehicle::create(['name'=> 'B '. rand(1000,9999) . ' VFR']);
+		Vehicle::create(['name'=> 'B '. rand(1000,9999) . ' VV']);
+		Vehicle::create(['name'=> 'B '. rand(1000,9999) . ' YUT']);
 	}
 
 	public function shifts()
@@ -196,13 +258,13 @@ class TestingTableSeeder extends Seeder
     {
         DB::table('units')->truncate();
 		
-		Unit::create(['id'=> 1,'code'=>'PCS','name'=>'Packs']);
-		Unit::create(['id'=> 2,'code'=>'KG','name'=>'Kilo gram']);
-		Unit::create(['id'=> 3,'code'=>'TON','name'=>'Ton']);
-		Unit::create(['id'=> 4,'code'=>'BRL','name'=>'Barel']);
-		Unit::create(['id'=> 5,'code'=>'LTR','name'=>'Liter']);
-		Unit::create(['id'=> 6,'code'=>'M','name'=>'Meter']);
-		Unit::create(['id'=> 7,'code'=>'DM','name'=>'Deci Meter']);
+		Unit::create(['id'=> 1,'code'=>'Pcs','name'=>'Pcs']);
+		Unit::create(['id'=> 2,'code'=>'Kg','name'=>'KiloGram']);
+		Unit::create(['id'=> 3,'code'=>'dm','name'=>'Decimeter']);
+		Unit::create(['id'=> 4,'code'=>'brl','name'=>'Barel']);
+		Unit::create(['id'=> 5,'code'=>'ltr','name'=>'Liter']);
+		Unit::create(['id'=> 6,'code'=>'mtr','name'=>'Meter']);
+		Unit::create(['id'=> 7,'code'=>'ton','name'=>'Ton']);
 
     }
 }

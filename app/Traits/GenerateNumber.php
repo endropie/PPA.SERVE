@@ -9,6 +9,70 @@ use App\Models\Accounting\Journal;
 
 trait GenerateNumber
 {
+    public function getNextForecastNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'FCO/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Income\Forecast::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextPreDeliveryNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'PDO/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Income\PreDelivery::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextDeliveryNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'DO/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Income\Delivery::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextPackingItemNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'WPR/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Factory\PackingItem::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextWorkinProductionNumber($date = null)
     {
         $digit = 5;

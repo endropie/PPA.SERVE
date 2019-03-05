@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateIncomingGoodsTables extends Migration
+class CreateForecastsTables extends Migration
 {
     /**
      * Run the migrations.
@@ -13,32 +13,28 @@ class CreateIncomingGoodsTables extends Migration
      */
     public function up()
     {
-        Schema::create('incoming_goods', function (Blueprint $table) {
+        Schema::create('forecasts', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('date');
-            $table->time('time');
+            $table->date('start_date');
+            $table->date('end_date');
 
             $table->integer('customer_id');
-            $table->string('reference_number')->nullable();
-            $table->date('reference_date')->nullable();
-            
-            $table->integer('vehicle_id')->nullable();
-            $table->integer('tranport_rate')->nullable();
+
             $table->text('description')->nullable();
 
             $table->timestamps();
         });
 
-        Schema::create('incoming_good_items', function (Blueprint $table) {
+        Schema::create('forecast_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('incoming_good_id');
+            $table->integer('forecast_id');
 
             $table->integer('item_id');
-            $table->float('quantity');
-
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
+            $table->float('quantity');
+            $table->float('price')->default(0);
 
             $table->timestamps();
         });
@@ -51,7 +47,7 @@ class CreateIncomingGoodsTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('incoming_goods');
-        Schema::dropIfExists('incoming_good_items');
+        Schema::dropIfExists('forecasts');
+        Schema::dropIfExists('forecast_items');
     }
 }

@@ -24,6 +24,7 @@ class CreateCustomersTable extends Migration
             $table->string('subdistrict')->nullable();
             $table->string('district')->nullable();
             $table->integer('province_id')->nullable();
+            $table->string('zipcode')->nullable();
 
             $table->string('npwp')->nullable();
             $table->string('pkp')->nullable();

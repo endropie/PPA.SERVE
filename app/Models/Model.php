@@ -13,6 +13,18 @@ class Model extends Eloquent
 {
     use Eloquence;
 
+    public $model_comments = [];
+
+    public function getModelComments()
+    {
+        return $this->model_comments;
+    }
+
+    public function pushModelComments($text)
+    {
+        return $this->model_comments[] = $text;
+    }
+
     public function getIsRelatedAttribute()
     {
         return false;

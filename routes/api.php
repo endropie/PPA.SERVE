@@ -44,20 +44,30 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     
     Route::prefix('incomes')->name('.incomes')->group(function () {
         Route::apiResource('customers', 'Incomes\Customers');
+        Route::apiResource('forecasts', 'Incomes\Forecasts');
+        Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
+        Route::apiResource('deliveries', 'Incomes\Deliveries');
     });
 
     Route::prefix('warehouses')->name('.warehouses')->group(function () {
+        Route::apiResource('transports', 'Warehouses\Transports');
         Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
         Route::apiResource('finished-goods', 'Warehouses\FinishedGoods');
     });
 
     Route::prefix('factories')->name('.factories')->group(function () {
+        Route::post('work-orders/newgroup', 'Factories\WorkOrders@storeGroup');
+
         Route::apiResource('workin-productions', 'Factories\WorkinProductions');
         Route::apiResource('work-orders', 'Factories\WorkOrders');
-        Route::post('work-orders/newgroup', 'Factories\WorkOrders@storeGroup');
+        Route::apiResource('packing-items', 'Factories\PackingItems');
     });
 
     Route::prefix('references')->name('.references')->group(function () {
+        Route::apiResource('operators', 'References\Operators');
+        Route::apiResource('vehicles', 'References\Vehicles');
+        Route::apiResource('faults', 'References\Faults');
+        Route::apiResource('type_faults', 'References\TypeFaults');
         Route::apiResource('lines', 'References\Lines');
         Route::apiResource('shifts', 'References\Shifts');
         Route::apiResource('provinces', 'References\Provinces');

@@ -8,10 +8,12 @@ class Customer extends Model
 {
     
     protected $fillable = [
-        'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id',
+        'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
         'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service', 
         'bill_mode', 'delivery_mode', 'order_mode', 'description'
     ];
+
+    protected $appends = [ 'address_raw' ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -21,4 +23,19 @@ class Customer extends Model
     {
         return $this->hasMany('App\Models\Income\CustomerContact');
     }  
+
+    public function province()
+    {
+        return $this->belongsTo('App\Models\Reference\Province');
+    }
+
+    public function getAddressRawAttribute() {
+        $raw  = ($this->address ?? '');
+        $raw .= ($this->subdistrict ? "\n". $this->subdistrict .' ' : '');
+        $raw .= ($this->district ?  $this->district .', ' : '');
+        $raw .= ($this->province_id ? "\n". $this->province()->value('name') .' ' : '');
+        $raw .= ($this->zipcode ? ' '. $this->zipcode : '');
+
+        return $raw;
+    }
 }

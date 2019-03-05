@@ -38,7 +38,7 @@ class Specifications extends ApiController
         $specification->specification_details()->delete();
 
         $details = $request->specification_details;
-        for ($i=0; $i < sizeof($details); $i++) { 
+        for ($i=0; $i < count($details); $i++) { 
 
             // create pre production on the item updated!
             $specification->specification_details()->create($details[$i]);
@@ -65,7 +65,7 @@ class Specifications extends ApiController
         $specification->specification_details()->delete();
 
         $details = $request->specification_details;
-        for ($i=0; $i < sizeof($details); $i++) { 
+        for ($i=0; $i < count($details); $i++) { 
 
             // create pre production on the item updated!
             $specification->specification_details()->create($details[$i]);

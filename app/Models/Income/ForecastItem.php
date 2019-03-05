@@ -1,29 +1,29 @@
 <?php
 
-namespace App\Models\Warehouse;
+namespace App\Models\Income;
 
 use App\Models\Model;
 
-class IncomingGoodItem extends Model
+class ForecastItem extends Model
 {
    protected $fillable = [
-      'item_id', 'quantity', 'unit_id', 'unit_rate'
+      'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
    ];
 
    protected $appends = ['unit_stock'];
-
+   
    protected $hidden = ['created_at', 'updated_at'];
 
    protected $model_relations = [];
 
-   public function incoming_good()
+   public function forecast()
    {
-      return $this->belongsTo('App\Models\Factory\IncomingGood');
+      return $this->belongsTo('App\Models\Income\Forecast');
    }
 
    public function item()
    {
-      return $this->belongsTo('App\Models\Common\Item');
+      return $this->belongsTo('App\Models\Common\Item')->with('unit');
    }
 
    public function unit()

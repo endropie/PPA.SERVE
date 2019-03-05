@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Models\Warehouse;
+namespace App\Models\Income;
 
 use App\Models\Model;
 
-class IncomingGoodItem extends Model
+class DeliveryItem extends Model
 {
    protected $fillable = [
-      'item_id', 'quantity', 'unit_id', 'unit_rate'
+      'item_id', 'unit_id', 'unit_rate', 'quantity'
    ];
-
-   protected $appends = ['unit_stock'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
    protected $model_relations = [];
 
-   public function incoming_good()
+   public function delivery()
    {
-      return $this->belongsTo('App\Models\Factory\IncomingGood');
+      return $this->belongsTo('App\Models\Income\Delivery');
    }
 
    public function item()
@@ -32,7 +30,6 @@ class IncomingGoodItem extends Model
    }
 
    public function getUnitStockAttribute() {
-
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
       

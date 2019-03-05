@@ -29,7 +29,9 @@ class CreateWorkOrdersTables extends Migration
 
             $table->integer('item_id');
             $table->integer('quantity');
-            $table->integer('ngratio')->default(0);
+            $table->integer('unit_id');
+            $table->float('unit_rate')->default(1);
+            $table->float('ngratio')->default(0);
 
             $table->integer('line_id');
             $table->integer('shift_id')->nullable();

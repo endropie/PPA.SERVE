@@ -7,7 +7,6 @@ use App\Http\Controllers\ApiController;
 
 use App\Models\Factory\WorkOrder; 
 use App\Traits\GenerateNumber;
-
 class WorkOrders extends ApiController
 {
     use GenerateNumber;
@@ -38,11 +37,17 @@ class WorkOrders extends ApiController
        
         $work_order = WorkOrder::create($request->all());
 
-        $item = $request->work_order_items;
+        $row = $request->work_order_items;
 
-        // create item production on the Work-order created!
-        $work_order->work_order_items()->create($item);
-
+        // Work Order Items only 1 row detail (relation = $model->hasOne)
+        if($row) {
+            // create item row on the Work Orders updated!
+            $detail = $work_order->work_order_items()->create($row);
+    
+            // Calculate stock on after the Work Orders updated!
+            $detail->item->increase($detail->unit_stock, 'work_order', 'incoming_good');
+        }
+        
         return response()->json($work_order);
     }
 
@@ -62,7 +67,10 @@ class WorkOrders extends ApiController
             ]);
 
             // create item production on the Work-order group created!
-            $work_order->work_order_items()->create($item);
+            $detail = $work_order->work_order_items()->create($item);
+            
+            // Calculate stock on before the Work Orders updated!
+            $detail->item->increase($detail->unit_stock, 'work_order', 'incoming_good');
         }
 
         return response()->json(['success' => true]);
@@ -70,7 +78,7 @@ class WorkOrders extends ApiController
 
     public function show($id)
     {
-        $work_order = WorkOrder::with(['work_order_items.item'])->findOrFail($id);
+        $work_order = WorkOrder::with(['work_order_items.item.item_units', 'work_order_items.item.unit'])->findOrFail($id);
         $work_order->is_editable = (!$work_order->is_related);
 
         return response()->json($work_order);
@@ -82,13 +90,29 @@ class WorkOrders extends ApiController
 
         $work_order->update($request->input());
 
-        // Delete items on the incoming goods updated!
-        $work_order->work_order_items()->delete();
-
-        $item = $request->work_order_items;
+        $row = $request->work_order_items;
         
-        // create item row on the incoming Goods updated!
-        $work_order->work_order_items()->create($item);
+        // Work Order Items only 1 row detail (relation = $model->hasOne)
+        if($row) {
+            $detail = $work_order->work_order_items()->find($row['id']);
+
+            if($detail) {
+                // Calculate stock on before the Work Orders updated!
+                $detail->item->decrease($detail->unit_stock, 'work_order', 'incoming_good');
+                
+                // update item row on the Work Orders updated!
+                $detail->update($row);
+            }
+            else{
+                // create item row on the Work Orders updated!
+                $detail = $work_order->work_order_items()->create($row);
+            }
+
+            // Calculate stock on before the Work Orders updated!
+            $detail = $work_order->work_order_items()->find($detail->id);
+            $detail->item->increase($detail->unit_stock, 'work_order', 'incoming_good');
+        }
+        
 
         return response()->json($work_order);
     }

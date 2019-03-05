@@ -13,11 +13,11 @@ class Items extends ApiController
     {
         switch (request('mode')) {
             case 'all':            
-                $items = Item::with(['item_prelines'])->filterable()->get();    
+                $items = Item::with(['item_prelines','item_units','unit'])->filterable()->get();    
                 break;
 
             case 'datagrid':
-                $items = Item::with(['item_prelines','brand','customer','specification'])->filterable()->get();
+                $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->filterable()->get();
                 
                 break;
 
@@ -33,11 +33,16 @@ class Items extends ApiController
     {
         $item = Item::create($request->all());
 
-        $pre = $request->item_prelines;
-        for ($i=0; $i < sizeof($pre); $i++) { 
-
+        $preline_rows = $request->item_prelines;
+        for ($i=0; $i < count($preline_rows); $i++) {
             // create pre production on the item updated!
-            $item->item_prelines()->create($pre[$i]);
+            $item->item_prelines()->create($preline_rows[$i]);
+        }
+
+        $unit_rows = $request->item_units;
+        for ($i=0; $i < count($unit_rows); $i++) { 
+            // create item units on the item updated!
+            $item->item_units()->create($unit_rows[$i]);
         }
 
         return response()->json($item);
@@ -45,7 +50,7 @@ class Items extends ApiController
 
     public function show($id)
     {
-        $item = Item::with(['item_prelines'])->findOrFail($id);
+        $item = Item::with(['item_prelines', 'item_units'])->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         return response()->json($item);
@@ -59,12 +64,18 @@ class Items extends ApiController
 
         // Delete pre production on the item updated!
         $item->item_prelines()->delete();
-
-        $pre = $request->item_prelines;
-        for ($i=0; $i < sizeof($pre); $i++) { 
-
+        $preline_rows = $request->item_prelines;
+        for ($i=0; $i < count($preline_rows); $i++) { 
             // create pre production on the item updated!
-            $item->item_prelines()->create($pre[$i]);
+            $item->item_prelines()->create($preline_rows[$i]);
+        }
+
+        // Delete item units on the item updated!
+        $item->item_units()->delete();
+        $unit_rows = $request->item_units;
+        for ($i=0; $i < count($unit_rows); $i++) { 
+            // create item units on the item updated!
+            $item->item_units()->create($unit_rows[$i]);
         }
 
         return response()->json($item);

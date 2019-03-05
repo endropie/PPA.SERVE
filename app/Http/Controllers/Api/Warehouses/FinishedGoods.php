@@ -39,7 +39,7 @@ class FinishedGoods extends ApiController
         $finished_good = FinishedGood::create($request->all());
 
         $item = $request->finished_good_items;
-        for ($i=0; $i < sizeof($item); $i++) { 
+        for ($i=0; $i < count($item); $i++) { 
 
             // create item production on the incoming Goods updated!
             $finished_good->finished_good_items()->create($item[$i]);
@@ -66,7 +66,7 @@ class FinishedGoods extends ApiController
         $finished_good->finished_good_items()->delete();
 
         $item = $request->finished_good_items;
-        for ($i=0; $i < sizeof($item); $i++) { 
+        for ($i=0; $i < count($item); $i++) { 
 
             // create item row on the incoming Goods updated!
             $finished_good->finished_good_items()->create($item[$i]);

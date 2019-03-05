@@ -50,6 +50,24 @@ class CreateItemsTable extends Migration
             $table->integer('item_id');  // =>> the field "belongsTo" relation with "Items" table.
             $table->timestamps();
         });
+
+        Schema::create('item_units', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('item_id');
+            $table->integer('unit_id');
+            $table->float('rate')->default(1);
+            $table->timestamps();
+        });
+
+        Schema::create('item_stocks', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('item_id');
+            $table->tinyInteger('stockist');
+            $table->float('total')->default(0);
+            $table->timestamps();
+
+            $table->unique(['item_id','stockist']);
+        });
     }
 
     /**
@@ -61,5 +79,7 @@ class CreateItemsTable extends Migration
     {
         Schema::dropIfExists('items');
         Schema::dropIfExists('item_prelines');
+        Schema::dropIfExists('item_units');
+        Schema::dropIfExists('item_stocks');
     }
 }

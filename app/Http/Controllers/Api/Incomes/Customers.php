@@ -54,7 +54,7 @@ class Customers extends ApiController
         $customer->customer_contacts()->delete();
 
         $pre = $request->customer_contacts;
-        for ($i=0; $i < sizeof($pre); $i++) { 
+        for ($i=0; $i < count($pre); $i++) { 
 
             // create contacts on the customer updated!
             $customer->customer_contacts()->create($pre[$i]);

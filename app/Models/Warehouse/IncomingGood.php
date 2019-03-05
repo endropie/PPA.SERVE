@@ -8,7 +8,7 @@ class IncomingGood extends Model
 {
    protected $fillable = [
       'number', 'date', 'time', 'customer_id', 'reference_number', 'reference_date', 
-      'freight_tranport_number', 'freight_tranport_rate', 'description', 
+      'vehicle_id', 'tranport_rate', 'description', 
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
