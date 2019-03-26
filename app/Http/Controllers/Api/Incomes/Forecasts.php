@@ -25,7 +25,7 @@ class Forecasts extends ApiController
                 break;
 
             default:
-                $forecasts = Forecast::collect();                
+                $forecasts = Forecast::with(['customer'])->collect();                
                 break;
         }
 
@@ -34,6 +34,9 @@ class Forecasts extends ApiController
 
     public function store(Request $request)
     {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
         if(!$request->number) $request->merge(['number'=> $this->getNextForecastNumber()]);
 
         $forecast = Forecast::create($request->all());
@@ -45,6 +48,8 @@ class Forecasts extends ApiController
             $forecast->forecast_items()->create($item[$i]);
         }
 
+        // DB::Commit => Before return function!
+        $this->DATABASE::commit();
         return response()->json($forecast);
     }
 
@@ -58,28 +63,54 @@ class Forecasts extends ApiController
 
     public function update(Request $request, $id)
     {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
         $forecast = Forecast::findOrFail($id);
 
         $forecast->update($request->input());
 
-        // Delete items on the incoming goods updated!
-        $forecast->forecast_items()->delete();
-
-        $item = $request->forecast_items;
-        for ($i=0; $i < count($item); $i++) { 
-
-            // create item row on the incoming Goods updated!
-            $forecast->forecast_items()->create($item[$i]);
+        // Delete old incoming goods items when $request detail rows has not ID
+        $ids =  array_filter((array_column($request->forecast_items, 'id')));
+        $delete_details = $forecast->forecast_items()->whereNotIn('id', $ids)->get();
+        
+        if($delete_details) {
+          foreach ($delete_details as $detail) {
+            // Delete detail of "Request Order"
+            $detail->delete();
+          }
         }
 
+        $rows = $request->forecast_items;
+        for ($i=0; $i < count($rows); $i++) { 
+            $row = $rows[$i];
+            $detail = $forecast->forecast_items()->find($row['id']);
+            if($detail) {                
+                // update item row on the request orders updated!
+                $detail->update($row);
+            }
+            else{
+                // create item row on the request orders updated!
+                $forecast->forecast_items()->create($row);
+            }
+        }
+
+        // DB::Commit => Before return function!
+        $this->DATABASE::commit();
         return response()->json($forecast);
     }
 
     public function destroy($id)
     {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
         $forecast = Forecast::findOrFail($id);
+        $forecast->forecast_items()->delete();
         $forecast->delete();
 
+        // DB::Commit => Before return function!
+        $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
 }

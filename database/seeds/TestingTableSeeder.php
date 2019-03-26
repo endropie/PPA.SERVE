@@ -49,59 +49,88 @@ class TestingTableSeeder extends Seeder
 		$strings = array ("AS", "BU", "GT", "HD", "HJL", "QQ", "WUG", "US", "KD", "EA", "AF");
 		$hangers = array("20", "20", "50", "24", "20");
 
-		for ($i=0; $i < 15; $i++) { 
-			$brand_id = rand(1,5);
-			$customer_id = rand(1,5);
-			$specification_id = $i+1;
-
-			$rand_hanger = array_rand($hangers, 2);
+		for ($k=1; $k <= 5; $k++) {
+		 for ($j=1; $j <= 5; $j++) { 
+		  
+		  if(rand(1,10)  > 5)
+		  for ($i=1; $i <= 15; $i++) { 
 			
-			$c1 = Brand::find($brand_id); 						// print($c1->code);
-			$c2 = Customer::find($customer_id);					// print($c2->code);
-			$c3 = Specification::find($specification_id);		// print($c3->code);
+			if( rand(1,10) > 7) {
+				$specification_id = $i;
+				$brand_id = $j;
+				$customer_id = $k;
 
-			$code = $c1->code .'-'. $c2->code .'-'. $c3->code;
+				$rand_hanger = array_rand($hangers, 2);
+				
+				$c1 = Customer::find($customer_id);
+				$c2 = Brand::find($brand_id);
+				$c3 = Specification::find($specification_id);
 
-			$name = $strings[array_rand($strings, 2)[0]] . '-'. $faker->randomNumber(5);
-			$item = Item::create([
-				'id' => $i+1, 
-				'code' => $code, 
-				'brand_id' 		=> $brand_id,
-				'customer_id' 	=> $customer_id,
-				'specification_id' => $specification_id,
-				'part_number'	=> $faker->randomNumber(8),
-				'part_name' 	=> $name,
-				'part_alias' 	=> $faker->randomNumber(1) < 5 ? $name .'-'. $faker->randomNumber(2) : null,
-				'number_hanger' => $hangers[$rand_hanger[0]],
-				'unit_id' => 1,
-				'type_item_id' => 1,
-				'category_item_id' => 1,
-				'size_id' => rand(1,5),
-				'price' => rand(14,60) * 1000
-			]);
-			
-			// Generate Prelines..
-			for ($j=0; $j < rand(2,5); $j++) {
-				$item->item_prelines()->create(['line_id' => rand(1,23)]);
+				// print($k .'-'. $j .'-'. $i ."\n");
+				$code = $c1->code .'-'. $c2->code .'-'. $c3->code;
+
+				$name = $strings[array_rand($strings, 2)[0]] . '-'. $faker->randomNumber(3);
+				$item = Item::create([
+					'id' => null, 
+					'code' => $code, 
+					'customer_id' 	=> $customer_id,
+					'brand_id' 		=> $brand_id,
+					'specification_id' => $specification_id,
+					'part_number'	=> $faker->randomNumber(8),
+					'part_name' 	=> $name,
+					'part_alias' 	=> $faker->randomNumber(1) < 5 ? $name .'-'. $faker->randomNumber(2) : null,
+					'number_hanger' => $hangers[$rand_hanger[0]],
+					'unit_id' => 1,
+					'type_item_id' => 1,
+					'category_item_id' => 1,
+					'size_id' => rand(1,5),
+					'price' => rand(14,60) * 1000
+				]);
+				
+				// Generate Prelines..
+				for ($x=0; $x < rand(1,3); $x++) {
+					$item->item_prelines()->create(['line_id' => rand(1,23)]);
+				}
+				// Generate Prelines..
+				if($faker->randomNumber(1) < 7) {
+					$item->item_units()->create(['unit_id' => 2, 'rate' => rand(0,2) + (1 / rand(2,4))]);
+				}
 			}
-			// Generate Prelines..
-			if($faker->randomNumber(1) < 7) {
-				$item->item_units()->create(['unit_id' => 2, 'rate' => rand(0,2) + (1 / rand(2,4))]);
-			}
+		  }
+		 }
 		}
 		
 	}
 	public function customers()
     {
 		$faker = Faker\Factory::create();
+		$orders = ['NONE', 'BASEON', 'ACCUMULATE'];
+		$deliveries = ['SEPARATE', 'JOIN', 'DETAIL'];
+		$invoices = ['SEPARATE', 'JOIN', 'DETAIL', 'UNIT_DETAIL'];
 
 		DB::table('customers')->truncate();
+
+		Customer::create([
+			'id'=> 1,'code'=>'ASJ','name'=>'Allisan Sentral Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
+			'order_mode' 	=> $orders[0], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+		]);
 		
-		Customer::create(['id'=> 1,'code'=>'ASJ','name'=>'Alissan Sentral Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
-		Customer::create(['id'=> 2,'code'=>'HII','name'=>'Hipo Intern Indonesia','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
-		Customer::create(['id'=> 3,'code'=>'DKB','name'=>'Duangsa karya Bersama','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
-		Customer::create(['id'=> 4,'code'=>'BJB', 'name'=>'Bersama Jaya Baru','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
-		Customer::create(['id'=> 5,'code'=>'BJ', 'name'=>'Bersama Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999)]);
+		Customer::create([
+			'id'=> 2,'code'=>'HII','name'=>'Hipo Intern Indonesia','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
+			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+		]);
+		Customer::create([
+			'id'=> 3,'code'=>'DKB','name'=>'Duangsa karya Bersama','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
+			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+		]);
+		Customer::create([
+			'id'=> 4,'code'=>'BJB', 'name'=>'Bersama Jaya Baru','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
+			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+		]);
+		Customer::create([
+			'id'=> 5,'code'=>'ZM', 'name'=>'Zen Motor','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
+			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+		]);
 		
 	}
 
@@ -196,22 +225,23 @@ class TestingTableSeeder extends Seeder
 	public function specifications()
     {
 		DB::table('specifications')->truncate();
-		
-		Specification::create(['id'=> 1,'code'=>'FD1423422','name'=>'Found Direct 1','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 2,'code'=>'CL1424323','name'=>'Calm LAMP 1','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 3,'code'=>'CB1234242','name'=>'Cyber Bound 1','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
-		Specification::create(['id'=> 4,'code'=>'FD2423424','name'=>'Found Direct 2','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 5,'code'=>'CL28674','name'=>'Calm LAMP 2','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 6,'code'=>'CB636452','name'=>'Cyber Bound 2','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
-		Specification::create(['id'=> 7,'code'=>'FD364556','name'=>'Found Direct 3','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 8,'code'=>'CL6456463','name'=>'Calm LAMP 3','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
-		Specification::create(['id'=> 9,'code'=>'CB634223','name'=>'Cyber Bound 3','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
-		Specification::create(['id'=>10,'code'=>'FD6456644','name'=>'Found Direct 4','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
-		Specification::create(['id'=>11,'code'=>'CL2324234','name'=>'Calm LAMP 4','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
-		Specification::create(['id'=>12,'code'=>'CB964454','name'=>'Cyber Bound 4','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
-		Specification::create(['id'=>13,'code'=>'FD5396572','name'=>'Found Direct 5','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
-		Specification::create(['id'=>14,'code'=>'CL5454575','name'=>'Calm LAMP 5','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
-		Specification::create(['id'=>15,'code'=>'CB5263654','name'=>'Cyber Bound 5','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
+		$faker = Faker\Factory::create();
+
+		Specification::create(['id'=> 1,'code'=>'FD'.$faker->randomNumber(rand(3,6)),'name'=>'Found Direct 1','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 2,'code'=>'CL'.$faker->randomNumber(rand(3,6)),'name'=>'Calm LAMP 1','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 3,'code'=>'CB'.$faker->randomNumber(rand(3,6)),'name'=>'Cyber Bound 1','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
+		Specification::create(['id'=> 4,'code'=>'YM'.$faker->randomNumber(rand(3,6)),'name'=>'Found Direct 2','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 5,'code'=>'NM'.$faker->randomNumber(rand(3,6)),'name'=>'Calm LAMP 2','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 6,'code'=>'CB'.$faker->randomNumber(rand(3,6)),'name'=>'Cyber Bound 2','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
+		Specification::create(['id'=> 7,'code'=>'PQ'.$faker->randomNumber(rand(3,6)),'name'=>'Found Direct 3','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 8,'code'=>'WR'.$faker->randomNumber(rand(3,6)),'name'=>'Calm LAMP 3','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
+		Specification::create(['id'=> 9,'code'=>'CB'.$faker->randomNumber(rand(3,6)),'name'=>'Cyber Bound 3','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
+		Specification::create(['id'=>10,'code'=>'FD'.$faker->randomNumber(rand(3,6)),'name'=>'Found Direct 4','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
+		Specification::create(['id'=>11,'code'=>'SD'.$faker->randomNumber(rand(3,6)),'name'=>'Calm LAMP 4','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
+		Specification::create(['id'=>12,'code'=>'CB'.$faker->randomNumber(rand(3,6)),'name'=>'Cyber Bound 4','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
+		Specification::create(['id'=>13,'code'=>'FD'.$faker->randomNumber(rand(3,6)),'name'=>'Found Direct 5','color_id'=> 1,'times_spray_white'=> 23.8,'times_spray_red'=> 21]);
+		Specification::create(['id'=>14,'code'=>'RE'.$faker->randomNumber(rand(3,6)),'name'=>'Calm LAMP 5','color_id'=> 2,'times_spray_white'=> 23,'times_spray_red'=> 21]);
+		Specification::create(['id'=>15,'code'=>'CB'.$faker->randomNumber(rand(3,6)),'name'=>'Cyber Bound 5','color_id'=> 1,'times_spray_white'=> 29,'times_spray_red'=> 25.6]);
 
 	}
 	

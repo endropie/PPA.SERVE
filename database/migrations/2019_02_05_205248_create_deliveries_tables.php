@@ -31,7 +31,7 @@ class CreateDeliveriesTables extends Migration
             $table->date('due_date')->nullable();
             $table->time('due_time')->nullable();
 
-            $table->enum('mode',['reguler', 'return'])->default('reguler');
+            $table->enum('transaction',['REGULER', 'RETURN'])->default('REGULER');
             $table->tinyInteger('is_revision')->default(0);
             $table->text('description')->nullable();
 

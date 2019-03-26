@@ -28,7 +28,8 @@ class CreateWorkOrdersTables extends Migration
             $table->integer('work_order_id');
 
             $table->integer('item_id');
-            $table->integer('quantity');
+            $table->float('quantity')->default(0);
+            $table->float('target')->default(0);
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('ngratio')->default(0);

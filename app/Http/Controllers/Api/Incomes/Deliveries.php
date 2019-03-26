@@ -7,6 +7,7 @@ use App\Http\Controllers\ApiController;
 
 use App\Models\Income\Delivery; 
 use App\Traits\GenerateNumber;
+use function GuzzleHttp\json_encode;
 
 class Deliveries extends ApiController
 {
@@ -21,11 +22,10 @@ class Deliveries extends ApiController
 
             case 'datagrid':    
                 $deliveries = Delivery::with(['customer','operator','vehicle'])->filterable()->get();
-                
                 break;
 
             default:
-                $deliveries = Delivery::collect();                
+                $deliveries = Delivery::with(['customer','operator','vehicle'])->collect();                
                 break;
         }
 
@@ -34,6 +34,8 @@ class Deliveries extends ApiController
 
     public function store(Request $request)
     {
+        $this->DATABASE::beginTransaction();
+
         if(!$request->number) $request->merge(['number'=> $this->getNextDeliveryNumber()]);
 
         $delivery = Delivery::create($request->all());
@@ -46,9 +48,10 @@ class Deliveries extends ApiController
             $detail = $delivery->delivery_items()->create($row);
 
             // Calculate stock on after the Deliveries updated!
-            $detail->item->increase($detail->unit_stock, 'delivery', 'packing_item');
+            $detail->item->decrease($detail->unit_stock, 'FG');
         }
 
+        $this->DATABASE::commit();
         return response()->json($delivery);
     }
 
@@ -62,12 +65,23 @@ class Deliveries extends ApiController
 
     public function update(Request $request, $id)
     {
+        $this->DATABASE::beginTransaction();
+
         $delivery = Delivery::findOrFail($id);
 
         $delivery->update($request->input());
 
-        // Delete items on the incoming goods updated!
-        $delivery->delivery_items()->delete();
+        // Delete old incoming goods items when $request detail rows has not ID
+        $ids =  array_filter((array_column($request->delivery_items, 'id')));
+        $delete_details = $delivery->delivery_items()->whereNotIn('id', $ids)->get();
+        
+        if($delete_details) {
+          foreach ($delete_details as $detail) {
+            // Calculate first, before deleting!
+            $detail->item->increase($detail->unit_stock, 'FG');
+            $detail->delete();
+          }
+        }
 
         $rows = $request->delivery_items;
         for ($i=0; $i < count($rows); $i++) {
@@ -76,7 +90,7 @@ class Deliveries extends ApiController
             $detail = $delivery->delivery_items()->find($row['id']);
             if($detail) {
                 // Calculate stock on before the incoming Goods updated!
-                $detail->item->decrease($detail->unit_stock, 'delivery', 'packing_item');
+                $detail->item->increase($detail->unit_stock, 'FG');
                 
                 // update item row on the incoming Goods updated!
                 $detail->update($row);
@@ -86,18 +100,22 @@ class Deliveries extends ApiController
                 $detail = $delivery->delivery_items()->create($row);
             }
             // Calculate stock on after the Deliveries updated!
-            $detail->item->increase($detail->unit_stock, 'delivery', 'packing_item');
+            $detail->item->decrease($detail->unit_stock, 'FG');
         }
 
+        $this->DATABASE::commit();
         return response()->json($delivery);
     }
 
     public function destroy($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $delivery = Delivery::findOrFail($id);
         $delivery->delivery_items()->delete();
         $delivery->delete();
 
+        $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
 }

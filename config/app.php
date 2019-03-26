@@ -166,6 +166,7 @@ return [
          * Package Service Providers...
          */
         Barryvdh\Cors\ServiceProvider::class,
+        Spatie\Permission\PermissionServiceProvider::class,
 
         /*
          * Application Service Providers...

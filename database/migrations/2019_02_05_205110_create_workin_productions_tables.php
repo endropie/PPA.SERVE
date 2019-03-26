@@ -19,7 +19,7 @@ class CreateWorkinProductionsTables extends Migration
             $table->integer('line_id');
             $table->date('date');
             $table->integer('shift_id');
-            $table->integer('type_worktime_id');
+            $table->string('worktime', 25);
 
             $table->text('description')->nullable();
 
@@ -31,8 +31,11 @@ class CreateWorkinProductionsTables extends Migration
 
             $table->integer('workin_production_id');
             $table->integer('item_id');
-            $table->integer('quantity');
+            $table->integer('unit_id');
+            $table->float('unit_rate')->default(1);
+            $table->float('quantity');
 
+            $table->integer('work_order_item_id')->nullable();
             $table->timestamps();
         });
     }

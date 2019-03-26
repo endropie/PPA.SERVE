@@ -21,11 +21,10 @@ class WorkinProductions extends ApiController
 
             case 'datagrid':    
                 $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])->filterable()->get();
-                
                 break;
 
             default:
-                $workin_productions = WorkinProduction::collect();                
+                $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])->collect();                
                 break;
         }
 
@@ -34,6 +33,7 @@ class WorkinProductions extends ApiController
 
     public function store(Request $request)
     {
+        $this->DATABASE::beginTransaction();
         
         if(!$request->number) $request->merge(['number'=> $this->getNextWorkinProductionNumber()]);
 
@@ -46,12 +46,13 @@ class WorkinProductions extends ApiController
             $workin_production->workin_production_items()->create($item[$i]);
         }
 
+        $this->DATABASE::commit();
         return response()->json($workin_production);
     }
 
     public function show($id)
     {
-        $workin_production = WorkinProduction::with(['workin_production_items.item'])->findOrFail($id);
+        $workin_production = WorkinProduction::with(['workin_production_items.item.item_units', 'workin_production_items.item.unit'])->findOrFail($id);
         $workin_production->is_editable = (!$workin_production->is_related);
 
         return response()->json($workin_production);
@@ -59,6 +60,8 @@ class WorkinProductions extends ApiController
 
     public function update(Request $request, $id)
     {
+        $this->DATABASE::beginTransaction();
+
         $workin_production = WorkinProduction::findOrFail($id);
 
         $workin_production->update($request->input());
@@ -73,14 +76,19 @@ class WorkinProductions extends ApiController
             $workin_production->workin_production_items()->create($item[$i]);
         }
 
+        $this->DATABASE::commit();
         return response()->json($workin_production);
     }
 
     public function destroy($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $workin_production = WorkinProduction::findOrFail($id);
+        $workin_production->workin_production_items()->delete();
         $workin_production->delete();
 
+        $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
 }

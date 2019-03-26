@@ -17,8 +17,8 @@ class CreateCustomersTable extends Migration
             $table->increments('id');
             $table->string('code');
             $table->string('name');
-            $table->string('email');
-            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
             $table->string('fax')->nullable();
             $table->string('address')->nullable();
             $table->string('subdistrict')->nullable();
@@ -32,11 +32,11 @@ class CreateCustomersTable extends Migration
 
             $table->boolean('with_tax')->default(0);
             $table->boolean('with_pph')->default(0);
-            $table->integer('tax')->default(0);
-            $table->integer('pph_service')->default(0);
-            $table->integer('pph_material')->default(0);
+            $table->float('tax')->default(0);
+            $table->float('pph_service')->default(0);
+            $table->float('pph_material')->default(0);
 
-            $table->string('bill_mode')->nullable();
+            $table->string('invoice_mode')->nullable();
             $table->string('delivery_mode')->nullable();
             $table->string('order_mode')->nullable();
 

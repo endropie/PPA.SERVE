@@ -3,12 +3,15 @@
 namespace App\Models\Warehouse;
 
 use App\Models\Model;
-
+use App\Filters\Filterable;
 class IncomingGood extends Model
 {
+   use Filterable;
+
    protected $fillable = [
-      'number', 'date', 'time', 'customer_id', 'reference_number', 'reference_date', 
-      'vehicle_id', 'tranport_rate', 'description', 
+      'number', 'registration', 'date', 'time', 
+      'customer_id', 'reference_number', 'reference_date', 'transaction', 'order_mode', 'request_order_id',
+      'transport_number', 'transport_rate', 'description', 
    ];
 
    protected $hidden = ['created_at', 'updated_at'];

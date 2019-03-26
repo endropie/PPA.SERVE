@@ -6,7 +6,7 @@ use App\Models\Model;
 
 class WorkinProduction extends Model
 {
-   protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'type_worktime_id', 'description'];
+   protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'description'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -23,10 +23,5 @@ class WorkinProduction extends Model
    public function shift()
    {
       return $this->belongsTo('App\Models\Reference\Shift');
-   }
-
-   public function type_worktime()
-   {
-      return $this->belongsTo('App\Models\Reference\TypeWorktime');
    }
 }

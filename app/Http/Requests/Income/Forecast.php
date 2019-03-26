@@ -23,8 +23,8 @@ class Forecast extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:forecasts,NULL,' . $id,
-            'start_date' => 'required',
-            'end_date' => 'required',
+            'begin_date' => 'required',
+            'until_date' => 'required',
             'customer_id' => 'required',
 
             'forecast_items.*.item_id' => 'required',

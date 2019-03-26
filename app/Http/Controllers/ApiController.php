@@ -11,6 +11,8 @@ class ApiController extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    protected $DATABASE = \DB::class;
+
     public function __construct()
     {
         # Code..
@@ -28,5 +30,24 @@ class ApiController extends BaseController
         }else{
             $this->middleware('permission:'. $value);
         }
+    }
+
+    public function relationships($model, $relationships)
+    {
+        $counter = array();
+        foreach ($relationships as $relationship => $text) {
+            $relation = explode('.', $relationship);
+            $model = $model;
+            for ($i=0; $i < count($relation); $i++) { 
+                $function = $relation[$i];
+                $model = $model->$function();
+               
+                if ($i == count($relation)-1 && $c = $model->count()) {
+                    // dd($c, $function, $model);
+                    $counter[] = $c . ' ' . strtolower($text);
+                }
+            }
+        }
+        return $counter;
     }
 }

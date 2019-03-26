@@ -16,13 +16,14 @@ class Customer extends Request
         $method = $this->getMethod();
         
         if ($method == 'PATCH' || $method == 'PUT') {
-            $id = $this->cusomer;
+            $id = $this->customer;
         } 
         else $id = null;
 
         return [
-            'code' => 'required|string|max:191|unique:items,NULL,' . $id,
+            'code' => 'required|string|max:5|unique:customers,NULL,' . $id,
             'name' => 'required|string|max:191',
+            'phone' => 'string|max:25'
             
         ];
     }

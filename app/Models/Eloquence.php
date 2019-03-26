@@ -1,5 +1,5 @@
 <?php
-namespace App\Traits;
+namespace App\Models;
 /**********************************************************************************
  * How to use
  * ==========
@@ -38,8 +38,8 @@ trait Eloquence
         $input = $request->input();
         $limit = $request->get('limit', 50);
         
-        $query = $query->filterable();
-        $query = $query->sortable();
+        // $query = $query->filterable();
+        // $query = $query->sortable();
     
         $query = $query->paginate($limit);        
 

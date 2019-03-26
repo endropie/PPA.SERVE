@@ -7,7 +7,7 @@ use App\Models\Model;
 class WorkinProductionItem extends Model
 {
    protected $fillable = [
-      'item_id', 'quantity',
+      'item_id', 'quantity', 'unit_id', 'unit_rate'
    ];
 
    protected $hidden = ['created_at', 'updated_at'];

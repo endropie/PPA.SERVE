@@ -12,18 +12,23 @@ class Items extends ApiController
     public function index()
     {
         switch (request('mode')) {
-            case 'all':            
-                $items = Item::with(['item_prelines','item_units','unit'])->filterable()->get();    
-                break;
+          case 'all':            
+            $items = Item::with(['item_prelines','item_units','unit'])->filterable()->get();    
+          break;
 
-            case 'datagrid':
-                $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->filterable()->get();
-                
-                break;
+          case 'datagrid':
+            $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->orderBy('id','DESC')->filterable()->get();
+            
+          break;
 
-            default:
-                $items = Item::collect();                
-                break;
+          case 'itemstock':
+            $items = Item::filterable()->get(['id'])->map->append('totals');
+            
+          break;
+
+          default:
+            $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->collect();                
+          break;
         }
 
         return response()->json($items);

@@ -7,10 +7,10 @@ use App\Models\Model;
 class Forecast extends Model
 {
    protected $fillable = [
-      'number', 'start_date', 'end_date', 'customer_id', 'description', 
+      'number', 'begin_date', 'until_date', 'customer_id', 'description', 
    ];
 
-   protected $hidden = ['created_at', 'updated_at'];
+   protected $hidden = [];
 
    protected $model_relations = [];
 

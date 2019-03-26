@@ -12,7 +12,7 @@ class Item extends Model
       'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description'
    ];
 
-   protected $appends = ['totals'];
+   protected $appends = [];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -57,7 +57,7 @@ class Item extends Model
    {
       $stocks = [];
       foreach (ItemStockist::toArray() as $key => $value) {
-         $stocks[] = [$key => $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $value)->sum('total')];
+         $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $value)->sum('total');
       }
       return $stocks;
    }
@@ -68,6 +68,7 @@ class Item extends Model
 
       return $this->item_stocks->where('stockist', $stockist)->first();
    }
+
 
    // Execute Function for INCREASE & DECREASE total stock in `item_stocks` model
    // ===========================================================================

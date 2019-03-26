@@ -36,7 +36,7 @@ class IncomingGoodItem extends Model
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
       
-      return (double) $this->quantity / $this->unit_rate;
+      return (double) $this->quantity * $this->unit_rate;
    }
 }
  

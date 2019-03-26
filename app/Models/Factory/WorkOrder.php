@@ -12,7 +12,8 @@ class WorkOrder extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $model_mandatories = ['work_order_items'];
+   protected $model_depedencies = ['workin_production_items'];
 
    public function work_order_items()
    {
@@ -23,6 +24,11 @@ class WorkOrder extends Model
    {
       return $this->belongsTo('App\Models\Income\Customer');
    }
-   
+
+   public function workin_production_items()
+   {
+      return $this->work_order_items->hasMany('App\Models\Factory\WorkinProductionItem');
+   }
+
 }
  

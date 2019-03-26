@@ -25,6 +25,22 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextRequestOrderNumber($date = null)
+    {
+        $digit = 5;
+        $prefix = 'POC/{{Y-m}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Income\RequestOrder::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextPreDeliveryNumber($date = null)
     {
         $digit = 5;
@@ -57,14 +73,14 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextPackingItemNumber($date = null)
+    public function getNextPackingNumber($date = null)
     {
         $digit = 5;
         $prefix = 'WPR/{{Y-m}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
-        $next = \App\Models\Factory\PackingItem::where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Factory\Packing::where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
         

@@ -4,24 +4,26 @@ namespace App\Models\Income;
 
 use App\Models\Model;
 
-class DeliveryItem extends Model
+class RequestOrderItem extends Model
 {
    protected $fillable = [
-      'item_id', 'unit_id', 'unit_rate', 'quantity'
+      'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
    ];
 
+   protected $appends = ['unit_stock'];
+   
    protected $hidden = ['created_at', 'updated_at'];
 
    protected $model_relations = [];
 
-   public function delivery()
+   public function request_order()
    {
-      return $this->belongsTo('App\Models\Income\Delivery');
+      return $this->belongsTo('App\Models\Income\RequestOrder');
    }
 
    public function item()
    {
-      return $this->belongsTo('App\Models\Common\Item');
+      return $this->belongsTo('App\Models\Common\Item')->with('unit');
    }
 
    public function unit()
@@ -30,10 +32,11 @@ class DeliveryItem extends Model
    }
 
    public function getUnitStockAttribute() {
+
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
       
-      return (double) $this->quantity * $this->unit_rate;
+      return (double) $this->quantity / $this->unit_rate;
    }
 }
  

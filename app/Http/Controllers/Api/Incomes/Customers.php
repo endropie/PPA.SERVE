@@ -17,7 +17,7 @@ class Customers extends ApiController
                 break;
 
             case 'datagrid':
-                $customers = Customer::filterable()->get();
+                $customers = Customer::orderBy('id','DESC')->filterable()->get();
                 
                 break;
 
@@ -31,6 +31,9 @@ class Customers extends ApiController
 
     public function store(Request $request)
     {
+        $request->merge( ['tax' => (float) $request->tax]);
+        $request->merge( ['pph_service' => (float) $request->pph_service ]);
+        $request->merge( ['pph_material' => (float) $request->pph_material ]);
         $customer = Customer::create($request->all());
 
         return response()->json($customer);
@@ -47,7 +50,9 @@ class Customers extends ApiController
     public function update(Request $request, $id)
     {
         $customer = Customer::findOrFail($id);
-
+        $request->merge( ['tax' => (float) $request->tax]);
+        $request->merge( ['pph_service' => (float) $request->pph_service ]);
+        $request->merge( ['pph_material' => (float) $request->pph_material ]);
         $customer->update($request->input());
 
         // Delete all contacts on before the customer updated!

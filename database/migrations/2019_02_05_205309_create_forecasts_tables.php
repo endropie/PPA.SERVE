@@ -16,8 +16,8 @@ class CreateForecastsTables extends Migration
         Schema::create('forecasts', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->date('begin_date');
+            $table->date('until_date');
 
             $table->integer('customer_id');
 
@@ -35,6 +35,7 @@ class CreateForecastsTables extends Migration
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
             $table->float('price')->default(0);
+            $table->string('note')->nullable();
 
             $table->timestamps();
         });

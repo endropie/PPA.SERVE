@@ -7,7 +7,7 @@ use App\Models\Model;
 class ForecastItem extends Model
 {
    protected $fillable = [
-      'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
+      'item_id', 'unit_id', 'unit_rate', 'quantity', 'price', 'note'
    ];
 
    protected $appends = ['unit_stock'];

@@ -45,6 +45,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::prefix('incomes')->name('.incomes')->group(function () {
         Route::apiResource('customers', 'Incomes\Customers');
         Route::apiResource('forecasts', 'Incomes\Forecasts');
+        Route::apiResource('request-orders', 'Incomes\RequestOrders');
         Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
         Route::apiResource('deliveries', 'Incomes\Deliveries');
     });
@@ -52,7 +53,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::prefix('warehouses')->name('.warehouses')->group(function () {
         Route::apiResource('transports', 'Warehouses\Transports');
         Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
-        Route::apiResource('finished-goods', 'Warehouses\FinishedGoods');
     });
 
     Route::prefix('factories')->name('.factories')->group(function () {
@@ -60,7 +60,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::apiResource('workin-productions', 'Factories\WorkinProductions');
         Route::apiResource('work-orders', 'Factories\WorkOrders');
-        Route::apiResource('packing-items', 'Factories\PackingItems');
+        Route::apiResource('packings', 'Factories\Packings');
     });
 
     Route::prefix('references')->name('.references')->group(function () {
@@ -76,7 +76,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::apiResource('brands', 'References\Brands');
         Route::apiResource('colors', 'References\Colors');
         Route::apiResource('type_items', 'References\TypeItems');
-        Route::apiResource('type_worktimes', 'References\TypeWorktimes');
         Route::apiResource('category_items', 'References\CategoryItems');
         Route::apiResource('specifications', 'References\Specifications');
     });

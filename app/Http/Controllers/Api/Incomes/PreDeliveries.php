@@ -25,7 +25,7 @@ class PreDeliveries extends ApiController
                 break;
 
             default:
-                $pre_deliveries = PreDelivery::collect();                
+                $pre_deliveries = PreDelivery::with(['customer'])->collect();                
                 break;
         }
 

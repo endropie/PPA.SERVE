@@ -4,7 +4,7 @@ namespace App\Http\Requests\Factory;
 
 use App\Http\Requests\Request;
 
-class PackingItem extends Request
+class Packing extends Request
 {
     public function authorize()
     {
@@ -17,13 +17,16 @@ class PackingItem extends Request
         $method = $this->getMethod();
         
         if ($method == 'PATCH' || $method == 'PUT') {
-            $id = $this->packing_item;
+            $id = $this->packing;
         } 
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:packing_items,NULL,' . $id,
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:packings,NULL,' . $id,
             'customer_id' => 'required',
+            'packing_items.item_id' => 'required',
+            'packing_items.quantity' => 'required',
+            'packing_items.unit_id' => 'required',
         ];
     }
 
@@ -32,8 +35,8 @@ class PackingItem extends Request
         $msg = 'The field is required!';
 
         return [
-            'packing_item_faults.*.item_id' => $msg,
-            'customer_id.required'      => $msg,
+            'packing_items.item_id' => $msg,
+            'customer_id.required'  => $msg,
         ];
     }
 }
