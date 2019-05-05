@@ -11,8 +11,8 @@ trait GenerateNumber
 {
     public function getNextForecastNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'FCO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'FC/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -27,8 +27,8 @@ trait GenerateNumber
 
     public function getNextRequestOrderNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'POC/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'SO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -43,8 +43,8 @@ trait GenerateNumber
 
     public function getNextPreDeliveryNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'PDO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'PDO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -57,14 +57,30 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextDeliveryNumber($date = null)
+    public function getNextShipDeliveryNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'DO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'SDO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
-        $next = \App\Models\Income\Delivery::where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Income\ShipDelivery::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+        
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextDeliveryOrderNumber($date = null)
+    {
+        $digit = 6;
+        $prefix = 'DO/{{Y}}/';
+        
+        $prefix = $this->dateParser($prefix, $date);
+        
+        $next = \App\Models\Income\DeliveryOrder::where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
         
@@ -75,8 +91,8 @@ trait GenerateNumber
 
     public function getNextPackingNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'WPR/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'WPR/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -91,8 +107,8 @@ trait GenerateNumber
 
     public function getNextWorkinProductionNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'WIP/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'WIP/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -107,8 +123,8 @@ trait GenerateNumber
 
     public function getNextWorkOrderNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'WO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'WO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -123,8 +139,8 @@ trait GenerateNumber
 
     public function getNextIncomingGoodNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'IG/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'MP/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -137,26 +153,10 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextFinishedGoodNumber($date = null)
-    {
-        $digit = 5;
-        $prefix = 'FG/{{Y-m}}/';
-        
-        $prefix = $this->dateParser($prefix, $date);
-        
-        $next = \App\Models\Warehouse\FinishedGood::where('number','LIKE', $prefix.'%')->max('number');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-        
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
     public function getNextPurchaseInvoiceNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'BIL/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'BIL/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -171,8 +171,8 @@ trait GenerateNumber
 
     public function getNextSalesQuotationNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'QO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'QO/{{Y}}/';
 
         $prefix = $this->dateParser($prefix, $date);
         
@@ -187,8 +187,8 @@ trait GenerateNumber
 
     public function getNextSalesOrderNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'SO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'SO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -203,8 +203,8 @@ trait GenerateNumber
 
     public function getNextSalesDeliveryNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'DO/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'DO/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -219,8 +219,8 @@ trait GenerateNumber
 
     public function getNextSalesInvoiceNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'INV/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'INV/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         
@@ -235,8 +235,8 @@ trait GenerateNumber
 
     public function getNextJournalNumber($date = null)
     {
-        $digit = 5;
-        $prefix = 'JE/{{Y-m}}/';
+        $digit = 6;
+        $prefix = 'JE/{{Y}}/';
         
         $prefix = $this->dateParser($prefix, $date);
         

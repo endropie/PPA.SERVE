@@ -3,12 +3,15 @@
 namespace App\Models\Factory;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class Packing extends Model
 {
+    use Filterable;
+    
     protected $fillable = [
         'number', 'customer_id', 'date', 'time', 'shift_id', 'description',
-        'worktime', 'operator_id', 'work_order_id'
+        'worktime', 'operator_id'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];

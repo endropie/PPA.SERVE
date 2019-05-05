@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Incomes;
 
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
-
+use App\Filters\Income\RequestOrder as Filters;
 use App\Models\Income\RequestOrder; 
 use App\Traits\GenerateNumber;
 
@@ -12,22 +12,21 @@ class RequestOrders extends ApiController
 {
     use GenerateNumber;
 
-    public function index()
+    public function index(Filters $filters)
     {
         $fields = request('fields');
         $fields = $fields ? explode(',', $fields) : [];
 
         switch (request('mode')) {
             case 'all':
-                $request_orders = RequestOrder::filterable()->get();    
+                $request_orders = RequestOrder::filter($filters)->get();    
                 break;
 
             case 'datagrid':
                 $request_orders = RequestOrder::with(['customer'])->filterable()->get();
-                
                 break;
             
-            case 'detail-items':                
+            case 'detail-items':
                 $request_orders = RequestOrder::with('request_order_items')->filterable()->get(array_merge(['id'], $fields));
             break;
 
@@ -46,9 +45,13 @@ class RequestOrders extends ApiController
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['customer'])->collect();                
+                $request_orders = RequestOrder::with(['customer'])->filter($filters)->collect();                
                 break;
         }
+
+        $request_orders->map(function($row) {
+            $row->request_order_items->each->setAppends(['unit_amount','total_mount_pre_delivery_item']);
+        });
 
         return response()->json($request_orders);
     }

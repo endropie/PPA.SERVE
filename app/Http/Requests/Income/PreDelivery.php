@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\Income;
 
 use App\Http\Requests\Request;
@@ -23,9 +22,9 @@ class PreDelivery extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:pre_deliveries,NULL,' . $id,
-            'date' => 'required',
-            'time' => 'required',
             'customer_id' => 'required',
+            'plan_begin_date' => 'required',
+            'plan_until_date' => 'required',
 
             'delivery_items.*.item_id' => 'required',
 

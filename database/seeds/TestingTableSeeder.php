@@ -46,7 +46,9 @@ class TestingTableSeeder extends Seeder
 		// $faker->addProvider(new \Faker\Provider\Fakecar($faker));
 		$faker = Faker\Factory::create();
 
-		$strings = array ("AS", "BU", "GT", "HD", "HJL", "QQ", "WUG", "US", "KD", "EA", "AF");
+		$strings = array (
+			"Blok Silinder", "Ring Piston", "Poros Engkol (Crankshaft)", "Karter (Oil Pan)", "nozzle injector", 
+			"Silinder/shift Head", "Tuas Katup", "Klip Katup", "Bearing", "Zuiger (Piston)");
 		$hangers = array("20", "20", "50", "24", "20");
 
 		for ($k=1; $k <= 5; $k++) {
@@ -104,7 +106,7 @@ class TestingTableSeeder extends Seeder
 	public function customers()
     {
 		$faker = Faker\Factory::create();
-		$orders = ['NONE', 'BASEON', 'ACCUMULATE'];
+		$orders = ['NONE', 'PO', 'ACCUMULATE'];
 		$deliveries = ['SEPARATE', 'JOIN', 'DETAIL'];
 		$invoices = ['SEPARATE', 'JOIN', 'DETAIL', 'UNIT_DETAIL'];
 
@@ -113,23 +115,24 @@ class TestingTableSeeder extends Seeder
 		Customer::create([
 			'id'=> 1,'code'=>'ASJ','name'=>'Allisan Sentral Jaya','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
 			'order_mode' 	=> $orders[0], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+			
 		]);
 		
 		Customer::create([
 			'id'=> 2,'code'=>'HII','name'=>'Hipo Intern Indonesia','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
-			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+			'order_mode' 	=> $orders[0], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
 		]);
 		Customer::create([
 			'id'=> 3,'code'=>'DKB','name'=>'Duangsa karya Bersama','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
-			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+			'order_mode' 	=> $orders[1], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
 		]);
 		Customer::create([
 			'id'=> 4,'code'=>'BJB', 'name'=>'Bersama Jaya Baru','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
-			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+			'order_mode' 	=> $orders[1], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
 		]);
 		Customer::create([
 			'id'=> 5,'code'=>'ZM', 'name'=>'Zen Motor','email'=> $faker->email,'phone'=> $faker->phoneNumber, 'address'=> $faker->address, 'province_id'=> rand(11,13), 'zipcode'=> rand(11111,79999),
-			'order_mode' 	=> $orders[array_rand($orders)], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
+			'order_mode' 	=> $orders[2], 'delivery_mode'	=> $deliveries[array_rand($deliveries)], 'invoice_mode' 	=> $invoices[array_rand($invoices)],
 		]);
 		
 	}

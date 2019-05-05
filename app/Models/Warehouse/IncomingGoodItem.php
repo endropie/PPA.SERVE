@@ -10,7 +10,7 @@ class IncomingGoodItem extends Model
       'item_id', 'quantity', 'unit_id', 'unit_rate'
    ];
 
-   protected $appends = ['unit_stock'];
+   protected $appends = ['unit_amount'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -31,7 +31,7 @@ class IncomingGoodItem extends Model
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 
-   public function getUnitStockAttribute() {
+   public function getUnitAmountAttribute() {
 
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;

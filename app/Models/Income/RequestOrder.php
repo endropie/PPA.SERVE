@@ -3,9 +3,12 @@
 namespace App\Models\Income;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class RequestOrder extends Model
 {
+   use Filterable;
+   
    protected $fillable = [
       'number', 'begin_date', 'until_date', 'customer_id', 'reference_number', 'reference_date', 
       'description', 'order_mode'

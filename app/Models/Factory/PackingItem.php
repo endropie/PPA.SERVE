@@ -7,10 +7,10 @@ use App\Models\Model;
 class PackingItem extends Model
 {
     protected $fillable = [
-        'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id'
+        'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id', 'work_order_item_id'
     ];
 
-    protected $appends = ['unit_stock'];
+    protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -29,7 +29,7 @@ class PackingItem extends Model
         return $this->belongsTo('App\Models\Common\Item');
     }
 
-    public function getUnitStockAttribute() {
+    public function getUnitAmountAttribute() {
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
       

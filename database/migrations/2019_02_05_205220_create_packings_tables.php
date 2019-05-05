@@ -21,8 +21,7 @@ class CreatePackingsTables extends Migration
             $table->date('date');
             $table->time('time');
             $table->integer('shift_id')->nullable();
-            $table->string('worktime', 25)->nullable();
-            $table->integer('work_order_id')->nullable();
+            $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
             $table->integer('operator_id')->nullable();
 
             $table->text('description')->nullable();
@@ -37,6 +36,7 @@ class CreatePackingsTables extends Migration
             $table->float('unit_rate');
             $table->float('quantity');
             $table->integer('type_fault_id');
+            $table->integer('work_order_item_id');
 
             $table->timestamps();
         });

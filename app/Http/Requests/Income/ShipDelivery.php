@@ -4,7 +4,7 @@ namespace App\Http\Requests\Income;
 
 use App\Http\Requests\Request;
 
-class Delivery extends Request
+class ShipDelivery extends Request
 {
     public function authorize()
     {
@@ -17,19 +17,19 @@ class Delivery extends Request
         $method = $this->getMethod();
         
         if ($method == 'PATCH' || $method == 'PUT') {
-            $id = $this->delivery;
+            $id = $this->ship_delivery;
         } 
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:deliveries,NULL,' . $id,
-            'date' => 'required',
-            'time' => 'required',
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:ship_deliveries,NULL,' . $id,
+            'ship_date' => 'required',
+            'ship_time' => 'required',
             'customer_id' => 'required',
 
-            'delivery_items.*.item_id' => 'required',
+            'shipdelivery_items.*.item_id' => 'required',
 
-            'delivery_items' =>
+            'shipdelivery_items' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0) {
                     $fail('Delivery-Items must be select min. 1 item production.');
@@ -43,7 +43,7 @@ class Delivery extends Request
         $msg = 'The field is required!';
 
         return [
-            'delivery_items.*.item_id' => $msg,
+            'shipdelivery_items.*.item_id' => $msg,
             'quantity.required'         => $msg,
         ];
     }

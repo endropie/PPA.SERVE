@@ -50,4 +50,9 @@ class ApiController extends BaseController
         }
         return $counter;
     }
+
+    public function error($code = 501, $message = 'Implementation invalid!', $context = null) {
+        // return response()->json(['message' => $message, 'context' => $context], $code);
+        abort($code, $message, ['context' => $context]);
+    }
 }

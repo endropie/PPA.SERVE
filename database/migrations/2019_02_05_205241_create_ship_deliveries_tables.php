@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePreDeliveriesTables extends Migration
+class CreateShipDeliveriesTables extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,14 @@ class CreatePreDeliveriesTables extends Migration
      */
     public function up()
     {
-        Schema::create('pre_deliveries', function (Blueprint $table) {
+        Schema::create('ship_deliveries', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('date');
-            $table->time('time');
+            $table->enum('transaction', ['REGULER', 'RETURN']);
+            $table->date('ship_date')->nullable();
+            $table->time('ship_time')->nullable();
+            $table->date('due_date')->nullable();
+            $table->time('due_time')->nullable();
 
             $table->integer('customer_id');
             $table->string('customer_name')->nullable();
@@ -25,24 +28,26 @@ class CreatePreDeliveriesTables extends Migration
             $table->text('customer_address')->nullable();
 
             $table->integer('rit_id')->nullable();
-            $table->integer('trans_qty')->nullable();
-            $table->date('plan_date')->nullable();
-            $table->time('plan_time')->nullable();
+            $table->integer('vehicle_id')->nullable();
+            $table->integer('transport_id')->nullable();
+            $table->integer('operator_id')->nullable();
 
+            $table->tinyInteger('is_revision')->default(0);
             $table->text('description')->nullable();
 
+            $table->integer('pre_delivery_id')->nullable();
             $table->timestamps();
         });
 
-        Schema::create('pre_delivery_items', function (Blueprint $table) {
+        Schema::create('ship_delivery_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('pre_delivery_id');
+            $table->integer('ship_delivery_id');
 
             $table->integer('item_id');
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
-            $table->float('unit_qty');
             $table->float('quantity');
+            $table->integer('pre_delivery_item_id');
 
             $table->timestamps();
         });
@@ -55,7 +60,7 @@ class CreatePreDeliveriesTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('pre_deliveries');
-        Schema::dropIfExists('pre_delivery_items');
+        Schema::dropIfExists('ship_deliveries');
+        Schema::dropIfExists('ship_delivery_items');
     }
 }

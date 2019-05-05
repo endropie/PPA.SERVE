@@ -3,9 +3,12 @@
 namespace App\Models\Factory;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class WorkinProduction extends Model
 {
+   use Filterable;
+   
    protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'description'];
 
    protected $hidden = ['created_at', 'updated_at'];

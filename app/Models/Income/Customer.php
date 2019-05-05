@@ -3,10 +3,12 @@
 namespace App\Models\Income;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class Customer extends Model
 {
-    
+    use Filterable;
+
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
         'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service', 

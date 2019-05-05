@@ -3,9 +3,11 @@
 namespace App\Models\Income;
 
 use App\Models\Model;
-
+use App\Filters\Filterable;
 class Forecast extends Model
 {
+   use Filterable;
+
    protected $fillable = [
       'number', 'begin_date', 'until_date', 'customer_id', 'description', 
    ];

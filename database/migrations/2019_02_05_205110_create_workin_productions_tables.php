@@ -19,7 +19,7 @@ class CreateWorkinProductionsTables extends Migration
             $table->integer('line_id');
             $table->date('date');
             $table->integer('shift_id');
-            $table->string('worktime', 25);
+            $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
 
             $table->text('description')->nullable();
 

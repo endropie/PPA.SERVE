@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin\Auth;
+namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\Request;
 
@@ -29,7 +29,7 @@ class Permission extends Request
         $guard = $this->get('guard_name', 'web');
 
         return [
-            'name' => 'required|unique:permissions,NULL,' . $id . ',id,guard_name,'. $guard,
+            'name' => 'required|unique:auth_permissions,NULL,' . $id . ',id,guard_name,'. $guard,
             'guard_name' => $ruleGuard
         ];
     }

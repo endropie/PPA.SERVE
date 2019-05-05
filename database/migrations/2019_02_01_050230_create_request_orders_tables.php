@@ -23,7 +23,7 @@ class CreateRequestOrdersTables extends Migration
             $table->string('reference_number')->nullable();
             $table->date('reference_date')->nullable();
             
-            $table->enum('order_mode', ['BASEON', 'NONE', 'ACCUMULATE']);
+            $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();
 
             $table->timestamps();

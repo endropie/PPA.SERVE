@@ -33,4 +33,34 @@ class QueryFilters
     {
         return $this->request->all();
     }
+
+    
+
+    public function _with($values) {
+        // $with = ;
+        $values = explode(';', $values);
+        foreach ($values as $value) {
+            $item = explode(':', $value);
+            $name = $item[0];
+            $with[$name] = function($q) use ($item) {
+                if(!empty($item[1])) {
+                    $fields = explode(',', $item[1]);
+                    $q->select( array_merge(['id'], $fields));
+                }
+            };
+
+        }
+        return $this->builder->with($with);
+
+        // return $this->builder->with('customer')->with($values);
+    }
+
+    public function _select($values = false) {
+        // $with = ;
+        if(empty($values)) return $this->builder;
+        else {
+            $fields = explode(',', $values);
+            return $this->builder->select(array_merge(['id'], $fields));
+        }
+    }
 }

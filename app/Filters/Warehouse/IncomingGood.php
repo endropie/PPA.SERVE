@@ -14,7 +14,7 @@ class IncomingGood extends QueryFilters
         parent::__construct($request);
     }
   
-    public function customer($value) {
+    public function customer_id($value) {
         return $this->builder->where('customer_id', $value);
     }
 

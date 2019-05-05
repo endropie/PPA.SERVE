@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin\Auth;
+namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\Request;
 
@@ -29,7 +29,7 @@ class Role extends Request
         $guard = $this->get('guard_name', 'web');
 
         return [
-            'name' => 'required|unique:roles,NULL,' . $id . ',id,guard_name,'. $guard,
+            'name' => 'required|unique:auth_roles,NULL,' . $id . ',id,guard_name,'. $guard,
             'guard_name' => $ruleGuard
         ];
     }

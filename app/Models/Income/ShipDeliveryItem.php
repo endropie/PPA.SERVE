@@ -4,19 +4,24 @@ namespace App\Models\Income;
 
 use App\Models\Model;
 
-class DeliveryItem extends Model
+class ShipDeliveryItem extends Model
 {
    protected $fillable = [
-      'item_id', 'unit_id', 'unit_rate', 'quantity'
+      'pre_delivery_item_id', 'item_id', 'unit_id', 'unit_rate', 'quantity'
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
 
    protected $model_relations = [];
 
-   public function delivery()
+   public function ship_delivery()
    {
-      return $this->belongsTo('App\Models\Income\Delivery');
+      return $this->belongsTo('App\Models\Income\ShipDelivery');
+   }
+
+   public function pre_delivery_item()
+   {
+      return $this->belongsTo('App\Models\Income\PreDeliveryItem');
    }
 
    public function item()
@@ -29,7 +34,7 @@ class DeliveryItem extends Model
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 
-   public function getUnitStockAttribute() {
+   public function getUnitAmountAttribute() {
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
       

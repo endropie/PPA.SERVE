@@ -19,6 +19,11 @@ class WorkinProductionItem extends Model
       return $this->belongsTo('App\Models\Factory\WorkinProduction');
    }
 
+   public function work_order_item()
+   {
+      return $this->belongsTo('App\Models\Factory\WorkOrderItem');
+   }
+
    public function item()
    {
       return $this->belongsTo('App\Models\Common\Item');

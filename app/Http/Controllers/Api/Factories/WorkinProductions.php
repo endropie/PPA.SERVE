@@ -39,11 +39,16 @@ class WorkinProductions extends ApiController
 
         $workin_production = WorkinProduction::create($request->all());
 
-        $item = $request->workin_production_items;
-        for ($i=0; $i < count($item); $i++) { 
+        $rows = $request->workin_production_items;
+        for ($i=0; $i < count($rows); $i++) { 
+            $row = $rows[$i];
+            // create Part item on the WIP Created!
+            $detail = $workin_production->workin_production_items()->create($row);
 
-            // create item production on the incoming Goods updated!
-            $workin_production->workin_production_items()->create($item[$i]);
+            if($work_order_item = \App\Models\Factory\WorkOrderItem::find($row['work_order_item_id'])) {
+                $detail->work_order_item()->associate($work_order_item);
+                $detail->save();
+            }
         }
 
         $this->DATABASE::commit();
@@ -67,13 +72,24 @@ class WorkinProductions extends ApiController
         $workin_production->update($request->input());
 
         // Delete items on the incoming goods updated!
-        $workin_production->workin_production_items()->delete();
+        // $workin_production->workin_production_items()->delete();
 
-        $item = $request->workin_production_items;
-        for ($i=0; $i < count($item); $i++) { 
+        $rows = $request->workin_production_items;
+        $deletes = $workin_production->workin_production_items()->whereNotIn('id', array_filter(array_column($rows, 'id')))->delete();
+        // foreach ($deletes as $detail) {
+        //     $detail->item->decrease($detail->unit_amount, 'WO', 'FM');
+        //     $detail->delete();
+        // }
 
-            // create item row on the incoming Goods updated!
-            $workin_production->workin_production_items()->create($item[$i]);
+        for ($i=0; $i < count($rows); $i++) { 
+            $row = $rows[$i];
+            // create item row on the WIP updated!
+            $detail = $workin_production->workin_production_items()->updateOrCreate(['id' => $row['id']], $row);
+
+            if($work_order_item = \App\Models\Factory\WorkOrderItem::find($row['work_order_item_id'])) {
+                $detail->work_order_item()->associate($work_order_item);
+                $detail->save();
+            }
         }
 
         $this->DATABASE::commit();

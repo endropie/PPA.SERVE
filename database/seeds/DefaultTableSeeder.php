@@ -13,6 +13,11 @@ class DefaultTableSeeder extends Seeder
 {
 	public function run()
     {
+		// Create generate Passport Client: personal
+		// \Artisan::call('passport:client --personal');
+		// \Artisan::call('passport:client --password');
+		\Artisan::call('passport:install');
+
 		$this->auth();
 		$this->type_items();
 		$this->category_items();
@@ -48,7 +53,7 @@ class DefaultTableSeeder extends Seeder
 		DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 		
 
-		$crud = ['c'=>'create', 'r'=>'read', 'u'=>'edit', 'd'=>'delete'];
+		$crud = ['c'=>'create', 'r'=>'read', 'u'=>'update', 'd'=>'delete'];
 		$data = [
 			// Auth
 			'users' => ['c','r','u','d'],
@@ -65,7 +70,9 @@ class DefaultTableSeeder extends Seeder
 			'customers' => ['c','r','u','d'],
 			'forecasts' => ['c','r','u','d'],
 			'requests' 	=> ['c','r','u','d'],
-			'deliveries'=> ['c','r','u','d'],
+			'pre-deliveries'=> ['c','r','u','d'],
+			'ship-deliveries'=> ['c','r','u','d'],
+			'delivery-orders'=> ['c','r','u','d'],
 			'invoices' 	=> ['c','r','u','d'],
 			// Expenses
 			'vendors'	=> ['c','r','u','d'], 
@@ -85,10 +92,10 @@ class DefaultTableSeeder extends Seeder
 		];
 
 		
-		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'), 'email' => 'admin@mail.com']);
+		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
 		foreach ($roles as $key => $value) {
 			$name = str_replace('-','.', $key);
-			$user = User::create(['name' => $name, 'password' => Hash::make($name), 'email' => $name .'@mail.com']);
+			$user = User::create(['name' => $name, 'password' => Hash::make($name.'ppa'), 'email' => $name .'@ppa.com']);
 			$role = Role::create(['name' => $key]);
 			$user->assignRole($key);
 			$admin->assignRole($key);

@@ -38,7 +38,7 @@ class CreateCustomersTable extends Migration
 
             $table->string('invoice_mode')->nullable();
             $table->string('delivery_mode')->nullable();
-            $table->string('order_mode')->nullable();
+            $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
 
             $table->text('description')->nullable();
             $table->boolean('enable')->default(1);

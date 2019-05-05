@@ -3,31 +3,36 @@
 namespace App\Models\Factory;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class WorkOrder extends Model
 {
+   use Filterable;
+
    protected $fillable = [
-      'number', 'customer_id', 'description', 
+      'number', 'line_id', 'stockist_from', 'description', 
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_mandatories = ['work_order_items'];
-   protected $model_depedencies = ['workin_production_items'];
-
    public function work_order_items()
    {
-      return $this->hasOne('App\Models\Factory\WorkOrderItem');
+      return $this->hasMany('App\Models\Factory\WorkOrderItem');
    }
 
-   public function customer()
+   public function work_order_item_lines()
+    {
+        return $this->hasManyThrough('App\Models\Factory\WorkOrderItemLine', 'App\Models\Factory\WorkOrderItem');
+    }
+
+   public function line()
    {
-      return $this->belongsTo('App\Models\Income\Customer');
+      return $this->belongsTo('App\Models\Reference\Line');
    }
 
    public function workin_production_items()
    {
-      return $this->work_order_items->hasMany('App\Models\Factory\WorkinProductionItem');
+      return $this->work_order_items()->hasMany('App\Models\Factory\WorkinProductionItem');
    }
 
 }

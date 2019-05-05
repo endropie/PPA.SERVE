@@ -167,6 +167,8 @@ return [
          */
         Barryvdh\Cors\ServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
+        Laravel\Passport\PassportServiceProvider::class,
+        Akaunting\Setting\Provider::class,
 
         /*
          * Application Service Providers...
@@ -175,6 +177,7 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HelperServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
     ],
@@ -225,6 +228,11 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+
+        // Application aliases...
+        // ======================
+        'Carbon' => Carbon\Carbon::class,
+        'Setting' => Akaunting\Setting\Facade::class,
 
     ],
 

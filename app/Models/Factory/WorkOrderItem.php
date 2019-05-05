@@ -7,14 +7,19 @@ use App\Models\Model;
 class WorkOrderItem extends Model
 {
    protected $fillable = [
-      'work_order_id', 'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio', 'line_id', 'shift_id', 'start_date', 'end_date'
+      'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'
    ];
 
-   protected $appends = ['unit_stock'];
+   protected $appends = ['unit_amount'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
    protected $model_relations = [];
+
+   public function work_order_item_lines()
+   {
+      return $this->hasMany('App\Models\Factory\WorkOrderItemLine');
+   }
 
    public function work_order()
    {
@@ -31,20 +36,15 @@ class WorkOrderItem extends Model
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 
-   public function line()
-   {
-      return $this->belongsTo('App\Models\Reference\Line');
-   }
-
    public function workin_production_items()
    {
       return $this->hasMany('App\Models\Factory\WorkinProductionItem');
    }
 
-   public function getUnitStockAttribute() {
+   public function getUnitAmountAttribute() {
 
       // return false when rate is not valid
-      if($this->unit_rate <= 0) return false;
+      if($this->unit_rate <= 0) return null;
       
       return (double) $this->quantity * $this->unit_rate;
    }

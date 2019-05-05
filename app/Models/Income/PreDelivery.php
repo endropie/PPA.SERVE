@@ -3,12 +3,15 @@
 namespace App\Models\Income;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class PreDelivery extends Model
 {
+   use Filterable;
+   
    protected $fillable = [
-      'number', 'date', 'time', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description', 
-      'rit_id', 'trans_qty', 'plan_date', 'plan_time'
+      'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description', 
+      'transaction', 'order_mode', 'rit_id', 'trans_qty', 'plan_begin_date', 'plan_until_date'
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
@@ -25,14 +28,9 @@ class PreDelivery extends Model
       return $this->belongsTo('App\Models\Income\Customer');
    }
 
-   public function vehicle()
+   public function request_order()
    {
-      return $this->belongsTo('App\Models\Reference\Vehicle');
-   }
-
-   public function operator()
-   {
-      return $this->belongsTo('App\Models\Reference\Operator');
+      return $this->belongsTo('App\Models\Income\RequestOrder');
    }
 }
  

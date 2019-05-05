@@ -17,7 +17,7 @@ class IncomingGoods extends ApiController
     {
         switch (request('mode')) {
             case 'all':            
-                $incoming_goods = IncomingGood::filterable()->get();    
+                $incoming_goods = IncomingGood::filterable()->filter($filters)->get();    
                 break;
 
             case 'datagrid':    
@@ -39,6 +39,7 @@ class IncomingGoods extends ApiController
         $this->DATABASE::beginTransaction();
 
         if(!$request->number) $request->merge(['number'=> $this->getNextIncomingGoodNumber()]);
+        if(!$request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
 
         $incoming_good = IncomingGood::create($request->all());
 
@@ -50,7 +51,8 @@ class IncomingGoods extends ApiController
             $detail = $incoming_good->incoming_good_items()->create($row);
 
             // Calculate stock on before the incoming Goods updated!
-            $detail->item->increase($detail->unit_stock, 'FM');
+            $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+            $detail->item->increase($detail->unit_amount, $to);
         }
 
         $this->setRequestOrder($incoming_good, $incoming_good->order_mode);
@@ -84,7 +86,8 @@ class IncomingGoods extends ApiController
         if($delete_details) {
           foreach ($delete_details as $detail) {
             // Calculate first, before deleting!
-            $detail->item->decrease($detail->unit_stock, 'FM');
+            $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+            $detail->item->decrease($detail->unit_amount, $to);
             $detail->delete();
           }
         }
@@ -94,21 +97,18 @@ class IncomingGoods extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            $detail = $incoming_good->incoming_good_items()->find($row['id']);
-
-            if($detail) {
+            $oldDetail = $incoming_good->incoming_good_items()->find($row['id']);
+            if($oldDetail) {
                 // Calculate stock on before the incoming Goods updated!
-                $detail->item->decrease($detail->unit_stock, 'FM');
-                
-                // update item row on the incoming Goods updated!
-                $detail->update($row);
+                $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+                $oldDetail->item->decrease($oldDetail->unit_amount, $to);
             }
-            else{
-                // create item row on the incoming Goods updated!
-                $detail = $incoming_good->incoming_good_items()->create($row);
-            }
+
+            // Update or Create detail row
+            $newDetail = $incoming_good->incoming_good_items()->updateOrCreate(['id' => $row['id'] ?? null], $row);
             // Calculate stock on after the Incoming Goods updated!
-            $detail->item->increase($detail->unit_stock, 'FM');
+            $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+            $newDetail->item->increase($newDetail->unit_amount, $to);
         }
 
         // Create or update Request Order as referense
@@ -127,7 +127,8 @@ class IncomingGoods extends ApiController
         $incoming_good = IncomingGood::findOrFail($id);
         if($details = $incoming_good->incoming_good_items) {
             foreach ($details as $detail) {
-                $detail->item->decrease($detail->unit_stock, 'FM');
+                $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+                $detail->item->decrease($detail->unit_amount, $to);
             }
         }
         $incoming_good->incoming_good_items()->delete();
@@ -140,10 +141,10 @@ class IncomingGoods extends ApiController
 
     private function setRequestOrder($incoming_good, $mode = 'NONE', $old = []) 
     {
-        $oldArrayIDs = [];
+        $idKeyDetails = [];
         if (!empty($old['incoming_good_items']) && count($old['incoming_good_items']) > 0) {
             foreach ($old['incoming_good_items'] as $value) {
-                $oldArrayIDs[$value['id']] = $value['request_order_item_id'];
+                $idKeyDetails[] = $value['request_order_item_id'];
             }
         }
         
@@ -165,11 +166,11 @@ class IncomingGoods extends ApiController
             $incoming_good->update(['request_order_id' => $model->id]);
 
             // Delete detail items, first!
-            $model->request_order_items()->whereNotIn('id', array_values($oldArrayIDs))->delete();
+            $model->request_order_items()->whereNotIn('id', array_values($idKeyDetails))->delete();
             // loop detail items on incoming good, for create.
             $rows = $incoming_good->incoming_good_items;
             foreach ($rows as $key => $row) {
-                $detail = $model->request_order_items()->firstOrCreate(['id'=> $row['request_order_item_id']],
+                $detail = $model->request_order_items()->updateOrCreate(['id'=> $row['request_order_item_id']],
                 [
                     'item_id'   => $row['item_id'],
                     'unit_id'   => $row['unit_id'],
@@ -212,19 +213,28 @@ class IncomingGoods extends ApiController
                 $incoming_good->update(['request_order_id' => $model->id]);            
             }
             // Delete detail items, first!
-            $newArrayIDs = $model->request_order_items()->get()->pluck('id');
-            $var = ['old' => array_values($oldArrayIDs), 'new' => $newArrayIDs];
+            $newArrayIDs = $incoming_good->incoming_good_items()->whereNotNull('request_order_item_id')->get()->pluck('request_order_item_id');
+            $var = ['old' => array_filter(array_values($idKeyDetails)), 'new' => $newArrayIDs];
             
+            $test = $model->request_order_items()->where(
+              function($q) use ($var) {
+                $q->whereIn('id', $var['old']);
+                $q->whereNotIn('id', $var['new']);
+              }
+            )->get();
+            // abort(501, json_encode($var));
+            // abort(501, json_encode($test));
+
             $model->request_order_items()->where(
               function($q) use ($var) {
-                $q->whereIn('id', $var['old'])
-                  ->whereNotIn('id', $var['new']);
+                $q->whereIn('id', $var['old']);
+                $q->whereNotIn('id', $var['new']);
               }
             )->delete();
             // loop detail items on incoming good, for create.
             $rows = $incoming_good->incoming_good_items;
             foreach ($rows as $key => $row) {
-                $detail = $model->request_order_items()->firstOrCreate(['id'=> $row['request_order_item_id']],
+                $detail = $model->request_order_items()->updateOrCreate(['id'=> $row['request_order_item_id']],
                 [
                     'item_id'   => $row['item_id'],
                     'unit_id'   => $row['unit_id'],
@@ -240,7 +250,7 @@ class IncomingGoods extends ApiController
 
             
         }
-        else if (strtoupper($mode) === 'ACCUMULATE') {
+        else if (strtoupper($mode) === 'PO') {
             // Code...
         }
     }

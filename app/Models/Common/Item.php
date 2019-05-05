@@ -3,9 +3,12 @@
 namespace App\Models\Common;
 
 use App\Models\Model;
+use App\Filters\Filterable;
 
 class Item extends Model
 {
+   use Filterable;
+
    protected $fillable = [
       'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
       'packing_duration', 'sa_area', 'weight', 'number_hanger', 'price', 

@@ -16,7 +16,8 @@ class CreateWorkOrdersTables extends Migration
         Schema::create('work_orders', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->integer('customer_id');
+            $table->integer('line_id');
+            $table->string('stockist_from', 5);
 
             $table->text('description')->nullable();
 
@@ -32,12 +33,19 @@ class CreateWorkOrdersTables extends Migration
             $table->float('target')->default(0);
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
-            $table->float('ngratio')->default(0);
+            $table->float('ngratio')->default(0)->nullable();
+
+            $table->timestamps();
+        });
+
+        Schema::create('work_order_item_lines', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('work_order_item_id');
 
             $table->integer('line_id');
             $table->integer('shift_id')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->date('begin_date')->nullable();
+            $table->date('until_date')->nullable();
 
             $table->timestamps();
         });

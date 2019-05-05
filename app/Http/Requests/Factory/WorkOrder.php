@@ -23,7 +23,7 @@ class WorkOrder extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:work_orders,NULL,' . $id,
-            'customer_id' => 'required',
+            'line_id' => 'required',
         ];
     }
 
@@ -33,7 +33,7 @@ class WorkOrder extends Request
 
         return [
             'work_order_items.*.item_id' => $msg,
-            'customer_id.required'      => $msg,
+            'line_id.required'      => $msg,
         ];
     }
 }

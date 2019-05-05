@@ -11,9 +11,8 @@
 |
 */
 
-Route::get('/', function () {
-    // return 'test';
-    return view('vue.admin');
+Route::middleware('auth')->get('/user', function () {
+    return auth()->user;
 });
 
 Auth::routes();
