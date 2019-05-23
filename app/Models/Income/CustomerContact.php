@@ -13,7 +13,7 @@ class CustomerContact extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $model_relations = ['items'];
+    protected $relationships = ['items'];
 
     public function customer_contacts()
     {

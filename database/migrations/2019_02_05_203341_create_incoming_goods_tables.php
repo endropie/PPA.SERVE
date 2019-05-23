@@ -22,7 +22,6 @@ class CreateIncomingGoodsTables extends Migration
 
             $table->integer('customer_id');
             $table->string('reference_number')->nullable();
-            $table->date('reference_date')->nullable();
             
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);

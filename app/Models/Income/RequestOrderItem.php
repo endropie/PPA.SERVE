@@ -10,11 +10,11 @@ class RequestOrderItem extends Model
       'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
    ];
 
-   protected $appends = ['unit_amount', 'total_mount_pre_delivery_item', 'total_mount_delivery_order_item'];
+   protected $appends = ['unit_amount', 'total_pre_delivery_item', 'total_delivery_order_item'];
    
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = [];
 
    public function request_order()
    {
@@ -31,37 +31,22 @@ class RequestOrderItem extends Model
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 
-   public function base_extractables() // Type of Morph is "base" or "mount"
-   {
-      return $this->morphMany('App\Models\Common\ItemExtractable', 'base');
+   public function pre_delivery_items() {
+      return $this->morphMany('App\Models\Common\MountBaseItemable', 'base')
+         ->where('mount_type', 'App\Models\Income\PreDeliveryItem');
    }
 
-   public function sum_unit_mount($mount_type) {
-      // $mount_type = 'App\Models\Income\PreDeliveryItem';
-      return (double) $this->morphMany('App\Models\Common\ItemExtractable', 'base')
-         ->where('mount_type', $mount_type)->sum('unit_amount');
+   public function delivery_order_items() {
+      return $this->morphMany('App\Models\Common\MountBaseItemable', 'base')
+         ->where('mount_type', 'App\Models\Income\DeliveryOrderItem');
    }
 
-   public function getTotalMountPreDeliveryItemAttribute() {
-      // return false when rate is not valid
-      $mount_type = 'App\Models\Income\PreDeliveryItem';
-      $details = $this->morphMany('App\Models\Common\ItemExtractable', 'base')
-         ->where('mount_type', $mount_type);
-         // ->sum('unit_amount');
-      return (double) $details->get()->sum(function($c) {
-         return $c->mount->unit_amount;
-      });
+   public function getTotalPreDeliveryItemAttribute() {      
+      return (double) $this->pre_delivery_items->sum('unit_amount');
    }
 
-   public function getTotalMountDeliveryOrderItemAttribute() {
-      // return false when rate is not valid
-      $mount_type = 'App\Models\Income\DeliveryOrderItem';
-      $details = $this->morphMany('App\Models\Common\ItemExtractable', 'base')
-         ->where('mount_type', $mount_type);
-         // ->sum('unit_amount');
-      return (double) $details->get()->sum(function($c) {
-         return $c->mount->unit_amount;
-      });
+   public function getTotalDeliveryOrderItemAttribute() {      
+      return (double) $this->delivery_order_items->sum('unit_amount');
    }
 
    public function getUnitAmountAttribute() {

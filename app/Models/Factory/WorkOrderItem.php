@@ -14,7 +14,7 @@ class WorkOrderItem extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = [];
 
    public function work_order_item_lines()
    {

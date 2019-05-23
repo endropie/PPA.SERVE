@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Http\Controllers\Api\Factories;
 
 use App\Http\Requests\Factory\WorkinProduction as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Factory\WorkinProduction; 
+use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
 
 class WorkinProductions extends ApiController
@@ -45,7 +44,7 @@ class WorkinProductions extends ApiController
             // create Part item on the WIP Created!
             $detail = $workin_production->workin_production_items()->create($row);
 
-            if($work_order_item = \App\Models\Factory\WorkOrderItem::find($row['work_order_item_id'])) {
+            if($work_order_item = WorkOrderItem::find($row['work_order_item_id'])) {
                 $detail->work_order_item()->associate($work_order_item);
                 $detail->save();
             }
@@ -57,7 +56,11 @@ class WorkinProductions extends ApiController
 
     public function show($id)
     {
-        $workin_production = WorkinProduction::with(['workin_production_items.item.item_units', 'workin_production_items.item.unit'])->findOrFail($id);
+        $workin_production = WorkinProduction::with([
+            'line',
+            'workin_production_items.item.item_units', 
+            'workin_production_items.unit' 
+        ])->findOrFail($id);
         $workin_production->is_editable = (!$workin_production->is_related);
 
         return response()->json($workin_production);
@@ -71,22 +74,15 @@ class WorkinProductions extends ApiController
 
         $workin_production->update($request->input());
 
-        // Delete items on the incoming goods updated!
-        // $workin_production->workin_production_items()->delete();
-
         $rows = $request->workin_production_items;
         $deletes = $workin_production->workin_production_items()->whereNotIn('id', array_filter(array_column($rows, 'id')))->delete();
-        // foreach ($deletes as $detail) {
-        //     $detail->item->decrease($detail->unit_amount, 'WO', 'FM');
-        //     $detail->delete();
-        // }
 
         for ($i=0; $i < count($rows); $i++) { 
             $row = $rows[$i];
             // create item row on the WIP updated!
             $detail = $workin_production->workin_production_items()->updateOrCreate(['id' => $row['id']], $row);
 
-            if($work_order_item = \App\Models\Factory\WorkOrderItem::find($row['work_order_item_id'])) {
+            if($work_order_item = WorkOrderItem::find($row['work_order_item_id'])) {
                 $detail->work_order_item()->associate($work_order_item);
                 $detail->save();
             }

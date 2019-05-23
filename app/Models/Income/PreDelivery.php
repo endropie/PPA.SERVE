@@ -11,12 +11,15 @@ class PreDelivery extends Model
    
    protected $fillable = [
       'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description', 
-      'transaction', 'order_mode', 'rit_id', 'trans_qty', 'plan_begin_date', 'plan_until_date'
+      'transaction', 'order_mode', 'plan_begin_date', 'plan_until_date'
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = [
+      'pre_delivery_items.ship_delivery_items' => 'ship_delivery_items',
+      'request_order',
+   ];
 
    public function pre_delivery_items()
    {

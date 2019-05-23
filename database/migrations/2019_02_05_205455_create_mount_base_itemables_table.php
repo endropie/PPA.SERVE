@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateItemExtractablesTable extends Migration
+class CreateMountBaseItemablesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreateItemExtractablesTable extends Migration
      */
     public function up()
     {
-        Schema::create('item_extractables', function (Blueprint $table) {
+        Schema::create('mount_base_itemables', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('base_type');
-            $table->integer('base_id');
             $table->string('mount_type');
             $table->integer('mount_id');
-
+            $table->string('base_type');
+            $table->integer('base_id');
+            $table->float('unit_amount')->default(0);
             $table->timestamps();
         });
     }
@@ -31,6 +31,6 @@ class CreateItemExtractablesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('item_extractables');
+        Schema::dropIfExists('mount_base_itemables');
     }
 }

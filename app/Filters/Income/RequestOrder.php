@@ -26,6 +26,10 @@ class RequestOrder extends QueryFilters
         return $this->builder->where('date', '<=',  $value);
     }
 
+    public function id($value) {
+        return $this->builder->where('id', $value);
+    }
+
     public function sortBy($value) {
         $order = Request('sortDesc') === "1" ? 'desc' : 'asc';
         switch ($value) 

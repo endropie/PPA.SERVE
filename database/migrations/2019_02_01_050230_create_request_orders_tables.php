@@ -16,12 +16,12 @@ class CreateRequestOrdersTables extends Migration
         Schema::create('request_orders', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('begin_date');
-            $table->date('until_date');
+            $table->date('date');
+            $table->date('begin_date')->nullable();
+            $table->date('until_date')->nullable();
 
             $table->integer('customer_id');
             $table->string('reference_number')->nullable();
-            $table->date('reference_date')->nullable();
             
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();

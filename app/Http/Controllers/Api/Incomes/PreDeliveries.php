@@ -22,11 +22,15 @@ class PreDeliveries extends ApiController
 
             case 'datagrid':    
                 $pre_deliveries = PreDelivery::with(['customer'])->filterable()->get();
-                
+                $pre_deliveries->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $pre_deliveries = PreDelivery::with(['customer'])->collect();                
+                $pre_deliveries = PreDelivery::with(['customer'])->collect();
+                $pre_deliveries->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
@@ -53,22 +57,34 @@ class PreDeliveries extends ApiController
 
     public function show($id)
     {
-        $pre_delivery = PreDelivery::with(['pre_delivery_items.item', 'pre_delivery_items.unit'])->findOrFail($id);
-        $pre_delivery->is_editable = (!$pre_delivery->is_related);
+        $pre_delivery = PreDelivery::with([
+            'customer',
+            'pre_delivery_items.item',
+            'pre_delivery_items.unit'
+        ])->findOrFail($id);
+
+        $pre_delivery->setAppends(['has_relationship']);
+        // dd($pre_delivery->relationship(['pre_delivery_items.request_order_items']));
 
         return response()->json($pre_delivery);
     }
 
     public function update(Request $request, $id)
     {
+        $this->DATABASE::beginTransaction();
+
         $pre_delivery = PreDelivery::findOrFail($id);
+
+        if ($pre_delivery->is_relationship == true) {
+            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        }
 
         $pre_delivery->update($request->input());
 
         // Delete items on the incoming goods updated!
         // $pre_delivery->pre_delivery_items()->delete();
         $pre_delivery->pre_delivery_items->map(function($detail) {
-            $detail->mount_extractables()->delete();
+            $detail->request_order_items()->delete();
             $detail->delete();
         });
 
@@ -80,16 +96,28 @@ class PreDeliveries extends ApiController
             $this->storeMountUnitAmount($pre_delivery, $pre_delivery_item);
         }
 
+        
+        $this->DATABASE::commit();
         return response()->json($pre_delivery);
     }
 
     public function destroy($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $pre_delivery = PreDelivery::findOrFail($id);
-        $pre_delivery->pre_delivery_items->map(function($q) {
-            $detail->mount_extractables()->delete();
+        if ($pre_delivery->is_relationship == true) {
+            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        }
+
+        $pre_delivery->pre_delivery_items->map(function($detail) {
+            $detail->request_order_items()->delete();
             $detail->delete();
-        })->delete();
+        });
+        $pre_delivery->delete();
+
+        
+        $this->DATABASE::commit();
 
         return response()->json(['success' => true]);
     }
@@ -97,7 +125,7 @@ class PreDeliveries extends ApiController
     public function storeMountUnitAmount($pre_delivery, $pre_delivery_item) {
         if ($pre_delivery->order_mode == 'PO') {
             //Code..
-            dd('is POmode');
+            abort(501, 'is POmode');
         }
         else {
             $request_order_items = RequestOrderItem::with('item')
@@ -106,16 +134,13 @@ class PreDeliveries extends ApiController
                 $q->where('customer_id', $pre_delivery->customer_id);
               })->get();
               
-            // $request_order_items = $request_order_items->sortByAsc(function($item) {
-            //     return $item->request_order->created_at;
-            // });
 
             $item_amount = $pre_delivery_item->unit_amount;
             $assosiate = collect([]);
 
             for ($i=0; $i < count($request_order_items); $i++) { 
                 $detail = $request_order_items[$i];
-                $detail->unit_available = ( $detail->unit_amount - $detail->total_mount_pre_delivery_item );
+                $detail->unit_available = ( $detail->unit_amount - $detail->total_pre_delivery_item );
 
                 if ($item_amount <= 0) break;
                 if ($detail->unit_available <= 0)  continue;
@@ -125,7 +150,8 @@ class PreDeliveries extends ApiController
                 if($quantity > 0) {
                     $assosiate->push([
                         'base_type' => get_class($detail),
-                        'base_id' => $detail->id
+                        'base_id' => $detail->id,
+                        'unit_amount' => $quantity
                     ]);
                 }
 
@@ -140,7 +166,7 @@ class PreDeliveries extends ApiController
                 // abort()
                 abort(501, $message);
             }
-            $pre_delivery_item->base_request_order_items()->createMany($assosiate->toArray());
+            $pre_delivery_item->request_order_items()->createMany($assosiate->toArray());
 
             // $this->error(501, 'Item unit amount invalid!', $assosiate);
         }

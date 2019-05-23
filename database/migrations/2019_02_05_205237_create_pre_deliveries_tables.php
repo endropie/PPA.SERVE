@@ -26,8 +26,6 @@ class CreatePreDeliveriesTables extends Migration
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->integer('request_order_id')->nullable();
 
-            $table->integer('rit_id')->nullable();
-            $table->integer('trans_qty')->nullable();
             $table->date('plan_begin_date');
             $table->date('plan_until_date');
 

@@ -24,6 +24,7 @@ class RequestOrders extends ApiController
 
             case 'datagrid':
                 $request_orders = RequestOrder::with(['customer'])->filterable()->get();
+                $request_orders->each->setAppends(['is_relationship']);
                 break;
             
             case 'detail-items':
@@ -45,12 +46,16 @@ class RequestOrders extends ApiController
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['customer'])->filter($filters)->collect();                
+                $request_orders = RequestOrder::with(['customer'])->filter($filters)->collect();
+                $request_orders->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
         $request_orders->map(function($row) {
-            $row->request_order_items->each->setAppends(['unit_amount','total_mount_pre_delivery_item']);
+            $row->request_order_items->each->setAppends(['unit_amount','total_pre_delivery_item']);
         });
 
         return response()->json($request_orders);
@@ -78,11 +83,16 @@ class RequestOrders extends ApiController
 
     public function show($id)
     {
-        $request_order = RequestOrder::with(['request_order_items.item.item_units', 'request_order_items.unit'])->findOrFail($id);
-        $request_order->hasRelationship = $this->relationships($request_order, [
-            'incoming_good' => 'Incoming Goods'
-        ]);
-        
+        $request_order = RequestOrder::with([
+            'customer',
+            'request_order_items.item.item_units',
+            'request_order_items.unit'
+        ])->findOrFail($id);
+
+        $request_order->setAppends(['has_relationship']);
+
+        // dd($request_order->total_delivery_order_item);
+
         return response()->json($request_order);
     }
 
@@ -92,6 +102,10 @@ class RequestOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $request_order = RequestOrder::findOrFail($id);
+        
+        if ($request_order->is_relationship == true) {
+            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        }
 
         $request_order->update($request->input());
 
@@ -131,6 +145,11 @@ class RequestOrders extends ApiController
         $this->DATABASE::beginTransaction();
         
         $request_order = RequestOrder::findOrFail($id);
+        
+        if ($request_order->is_relationship == true) {
+            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        }
+
         $request_order->request_order_items()->delete();
         $request_order->delete();
 

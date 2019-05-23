@@ -46,7 +46,7 @@ class Packings extends ApiController
     {
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
-        // abort(501, json_encode($request->all()));
+
         // Create the Packing Goods.
         $packing = Packing::create($request->all());
 
@@ -82,8 +82,22 @@ class Packings extends ApiController
 
     public function show($id)
     {
-        $packing = Packing::with(['packing_items.item.item_units','packing_items.packing_item_faults.fault'])->findOrFail($id);
-        $packing->is_editable = (!$packing->is_related);
+        if(request('mode') == 'view') {
+            $addWith = [
+                'operator',
+                'packing_items.work_order_item.work_order'
+            ];
+        }
+        else $addWith = [];
+
+        $packing = Packing::with(array_merge([
+            'customer',
+            'packing_items.item.item_units',
+            'packing_items.unit',
+            'packing_items.packing_item_faults.fault'
+        ], $addWith))->findOrFail($id);
+
+        // $packing->has_relationship = [];
 
         return response()->json($packing);
     }

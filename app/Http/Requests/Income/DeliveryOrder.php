@@ -22,9 +22,9 @@ class DeliveryOrder extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,NULL,' . $id,
-            'ship_date' => 'required',
-            'ship_time' => 'required',
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,numrev,' . $id,
+            'date' => 'required',
+            'time' => 'required',
             'customer_id' => 'required',
 
             'delivery_order_items.*.item_id' => 'required',

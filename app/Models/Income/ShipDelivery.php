@@ -10,14 +10,15 @@ class ShipDelivery extends Model
    use Filterable;
 
    protected $fillable = [
-      'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description', 
-      'pre_delivery_id',
-      'transaction', 'ship_date', 'ship_time', 'due_date', 'due_time', 'rit_id', 'operator_id', 'vehicle_id', 'transport_id', 'is_revision'
+      'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description',  'is_revision',
+      'transaction', 'date', 'time', 'due_date', 'due_time', 'operator_id', 'transport_number', 'transport_rate'
    ];
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = [
+      'revision_delivery_orders' => 'delivery_orders.revision'
+   ];
 
    public function ship_delivery_items()
    {
@@ -29,9 +30,9 @@ class ShipDelivery extends Model
       return $this->hasMany('App\Models\Income\DeliveryOrder');
    }
 
-   public function pre_delivery()
+   public function revision_delivery_orders()
    {
-      return $this->belongsTo('App\Models\Income\PreDelivery');
+      return $this->hasMany('App\Models\Income\DeliveryOrder')->where('is_revision', 1);
    }
 
    public function customer()

@@ -14,7 +14,7 @@ class Forecast extends Model
 
    protected $hidden = [];
 
-   protected $model_relations = [];
+   protected $relationships = [];
 
    public function forecast_items()
    {

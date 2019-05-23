@@ -35,7 +35,7 @@ class CreatePackingsTables extends Migration
             $table->integer('unit_id');
             $table->float('unit_rate');
             $table->float('quantity');
-            $table->integer('type_fault_id');
+            $table->integer('type_fault_id')->nullable();
             $table->integer('work_order_item_id');
 
             $table->timestamps();

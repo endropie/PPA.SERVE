@@ -19,12 +19,16 @@ class Customer extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $model_relations = ['items'];
+    protected $relationships = ['items'];
 
     public function customer_contacts()
     {
         return $this->hasMany('App\Models\Income\CustomerContact');
-    }  
+    }
+
+    public function customer_items(){
+        return $this->hasMany('App\Models\Common\Item');
+    }
 
     public function province()
     {

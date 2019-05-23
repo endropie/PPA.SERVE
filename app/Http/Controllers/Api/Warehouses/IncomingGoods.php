@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Http\Requests\Warehouse\IncomingGood as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Warehouse\IncomingGood as Filters;
-use App\Models\Warehouse\IncomingGood; 
+use App\Models\Warehouse\IncomingGood;
+use App\Models\Income\RequestOrder;
 use App\Traits\GenerateNumber;
 use Carbon\Carbon;
 
@@ -22,11 +23,15 @@ class IncomingGoods extends ApiController
 
             case 'datagrid':    
                 $incoming_goods = IncomingGood::with(['customer'])->filterable()->get();
-                
+                $incoming_goods->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->collect();                
+                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->collect();
+                $incoming_goods->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
@@ -64,19 +69,28 @@ class IncomingGoods extends ApiController
 
     public function show($id)
     {
-        $incoming_good = IncomingGood::with(['incoming_good_items.item.item_units', 'incoming_good_items.unit'])->findOrFail($id);
-        $incoming_good->is_editable = (!$incoming_good->is_related);
+        $incoming_good = IncomingGood::with([
+            'customer',
+            'incoming_good_items.item.item_units',
+            'incoming_good_items.unit'
+        ])->findOrFail($id);
+
+        $incoming_good->setAppends(['has_relationship']);
         
         return response()->json($incoming_good);
     }
 
     public function update(Request $request, $id)
     {
+
         // DB::beginTransaction => Before the function process!
         $old = IncomingGood::with('incoming_good_items')->findOrFail($id)->toArray();
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
+        
+        if ($incoming_good->is_relationship == true) return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+
         $incoming_good->update($request->input());
 
         // Delete old incoming goods items when $request detail rows has not ID
@@ -125,6 +139,9 @@ class IncomingGoods extends ApiController
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
+        
+        if ($incoming_good->is_relationship) return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+
         if($details = $incoming_good->incoming_good_items) {
             foreach ($details as $detail) {
                 $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
@@ -149,12 +166,12 @@ class IncomingGoods extends ApiController
         }
         
         if (strtoupper($mode) === 'NONE') {
-            $model = \App\Models\Income\RequestOrder::firstOrNew(['id' => $incoming_good->request_order_id]);
-            $model->begin_date  = $incoming_good->date;
-            $model->until_date  = $incoming_good->date;
+            $model = RequestOrder::firstOrNew(['id' => $incoming_good->request_order_id]);
+            $model->date  = $incoming_good->date;
+            $model->begin_date  = null;
+            $model->until_date  = null;
             $model->customer_id = $incoming_good->customer_id;
             $model->reference_number = $incoming_good->reference_number;
-            $model->reference_date   = $incoming_good->reference_date;
 
             $model->order_mode   = $incoming_good->order_mode;
             $model->description   = "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number";
@@ -163,7 +180,7 @@ class IncomingGoods extends ApiController
                 $model->number = $this->getNextRequestOrderNumber($incoming_good->date);
             }
             $model->save();
-            $incoming_good->update(['request_order_id' => $model->id]);
+            $incoming_good->save(['request_order_id' => $model->id]);
 
             // Delete detail items, first!
             $model->request_order_items()->whereNotIn('id', array_values($idKeyDetails))->delete();
@@ -186,7 +203,7 @@ class IncomingGoods extends ApiController
             }
         }
         else if (strtoupper($mode) === 'ACCUMULATE') {
-            $model = \App\Models\Income\RequestOrder::where(function ($query) use ($incoming_good) {
+            $model = RequestOrder::where(function ($query) use ($incoming_good) {
                 $query->whereDate('begin_date' , '<=', $incoming_good->date)
                       ->whereDate('until_date' , '>=', $incoming_good->date);
               })->where('customer_id', $incoming_good->customer_id)
@@ -196,10 +213,11 @@ class IncomingGoods extends ApiController
             // abort(501, json_encode($model));
 
             if(!$model) {
-                $model = new \App\Models\Income\RequestOrder;
+                $model = new RequestOrder;
                 $begin = Carbon::parse($incoming_good->date)->startOfMonth()->format('Y-m-d');
                 $until = Carbon::parse($incoming_good->date)->endOfMonth()->format('Y-m-d');
 
+                $model->date  = $incoming_good->date;
                 $model->begin_date  = $begin;
                 $model->until_date  = $until;
                 $model->customer_id = $incoming_good->customer_id;
@@ -210,7 +228,7 @@ class IncomingGoods extends ApiController
                     $model->number = $this->getNextRequestOrderNumber($incoming_good->date);
                 }
                 $model->save();
-                $incoming_good->update(['request_order_id' => $model->id]);            
+                $incoming_good->save(['request_order_id' =>  $model->id]);
             }
             // Delete detail items, first!
             $newArrayIDs = $incoming_good->incoming_good_items()->whereNotNull('request_order_item_id')->get()->pluck('request_order_item_id');
@@ -222,8 +240,6 @@ class IncomingGoods extends ApiController
                 $q->whereNotIn('id', $var['new']);
               }
             )->get();
-            // abort(501, json_encode($var));
-            // abort(501, json_encode($test));
 
             $model->request_order_items()->where(
               function($q) use ($var) {
@@ -251,7 +267,7 @@ class IncomingGoods extends ApiController
             
         }
         else if (strtoupper($mode) === 'PO') {
-            // Code...
+            // Not availabel execute..!
         }
     }
 }

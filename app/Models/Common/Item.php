@@ -19,7 +19,7 @@ class Item extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = ['incoming_good_items'];
+   protected $relationships = ['incoming_good_items'];
 
    public function item_prelines()
    {
@@ -59,7 +59,7 @@ class Item extends Model
    public function getTotalsAttribute()
    {
       $stocks = [];
-      foreach (ItemStockist::toArray() as $key => $value) {
+      foreach (ItemStock::getStockists() as $key => $value) {
          $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $value)->sum('total');
       }
       return $stocks;
@@ -67,44 +67,25 @@ class Item extends Model
 
    public function stock($stockist)
    {
-      $stockist = ItemStockist::getValidStockist($stockist);
+      $stockist = ItemStock::getValidStockist($stockist);
 
       return $this->item_stocks->where('stockist', $stockist)->first();
    }
 
-
-   // Execute Function for INCREASE & DECREASE total stock in `item_stocks` model
-   // ===========================================================================
-   // $number as quantity calculate stock,
-   // $stockist as enum/section of stock, 
-   // $exStockist as where taking stockist/enum/section of Stock 
-   // (default $exStockist => false)
    public function increase($number, $stockist, $exStockist = false)
    {
       if($exStockist) {
-         $exStockist = ItemStockist::getValidStockist($exStockist);
-
-         // $exStock = $this->item_stocks->where('stockist', $exStockist)->first();
-
-         // if(!$exStock) $exStock = $this->item_stocks()->create(['stockist' => $exStockist, 'total' => 0]);
+         $exStockist = ItemStock::getValidStockist($exStockist);
 
          $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
-
          $exStock->total = $exStock->total - $number;
-
          $exStock->save();
       }
 
-      $stockist = ItemStockist::getValidStockist($stockist);
-
-      // $stock = $this->stock($stockist);
-
-      // if(!$stock) $stock = $this->item_stocks()->create(['stockist' => $stockist, 'total' => 0]);
+      $stockist = ItemStock::getValidStockist($stockist);
 
       $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-
       $stock->total = $stock->total + $number;
-
       $stock->save();
 
       return $stock;
@@ -113,27 +94,17 @@ class Item extends Model
    public function decrease($number, $stockist, $exStockist = false)
    {
       if($exStockist) {
-         $exStockist = ItemStockist::getValidStockist($exStockist);
-
-         // $exStock = $this->item_stocks->where('stockist', $exStockist)->first();
-         // if(!$exStock) $exStock = $this->item_stocks()->create(['stockist' => $exStockist, 'total' => 0]);
+         $exStockist = ItemStock::getValidStockist($exStockist);
 
          $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
-
          $exStock->total = $exStock->total + $number;
-
          $exStock->save();
       }
 
-      $stockist = ItemStockist::getValidStockist($stockist);
-
-      // $stock = $this->item_stocks->where('stockist', $stockist)->first();
-      // if(!$stock) $stock = $this->item_stocks()->create(['stockist' => $stockist, 'total' => 0]);
+      $stockist = ItemStock::getValidStockist($stockist);
 
       $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-
       $stock->total = $stock->total - $number;
-
       $stock->save();
 
       return $stock;

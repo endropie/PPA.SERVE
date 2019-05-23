@@ -16,8 +16,8 @@ class CreateFinishedGoodsTables extends Migration
         Schema::create('finished_goods', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
-            $table->date('date');
-            $table->time('time');
+            $table->date('income_date');
+            $table->time('income_time');
 
             $table->integer('customer_id');
             

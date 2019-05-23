@@ -22,22 +22,21 @@ class WorkOrders extends ApiController
             $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->filterable()->get();
             break;
 
-            case 'items':    
-            $work_orders = \App\Models\Factory\WorkOrderItem::with([
-                'work_order'=> function($q) { $q->select(['id','number']); },
-            ])->get();
-            break;
-            
-            case 'item-lines':    
-            // $work_orders = \App\Models\Factory\WorkOrderItemLine::with([
-            //     'work_order_item.work_order'=> function($q) { 
-            //         $q->select(['id','number']); 
-            //     },
+            // case 'items':    
+            // $work_orders = \App\Models\Factory\WorkOrderItem::with([
+            //     'work_order'=> function($q) { $q->select(['id','number']); },
             // ])->get();
-            $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->get();
+            // break;
             
-            // $work_orders->each->workin_production_items;
-            break;
+            // case 'item-lines':    
+            //     // $work_orders = \App\Models\Factory\WorkOrderItemLine::with([
+            //     //     'work_order_item.work_order'=> function($q) { 
+            //     //         $q->select(['id','number']); 
+            //     //     },
+            //     // ])->get();
+            //     $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->get();
+                
+            // break;
 
             default:
                 $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->collect();                
@@ -60,7 +59,7 @@ class WorkOrders extends ApiController
             // create item row on the Work Orders updated!
             $detail = $work_order->work_order_items()->create($row);
             // Calculate stock on after the Work Orders updated!
-            $From = $detail->stockist_from;
+            $From = $work_order->stockist_from;
             $detail->item->increase($detail->unit_amount, 'WO', $From);
 
             $row_lines = $row['work_order_item_lines'];
@@ -85,7 +84,7 @@ class WorkOrders extends ApiController
             'work_order_items.work_order_item_lines.line'
         ])->findOrFail($id);
 
-        // $work_order->hasRelationship = $this->relationships($work_order, ['workin_production_items' => 'WorkIn Production']);
+        // $work_order->has_relationship = $this->relationships($work_order, ['workin_production_items' => 'WorkIn Production']);
 
         return response()->json($work_order);
     }
@@ -101,7 +100,7 @@ class WorkOrders extends ApiController
 
         $deletes = $work_order->work_order_items()->whereNotIn('id', array_filter(array_column($rows, 'id')))->get();
         foreach ($deletes as $detail) {
-            $From = $detail->stockist_from;
+            $From = $work_order->stockist_from;
             $detail->item->decrease($detail->unit_amount, 'WO', $From);
             $detail->delete();
         }
@@ -111,7 +110,7 @@ class WorkOrders extends ApiController
             $oldDetail = $work_order->work_order_items()->find($row['id']);
             if($oldDetail) {
                 // Calculate stock on before the incoming Goods updated!
-                $From = $oldDetail->stockist_from;
+                $From = $work_order->stockist_from;
                 $oldDetail->item->decrease($oldDetail->unit_amount, 'WO', $From);
             }
 
@@ -145,9 +144,10 @@ class WorkOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $work_order = WorkOrder::findOrFail($id);
-        $detail = $work_order->work_order_items;
-        $detail->item->decrease($detail->unit_amount, 'WO', $detail->stockist_from);
-        $work_order->work_order_items->delete();
+        $work_order->work_order_items->map(function($detail) use($work_order) {
+            $detail->item->decrease($detail->unit_amount, 'WO', $work_order->stockist_from);
+        });
+        $work_order->work_order_items()->delete();
         $work_order->delete();
 
         $this->DATABASE::commit();

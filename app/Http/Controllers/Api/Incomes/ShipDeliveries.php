@@ -6,6 +6,8 @@ use App\Filters\Income\ShipDelivery as Filters;
 use App\Http\Requests\Income\ShipDelivery as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\ShipDelivery; 
+use App\Models\Income\ShipDeliveryItem; 
+use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
 class ShipDeliveries extends ApiController
@@ -21,13 +23,18 @@ class ShipDeliveries extends ApiController
 
             case 'datagrid':    
                 $ship_deliveries = ShipDelivery::with(['customer','operator','vehicle'])->filterable()->get();
+                $ship_deliveries->each->setAppends(['is_relationship']);
                 break;
 
             default:
                 $ship_deliveries = ShipDelivery::with(['operator','vehicle', 
-                    'delivery_orders' => function($q) { $q->select(['id', 'ship_delivery_id', 'number']);},
+                    'delivery_orders' => function($q) { $q->select(['id', 'ship_delivery_id', 'number', 'numrev']);},
                     'customer' => function($q) { $q->select(['id', 'name']);}
-                ])->collect();                
+                ])->collect();
+                $ship_deliveries->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
@@ -42,18 +49,18 @@ class ShipDeliveries extends ApiController
 
         $ship_delivery = ShipDelivery::create($request->all());
 
-        $rows = $request->ship_delivery_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
+        $rows = collect($request->ship_delivery_items);
 
-            // create ShipDelivery items on the Deliveries updated!
-            $detail = $ship_delivery->ship_delivery_items()->create($row);
-
-            // Calculate stock on after the Deliveries updated!
-            $detail->item->decrease($detail->unit_amount, 'FG');
+        if($rows->count() > 0) {
+            $ids = $rows->pluck('id');
+            $ship_delivery_items = ShipDeliveryItem::whereIn('id',$ids)
+                ->wait()
+                ->update(['ship_delivery_id' => $ship_delivery->id]);
+            $this->storeDeliveryOrder($ship_delivery, $rows);
         }
-
-        $this->storeDeliveryOrder($ship_delivery);
+        else {
+            abort(501, 'Part detail not found!');
+        }
 
         $this->DATABASE::commit();
         return response()->json($ship_delivery);
@@ -61,100 +68,127 @@ class ShipDeliveries extends ApiController
 
     public function show($id)
     {
-        $ship_delivery = ShipDelivery::with(['ship_delivery_items.item.item_units', 'ship_delivery_items.unit'])->findOrFail($id);
-        $ship_delivery->is_editable = (!$ship_delivery->is_related);
-
-        return response()->json($ship_delivery);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $ship_delivery = ShipDelivery::findOrFail($id);
-
-        $ship_delivery->update($request->input());
-
-        // Delete old ShipDelivery items items when $request detail rows has not ID
-        $ids =  array_filter((array_column($request->ship_delivery_items, 'id')));
-        $delete_details = $ship_delivery->ship_delivery_items()->whereNotIn('id', $ids)->get();
+        $ship_delivery = ShipDelivery::with([
+            'customer',
+            'ship_delivery_items.item.item_units',
+            'ship_delivery_items.unit'
+        ])->findOrFail($id);
         
-        if($delete_details) {
-          foreach ($delete_details as $detail) {
-            $detail->delete();
-          }
-        }
+        $ship_delivery->setAppends(['has_relationship']);
 
-        $rows = $request->ship_delivery_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // Update or Create detail row
-            $newDetail = $ship_delivery->ship_delivery_items()->updateOrCreate(['id' => $row['id']], $row);
-        }
-
-        $this->storeDeliveryOrder($ship_delivery);
-
-        $this->DATABASE::commit();
         return response()->json($ship_delivery);
     }
 
     public function storeDeliveryOrder($ship_delivery) {
         $delivery_orders = $ship_delivery->delivery_orders;
         foreach ($delivery_orders as $delivery_order) {
-            $delivery_order_items = $delivery_order->delivery_order_items;
-            foreach ($delivery_order_items as $delivery_order_item) {
-
+            foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
                 $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
-                $delivery_order_item->base_request_order_items()->delete();
+                $delivery_order_item->ship_delivery_items()->delete();
+                $delivery_order_item->request_order_items()->delete();
                 $delivery_order_item->delete();
             }
             $delivery_order->delete();
         }
 
-        $list = [];
-        foreach ($ship_delivery->ship_delivery_items as $ship_delivery_item) {
-            $total_amount = $ship_delivery_item->unit_amount;
+        $list = []; $extract=[]; $uses=[];
 
-            foreach ($ship_delivery_item->pre_delivery_item->base_request_order_items as $key => $item) {
-                
-                $unit_amount = $total_amount > $item->base->unit_amount ? $item->base->unit_amount : $total_amount;
-                $total_amount -= $unit_amount;
-                
-                if($unit_amount <= 0.1) break;
-                $list[$item->base->request_order_id][$key] = [
-                    'ship_delivery_item_id' => $ship_delivery_item->id,
-                    'item_id' => $ship_delivery_item->item_id,
-                    'unit_id' => $ship_delivery_item->unit_id,
-                    'unit_rate' => $ship_delivery_item->unit_rate,
-                    'quantity' => ($unit_amount / $ship_delivery_item->unit_rate)
-                ];
-                $assosiate[$item->base->request_order_id][$key] = [
-                    'base_type' => $item->base_type,
-                    'base_id' => $item->base->id,
-                ];
+        $request_order_items = RequestOrderItem::whereHas('request_order', function($q) use($ship_delivery) {
+            $q->where('customer_id', $ship_delivery->customer_id);
+        })->get()->filter(function($x) {
+            return ($x->unit_amount > $x->total_delivery_order_item);
+        });
+
+        // abort(500, json_encode($request_order_items->count()));
+
+
+        foreach ($ship_delivery->ship_delivery_items as $ship_delivery_item) {
+            $max_amount = $ship_delivery_item->unit_amount;
+            $sum_amount = 0;
+
+            // foreach ($ship_delivery_item->pre_delivery_item->request_order_items as $key => $base_item) {
+            
+            foreach ($request_order_items as $key => $base_item) {
+
+                // abort(500, json_encode($base_item));
+                if($base_item->item_id == $ship_delivery_item->item_id) {
+                    $unit_amount = $base_item->unit_amount - ($uses[$base_item->id] ?? 0);
+                    // if (isset($uses[$base_item->id])) abort(500, json_encode($uses));
+
+                    $unit_amount = ($max_amount > $unit_amount ? $unit_amount : $max_amount);
+                    $max_amount -= $unit_amount;
+                    $sum_amount += $unit_amount;
+
+                    if(!isset($uses[$base_item->id])) $uses[$base_item->id] = 0;
+                    $uses[$base_item->id] += $unit_amount;
+                    
+                    if($unit_amount > 0 ){
+                        $RO = $base_item->request_order_id;
+                        $ITEM = $base_item->id;
+        
+                        $list[$RO][$ITEM] = [
+                            'item_id' => $ship_delivery_item->item_id,
+                            'unit_id' => $ship_delivery_item->item->unit_id,
+                            'unit_rate' => 1,
+                            'quantity' => $sum_amount
+                        ];
+        
+                        $extract[$RO][$ITEM][] = [
+                            'base_id' => $ship_delivery_item->id,
+                            'base_type' => get_class($ship_delivery_item),
+                            'unit_amount' => ($unit_amount)
+                        ];
+
+                    }
+                }
+
             }
 
-             if($total_amount > 0.1) abort(501, 'Total unit invalid! --> '. $total_amount .'from'. $ship_delivery_item->unit_amount);
+            //  if($max_amount > 0.1) abort(501, 'Total unit invalid! --> '. $max_amount .' from '. $ship_delivery_item->unit_amount);
         }
 
-        foreach ($list as $id => $rows) {
+        // abort(500, json_encode('tetete'));
+
+        foreach ($list as $ID => $rows) {
             $delivery_order = $ship_delivery->delivery_orders()->create([
                 'number' => $this->getNextDeliveryOrderNumber(),
-                'transaction' => $ship_delivery->transaction,
+                'transaction' => 'REGULER',
                 'customer_id' => $ship_delivery->customer_id,
                 'customer_name' => $ship_delivery->customer_name,
                 'customer_phone' => $ship_delivery->customer_phone,
                 'customer_address' => $ship_delivery->customer_address,
+
+                'operator_id' => $ship_delivery->operator_id,
+                'date' => $ship_delivery->date,
+                'time' => $ship_delivery->time,
+                'due_date' => $ship_delivery->due_date,
+                'due_time' => $ship_delivery->due_time,
             ]);
-            foreach ($rows as $key => $row) {
+
+            foreach ($rows as $ITEM => $row) {
+                $row['quantity'] = 0;
+
+                foreach ($extract[$ID][$ITEM] as $val) {
+                    $row['quantity'] += $val['unit_amount'];
+                }
+                
+                // abort(501, json_encode($row['quantity']));
+
                 $newDetail = $delivery_order->delivery_order_items()->create($row);
                 $newDetail->item->decrease($newDetail->unit_amount, 'FG');
-
-                $newDetail->mount_extractables()->create($assosiate[$id][$key]);
+                // $newDetail->request_order_item_id = $row['request_order_item_id'];
+                $newDetail->ship_delivery_items()->createMany($extract[$ID][$ITEM]);
+                $newDetail->request_order_items()->create([
+                    'base_type' => get_class($newDetail),
+                    'base_id' => $newDetail->id,
+                    'unit_amount' => $newDetail->unit_amount,
+                ]);
             }
+            
+            $delivery_order->request_order_id = $ID;
+            $delivery_order->save();
         }
 
-        // abort(501, json_encode($list));
     }
 
     public function destroy($id)
@@ -162,12 +196,22 @@ class ShipDeliveries extends ApiController
         $this->DATABASE::beginTransaction();
 
         $ship_delivery = ShipDelivery::findOrFail($id);
-        if($details = $ship_delivery->ship_delivery_items) {
-            foreach ($details as $detail) {
-                $detail->item->decrease($detail->unit_amount, 'FG');
-            }
+        
+        if ($ship_delivery->is_relationship == true) {
+            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
         }
-        $ship_delivery->ship_delivery_items()->delete();
+
+        foreach ($ship_delivery->delivery_orders as $delivery_order) {
+            foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
+                $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
+                $delivery_order_item->ship_delivery_items()->delete();
+                $delivery_order_item->request_order_items()->delete();
+                $delivery_order_item->delete();
+            }
+            $delivery_order->delete();
+        }
+
+        $ship_delivery->ship_delivery_items()->update(['ship_delivery_id' => null]);
         $ship_delivery->delete();
 
         $this->DATABASE::commit();

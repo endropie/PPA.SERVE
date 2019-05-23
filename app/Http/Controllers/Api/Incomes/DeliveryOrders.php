@@ -6,6 +6,7 @@ use App\Filters\Income\DeliveryOrder as Filters;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\DeliveryOrder; 
+use App\Models\Income\ShipDeliveryItem;
 use App\Traits\GenerateNumber;
 
 class DeliveryOrders extends ApiController
@@ -21,101 +22,113 @@ class DeliveryOrders extends ApiController
 
             case 'datagrid':    
                 $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filterable()->get();
+                $delivery_orders->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->collect();                
+                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->collect();
+                $delivery_orders->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
         return response()->json($delivery_orders);
     }
 
-    public function store(Request $request)
-    {
-        $this->DATABASE::beginTransaction();
-
-        if(!$request->number) $request->merge(['number'=> $this->getNextDeliveryOrderNumber()]);
-
-        $delivery_order = DeliveryOrder::create($request->all());
-
-        $rows = $request->delivery_order_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-
-            // create DeliveryOrder items on the Deliveries updated!
-            $detail = $delivery_order->delivery_order_items()->create($row);
-
-            // Calculate stock on after the Deliveries updated!
-            $detail->item->decrease($detail->unit_amount, 'FG');
-        }
-
-        $this->DATABASE::commit();
-        return response()->json($delivery_order);
-    }
-
     public function show($id)
     {
-        $delivery_order = DeliveryOrder::with(['delivery_order_items.item.item_units', 'delivery_order_items.unit'])->findOrFail($id);
-        $delivery_order->is_editable = (!$delivery_order->is_related);
+        
+        $delivery_order = DeliveryOrder::with([
+            'customer', 
+            'delivery_order_items.item.item_units', 
+            'delivery_order_items.unit',
+        ])->findOrFail($id);
+
+        $delivery_order->setAppends(['has_revision', 'has_relationship']);
 
         return response()->json($delivery_order);
     }
 
-    public function update(Request $request, $id)
+    public function revision(Request $request, $id)
     {
+        
         $this->DATABASE::beginTransaction();
 
-        $delivery_order = DeliveryOrder::findOrFail($id);
-
-        $delivery_order->update($request->input());
-
-        // Delete old DeliveryOrder items items when $request detail rows has not ID
-        $ids =  array_filter((array_column($request->delivery_order_items, 'id')));
-        $delete_details = $delivery_order->delivery_order_items()->whereNotIn('id', $ids)->get();
-        
-        if($delete_details) {
-          foreach ($delete_details as $detail) {
-            // Calculate first, before deleting!
+        $associate = [];
+        $revision = DeliveryOrder::findOrFail($id);        
+        if($revision) {
+          foreach ($revision->delivery_order_items as $detail) {
             $detail->item->increase($detail->unit_amount, 'FG');
-            $detail->delete();
+            $detail->ship_delivery_items()->delete();
+            $detail->request_order_items()->delete();
           }
         }
 
+        $revision->is_revision = true;
+        $revision->save();
+
+        // Auto generate number of revision
+        if($request->number) {
+            $max = (int) DeliveryOrder::where('number', $request->number)->max('numrev');
+            $request->merge(['numrev'=> ($max + 1)]);
+        }
+
+        $delivery_order = DeliveryOrder::create($request->all());
+
+        $ship_delivery_items = ShipDeliveryItem::whereHas('ship_delivery', 
+          function($q) use($delivery_order) {
+            $q->where('customer_id', $delivery_order->customer_id);
+          }
+        )->get()->filter(function($detail){
+                return ($detail->unit_amount - $detail->total_delivery_order_item) > 0;
+          });
+
         $rows = $request->delivery_order_items;
+        $mounting = []; $check = [];
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            $oldDetail = $delivery_order->delivery_order_items()->find($row['id']);
-            if($oldDetail) {
-                // Calculate stock on before the DeliveryOrder items updated!
-                $oldDetail->item->increase($oldDetail->unit_amount, 'FG');
-            }
+            // create DeliveryOrder items on the Delivery order revision!
+            $detail = $delivery_order->delivery_order_items()->create($row);
 
-            // Update or Create detail row
-            $newDetail = $delivery_order->delivery_order_items()->updateOrCreate(['id' => $row['id']], $row);
-            // Calculate stock on after the DeliveryOrder items updated!
-            $newDetail->item->decrease($newDetail->unit_amount, 'FG');
+            // Calculate stock on after the Delivery order revision!
+            $detail->item->decrease($detail->unit_amount, 'FG');
+
+            $detail->request_order_items()->create([
+                'base_type' => get_class($detail),
+                'base_id' => $detail->id,
+                'unit_amount' => $detail->unit_amount
+            ]);
+
+            $max_amount = $detail->unit_amount;
+            foreach ($ship_delivery_items as $base) {
+                if($base->item_id == $detail->item_id) {
+
+                    if($max_amount <= 0 ) break;
+                    if(!isset($mounting[$base->id])) $mounting[$base->id] = 0;
+
+                    $available = $base->unit_amount - ($base->total_delivery_order_item + $mounting[$base->id]);
+                    $quantity = $max_amount > $available ? $available : $max_amount;
+
+                    $detail->ship_delivery_items()->create([
+                        'base_type' => get_class($base),
+                        'base_id' => $base->id,
+                        'unit_amount' => $quantity
+                    ]);
+
+                    $mounting[$base->id] += (double) $quantity;
+                    $max_amount -= $quantity;                    
+                }
+            }
         }
+
+        $delivery_order->request_order_id = $request->request_order_id;
+        $delivery_order->ship_delivery_id = $request->ship_delivery_id;
+        $delivery_order->save();
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
-    }
-
-    public function destroy($id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $delivery_order = DeliveryOrder::findOrFail($id);
-        if($details = $delivery_order->delivery_order_items) {
-            foreach ($details as $detail) {
-                $detail->item->decrease($detail->unit_amount, 'FG');
-            }
-        }
-        $delivery_order->delivery_order_items()->delete();
-        $delivery_order->delete();
-
-        $this->DATABASE::commit();
-        return response()->json(['success' => true]);
     }
 }

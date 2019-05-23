@@ -14,11 +14,15 @@ class IncomingGoodItem extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = [];
 
    public function incoming_good()
    {
       return $this->belongsTo('App\Models\Factory\IncomingGood');
+   }
+
+   public function request_order_item() {
+      return $this->belongsTo('App\Models\Income\RequestOrderItem');
    }
 
    public function item()

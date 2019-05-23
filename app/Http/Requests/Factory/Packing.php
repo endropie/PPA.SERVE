@@ -27,7 +27,7 @@ class Packing extends Request
             'packing_items.item_id' => 'required',
             'packing_items.quantity' => 'required|numeric|gt:0',
             'packing_items.unit_id' => 'required',
-            'packing_items.packing_item_faults.*.quantity' => 'required|numeric|gt:0',
+            'packing_items.packing_item_faults.*.quantity' => 'required_if:packing_items.packing_item_faults.*.fault_id,!=,null',
         ];
     }
 

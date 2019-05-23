@@ -14,7 +14,7 @@ class PreDeliveryItem extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $model_relations = [];
+   protected $relationships = ['item'];
 
    public function pre_delivery()
    {
@@ -36,20 +36,28 @@ class PreDeliveryItem extends Model
       return $this->hasMany('App\Models\Income\ShipDeliveryItem');
    }
 
-   public function mount_extractables() // Type of Morph is "base" or "mount"
-   {
-      return $this->morphMany('App\Models\Common\ItemExtractable', 'mount');
-   }
-
-   public function base_request_order_items() {
-      return $this->morphMany('App\Models\Common\ItemExtractable', 'mount')
+   public function request_order_items() {
+      return $this->morphMany('App\Models\Common\MountBaseItemable', 'mount')
          ->where('base_type', 'App\Models\Income\RequestOrderItem');
    }
-
+   
    public function getTotalShipDeliveryItemAttribute() {
-      // return false when rate is not valid
-      // $details = $this->ship_delivery_items;
-      return (double) $this->ship_delivery_items->sum('unit_amount');
+      $totals = 0;
+
+      foreach ($this->ship_delivery_items as $detail) {
+         if($detail->delivery_order_items->count() > 0) {
+            $totals += (double) $detail->delivery_order_items->sum('unit_amount');
+         }
+         else {
+            $totals += (double) $detail->unit_amount;
+         }
+      }
+
+      return $totals;
+   }
+
+   public function getTotalRequestOrderItemAttribute() {
+      return (double) $this->request_order_items->sum('unit_amount');
    }
 
    public function getUnitAmountAttribute() {

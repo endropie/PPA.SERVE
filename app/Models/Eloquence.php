@@ -1,8 +1,8 @@
 <?php
 namespace App\Models;
 /**********************************************************************************
- * How to use
- * ==========
+*   How to use
+* =================
  * Collections:
  *  - collect()
  *    Get model to array collection with filterabel, sortable & pagination.
@@ -31,7 +31,7 @@ trait Eloquence
 {
     protected $filterableClass = null;
 
-    public function scopeCollect($query)
+    public function scopeCollect($query, $map = false)
     {
         $request = request();
 
@@ -41,7 +41,11 @@ trait Eloquence
         // $query = $query->filterable();
         // $query = $query->sortable();
     
-        $query = $query->paginate($limit);        
+        $query = $query->paginate($limit);   
+        
+        // // $query->setAppends(['has_relationships']);
+        // // dd($query->__get('items'));
+        // dd($query);
 
         return $query;
     }

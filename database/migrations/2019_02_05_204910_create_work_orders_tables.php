@@ -33,7 +33,7 @@ class CreateWorkOrdersTables extends Migration
             $table->float('target')->default(0);
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
-            $table->float('ngratio')->default(0)->nullable();
+            $table->float('ngratio')->default(0);
 
             $table->timestamps();
         });

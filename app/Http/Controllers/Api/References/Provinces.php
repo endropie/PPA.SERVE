@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
 use App\Http\Requests\Reference\Province as Request;
 use App\Http\Controllers\ApiController;
 

@@ -19,6 +19,11 @@ class PackingItem extends Model
         return $this->hasMany('App\Models\Factory\PackingItemFault');
     }
 
+    public function work_order_item()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
+    }
+
     public function packing()
     {
         return $this->belongsTo('App\Models\Factory\Packing');
@@ -27,6 +32,11 @@ class PackingItem extends Model
     public function item()
     {
         return $this->belongsTo('App\Models\Common\Item');
+    }
+
+    public function unit()
+    {
+       return $this->belongsTo('App\Models\Reference\Unit');
     }
 
     public function getUnitAmountAttribute() {

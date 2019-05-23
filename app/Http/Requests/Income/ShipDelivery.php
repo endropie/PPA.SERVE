@@ -23,8 +23,8 @@ class ShipDelivery extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:ship_deliveries,NULL,' . $id,
-            'ship_date' => 'required',
-            'ship_time' => 'required',
+            'date' => 'required',
+            'time' => 'required',
             'customer_id' => 'required',
 
             'shipdelivery_items.*.item_id' => 'required',

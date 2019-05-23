@@ -32,11 +32,16 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::post('register', 'Auth\Authentication@register');
     // Route::post('auth', 'Auth\Authentication@user');
 
-    Route::middleware(['auth:api'])->group( function(){
+    Route::middleware([
+        // 'auth:api'
+        ])->group( function(){
+    
         Route::prefix('auth')->name('auth.')->group(function () {
-            Route::name('user')->post('/', 'Auth\Authentication@user');
-            Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken');
-            Route::name('change-password')->post('/change-password', 'Auth\Authentication@setChangePassword');
+            Route::middleware(['auth:api'])->group( function(){
+                Route::name('user')->post('/', 'Auth\Authentication@user');
+                Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken')->middleware(['auth:api']);
+                Route::name('change-password')->post('/change-password', 'Auth\Authentication@setChangePassword');
+            });
             Route::apiResource('users', 'Auth\Users');
             Route::apiResource('roles', 'Auth\Roles');
             Route::apiResource('permissions', 'Auth\Permissions');
@@ -64,6 +69,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
             Route::apiResource('ship-deliveries', 'Incomes\ShipDeliveries');
+            Route::apiResource('ship-delivery-items', 'Incomes\ShipDeliveryItems');
+            Route::patch('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
         });
     
