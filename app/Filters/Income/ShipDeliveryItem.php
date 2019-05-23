@@ -23,7 +23,6 @@ class ShipDeliveryItem extends QueryFilters
     public function sort_part_name($name, $order = 'asc') {
         return $this->builder->with(['item'=>
           function ($q) use($name, $order) {
-              dd('dd');
             $q->orderBy('part_name', $order);
         }]);
     }
