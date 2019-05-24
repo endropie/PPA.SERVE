@@ -19,10 +19,10 @@ class DeliveryOrderItem extends Model
       return $this->belongsTo('App\Models\Income\DeliveryOrder');
    }
 
-   public function request_order_item()
-   {
-      return $this->belongsTo('App\Models\Income\RequestOrderItem');
-   }
+   // public function request_order_item()
+   // {
+   //    return $this->belongsTo('App\Models\Income\RequestOrderItem');
+   // }
 
    public function item()
    {
@@ -39,17 +39,17 @@ class DeliveryOrderItem extends Model
          ->where('base_type', 'App\Models\Income\ShipDeliveryItem');
    }
 
-   public function request_order_items() {
-      return $this->morphMany('App\Models\Common\MountBaseItemable', 'mount')
-         ->where('base_type', 'App\Models\Income\DeliveryOrderItem');
+   public function request_order_item() {
+      return $this->morphOne('App\Models\Common\MountBaseItemable', 'mount')
+         ->where('base_type', 'App\Models\Income\RequestOrderItem');
    }
 
    public function getTotalShipDeliveryItemAttribute() {
-      return (double) $this->request_order_items->sum('unit_amount');
+      return (double) $this->ship_delivery_items->sum('unit_amount');
    }
 
    public function getTotalRequestOrderItemAttribute() {
-      return (double) $this->request_order_items->sum('unit_amount');
+      return (double) $this->request_order_item->unit_amount; 
    }
 
    public function getUnitAmountAttribute() {

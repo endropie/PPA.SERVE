@@ -66,5 +66,11 @@ class PreDeliveryItem extends Model
       
       return (double) $this->quantity * $this->unit_rate;
    }
+
+   public function scopeHasAmount($query) {
+      $query->withCount(['ship_delivery_items as has_amount'=> function($ship_delivery_item) {
+         $ship_delivery_item->select(\DB::raw("SUM(quantity) as has_amount"));
+      }]);
+   }
 }
  

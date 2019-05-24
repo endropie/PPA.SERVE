@@ -22,12 +22,12 @@ class ShipDeliveries extends ApiController
                 break;
 
             case 'datagrid':    
-                $ship_deliveries = ShipDelivery::with(['customer','operator','vehicle'])->filterable()->get();
+                $ship_deliveries = ShipDelivery::with(['customer','operator','vehicle'])->filter($filters)->get();
                 $ship_deliveries->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $ship_deliveries = ShipDelivery::with(['operator','vehicle', 
+                $ship_deliveries = ShipDelivery::filter($filters)->with(['operator','vehicle', 
                     'delivery_orders' => function($q) { $q->select(['id', 'ship_delivery_id', 'number', 'numrev']);},
                     'customer' => function($q) { $q->select(['id', 'name']);}
                 ])->collect();
@@ -85,13 +85,13 @@ class ShipDeliveries extends ApiController
             foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
                 $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
                 $delivery_order_item->ship_delivery_items()->delete();
-                $delivery_order_item->request_order_items()->delete();
+                // $delivery_order_item->request_order_item()->delete();
                 $delivery_order_item->delete();
             }
             $delivery_order->delete();
         }
 
-        $list = []; $extract=[]; $uses=[];
+        $list = []; $extract=[]; $mounted=[];
 
         $request_order_items = RequestOrderItem::whereHas('request_order', function($q) use($ship_delivery) {
             $q->where('customer_id', $ship_delivery->customer_id);
@@ -100,31 +100,23 @@ class ShipDeliveries extends ApiController
         });
 
         // abort(500, json_encode($request_order_items->count()));
-
-
         foreach ($ship_delivery->ship_delivery_items as $ship_delivery_item) {
             $max_amount = $ship_delivery_item->unit_amount;
             $sum_amount = 0;
 
-            // foreach ($ship_delivery_item->pre_delivery_item->request_order_items as $key => $base_item) {
-            
-            foreach ($request_order_items as $key => $base_item) {
-
-                // abort(500, json_encode($base_item));
-                if($base_item->item_id == $ship_delivery_item->item_id) {
-                    $unit_amount = $base_item->unit_amount - ($uses[$base_item->id] ?? 0);
-                    // if (isset($uses[$base_item->id])) abort(500, json_encode($uses));
-
+            foreach ($request_order_items as $key => $base) {
+                if($base->item_id == $ship_delivery_item->item_id) {
+                    $unit_amount = $base->unit_amount - $base->total_delivery_order_item - ($mounted[$base->id] ?? 0);
                     $unit_amount = ($max_amount > $unit_amount ? $unit_amount : $max_amount);
                     $max_amount -= $unit_amount;
                     $sum_amount += $unit_amount;
 
-                    if(!isset($uses[$base_item->id])) $uses[$base_item->id] = 0;
-                    $uses[$base_item->id] += $unit_amount;
+                    if(!isset($mounted[$base->id])) $mounted[$base->id] = 0;
+                    $mounted[$base->id] += $unit_amount;
                     
                     if($unit_amount > 0 ){
-                        $RO = $base_item->request_order_id;
-                        $ITEM = $base_item->id;
+                        $RO = $base->request_order_id;
+                        $ITEM = $base->id;
         
                         $list[$RO][$ITEM] = [
                             'item_id' => $ship_delivery_item->item_id,
@@ -146,8 +138,6 @@ class ShipDeliveries extends ApiController
 
             //  if($max_amount > 0.1) abort(501, 'Total unit invalid! --> '. $max_amount .' from '. $ship_delivery_item->unit_amount);
         }
-
-        // abort(500, json_encode('tetete'));
 
         foreach ($list as $ID => $rows) {
             $delivery_order = $ship_delivery->delivery_orders()->create([
@@ -178,9 +168,9 @@ class ShipDeliveries extends ApiController
                 $newDetail->item->decrease($newDetail->unit_amount, 'FG');
                 // $newDetail->request_order_item_id = $row['request_order_item_id'];
                 $newDetail->ship_delivery_items()->createMany($extract[$ID][$ITEM]);
-                $newDetail->request_order_items()->create([
-                    'base_type' => get_class($newDetail),
-                    'base_id' => $newDetail->id,
+                $newDetail->request_order_item()->create([
+                    'base_type' => RequestOrderItem::class,
+                    'base_id' => $ITEM,
                     'unit_amount' => $newDetail->unit_amount,
                 ]);
             }
@@ -205,7 +195,7 @@ class ShipDeliveries extends ApiController
             foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
                 $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
                 $delivery_order_item->ship_delivery_items()->delete();
-                $delivery_order_item->request_order_items()->delete();
+                $delivery_order_item->request_order_item()->delete();
                 $delivery_order_item->delete();
             }
             $delivery_order->delete();

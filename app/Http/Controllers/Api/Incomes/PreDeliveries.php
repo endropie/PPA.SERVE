@@ -6,6 +6,7 @@ use App\Http\Requests\Income\PreDelivery as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\PreDelivery as Filters;
 use App\Models\Income\PreDelivery; 
+use App\Models\Income\PreDeliveryItem;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
@@ -21,12 +22,16 @@ class PreDeliveries extends ApiController
                 break;
 
             case 'datagrid':    
-                $pre_deliveries = PreDelivery::with(['customer'])->filterable()->get();
+                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->get();
                 $pre_deliveries->each->setAppends(['is_relationship']);
                 break;
 
+            case 'items':            
+                $pre_deliveries = PreDeliveryItem::hasAmount()->get();    
+                break;
+
             default:
-                $pre_deliveries = PreDelivery::with(['customer'])->collect();
+                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
                     return $item;
@@ -66,38 +71,6 @@ class PreDeliveries extends ApiController
         $pre_delivery->setAppends(['has_relationship']);
         // dd($pre_delivery->relationship(['pre_delivery_items.request_order_items']));
 
-        return response()->json($pre_delivery);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $pre_delivery = PreDelivery::findOrFail($id);
-
-        if ($pre_delivery->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
-        }
-
-        $pre_delivery->update($request->input());
-
-        // Delete items on the incoming goods updated!
-        // $pre_delivery->pre_delivery_items()->delete();
-        $pre_delivery->pre_delivery_items->map(function($detail) {
-            $detail->request_order_items()->delete();
-            $detail->delete();
-        });
-
-        $rows = $request->pre_delivery_items;
-        for ($i=0; $i < count($rows); $i++) { 
-            $row = $rows[$i];
-            // The detail item updated!
-            $pre_delivery_item = $pre_delivery->pre_delivery_items()->create($row);
-            $this->storeMountUnitAmount($pre_delivery, $pre_delivery_item);
-        }
-
-        
-        $this->DATABASE::commit();
         return response()->json($pre_delivery);
     }
 

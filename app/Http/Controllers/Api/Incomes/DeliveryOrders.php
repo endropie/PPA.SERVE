@@ -6,6 +6,7 @@ use App\Filters\Income\DeliveryOrder as Filters;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\DeliveryOrder; 
+use App\Models\Income\DeliveryOrderItem;
 use App\Models\Income\ShipDeliveryItem;
 use App\Traits\GenerateNumber;
 
@@ -62,7 +63,7 @@ class DeliveryOrders extends ApiController
           foreach ($revision->delivery_order_items as $detail) {
             $detail->item->increase($detail->unit_amount, 'FG');
             $detail->ship_delivery_items()->delete();
-            $detail->request_order_items()->delete();
+            // $detail->request_order_items()->delete();
           }
         }
 
@@ -90,15 +91,18 @@ class DeliveryOrders extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
+            $oldDetail = DeliveryOrderItem::find($row["id"]);
+            // abort(500, json_encode($oldDetail->request_order_item->base->quantity));
+
             // create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
             // Calculate stock on after the Delivery order revision!
             $detail->item->decrease($detail->unit_amount, 'FG');
 
-            $detail->request_order_items()->create([
-                'base_type' => get_class($detail),
-                'base_id' => $detail->id,
+            $detail->request_order_item()->create([
+                'base_type' => get_class($oldDetail->request_order_item->base),
+                'base_id' => $oldDetail->request_order_item->base->id,
                 'unit_amount' => $detail->unit_amount
             ]);
 
