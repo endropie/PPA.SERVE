@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Common;
 
+use App\Filters\QueryFilters as Filters;
 use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
@@ -9,11 +10,11 @@ use App\Models\Common\ItemStock;
 
 class Items extends ApiController
 {
-    public function index()
+    public function index(Filters $filters)
     {
         switch (request('mode')) {
           case 'all':            
-            $items = Item::with(['item_prelines','item_units','unit'])->filterable()->get();    
+            $items = Item::with(['item_prelines','item_units','unit'])->filter($filters)->get();    
           break;
 
           case 'datagrid':

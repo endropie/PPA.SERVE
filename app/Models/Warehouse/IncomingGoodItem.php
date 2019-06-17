@@ -30,6 +30,11 @@ class IncomingGoodItem extends Model
       return $this->belongsTo('App\Models\Common\Item');
    }
 
+   public function stockable()
+   {
+      return $this->morphMany('App\Models\Common\ItemStockable', 'base');
+   }
+
    public function unit()
    {
       return $this->belongsTo('App\Models\Reference\Unit');

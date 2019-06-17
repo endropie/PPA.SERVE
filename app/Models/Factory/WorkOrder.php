@@ -34,6 +34,5 @@ class WorkOrder extends Model
    {
       return $this->work_order_items()->hasMany('App\Models\Factory\WorkinProductionItem');
    }
-
 }
  

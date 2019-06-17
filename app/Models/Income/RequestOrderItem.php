@@ -10,7 +10,7 @@ class RequestOrderItem extends Model
       'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
    ];
 
-   protected $appends = ['unit_amount', 'total_pre_delivery_item', 'total_delivery_order_item'];
+   protected $appends = ['unit_amount', 'total_delivery_order_item'];
    
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -26,23 +26,19 @@ class RequestOrderItem extends Model
       return $this->belongsTo('App\Models\Common\Item')->with('unit');
    }
 
+   public function stockable()
+   {
+      return $this->morphMany('App\Models\Common\ItemStockable', 'base');
+   }
+
    public function unit()
    {
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 
-   public function pre_delivery_items() {
-      return $this->morphMany('App\Models\Common\MountBaseItemable', 'base')
-         ->where('mount_type', 'App\Models\Income\PreDeliveryItem');
-   }
-
-   public function delivery_order_items() {
-      return $this->morphMany('App\Models\Common\MountBaseItemable', 'base')
-         ->where('mount_type', 'App\Models\Income\DeliveryOrderItem');
-   }
-
-   public function getTotalPreDeliveryItemAttribute() {      
-      return (double) $this->pre_delivery_items->sum('unit_amount');
+   public function delivery_order_items() 
+   {
+      return $this->hasMany('App\Models\Income\DeliveryOrderItem');
    }
 
    public function getTotalDeliveryOrderItemAttribute() {      

@@ -22,6 +22,7 @@ class QueryFilters
         $this->builder = $builder;
         $fields = \Schema::getColumnListing($builder->getQuery()->from);
 
+        // dd($this->filters());
         foreach ($this->filters() as $name => $value) {
             if ( ! method_exists($this, $name)) {
                 if(strlen($value) && in_array($name, $fields)) {
@@ -88,7 +89,7 @@ class QueryFilters
          
         if(method_exists($this, 'sort_'. $value)) {
             $function = 'sort_'. $value;
-            return $this->$function($value, $order);
+            return $this->$function($order);
         }
         else if (strlen($value) && in_array($value, $fields)){
             return $this->builder->orderBy($value, $order);

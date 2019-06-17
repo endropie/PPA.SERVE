@@ -39,7 +39,7 @@ class Authentication extends Controller
         
         $newToken = $user->createToken('personal');
         $access['token'] =  $newToken->accessToken; 
-        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(carbon()->now());
+        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(Carbon()->now());
 
         $setting = setting()->all();
 
@@ -74,7 +74,7 @@ class Authentication extends Controller
         $newToken = $user->createToken('personal');
 
         $access['token'] =  $newToken->accessToken; 
-        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(Carbon::now());
+        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(Carbon()->now());
         
         return response()->json(['access'=>$access], $this->successStatus); 
     }

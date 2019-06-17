@@ -15,7 +15,7 @@ class Item extends Model
       'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description'
    ];
 
-   protected $appends = [];
+   protected $appends = ['totals'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -34,6 +34,11 @@ class Item extends Model
    public function item_stocks()
    {
       return $this->hasMany('App\Models\Common\ItemStock');
+   }
+   
+   public function item_stockables()
+   {
+      return $this->hasMany('App\Models\Common\ItemStockable');
    }
    
    public function unit()
@@ -60,7 +65,7 @@ class Item extends Model
    {
       $stocks = [];
       foreach (ItemStock::getStockists() as $key => $value) {
-         $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $value)->sum('total');
+         $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
       }
       return $stocks;
    }
@@ -72,7 +77,7 @@ class Item extends Model
       return $this->item_stocks->where('stockist', $stockist)->first();
    }
 
-   public function increase($number, $stockist, $exStockist = false)
+   public function Xincreasing($number, $stockist, $exStockist = false)
    {
       if($exStockist) {
          $exStockist = ItemStock::getValidStockist($exStockist);
@@ -91,7 +96,7 @@ class Item extends Model
       return $stock;
    }
 
-   public function decrease($number, $stockist, $exStockist = false)
+   public function Xdecreasing($number, $stockist, $exStockist = false)
    {
       if($exStockist) {
          $exStockist = ItemStock::getValidStockist($exStockist);
@@ -108,6 +113,55 @@ class Item extends Model
       $stock->save();
 
       return $stock;
+   }
+
+   public function transfer($collect, $number, $stockist = false, $exStockist = false) {
+      $collect = $collect->fresh();
+   
+      if($exStockist) {
+         $exStockist = ItemStock::getValidStockist($exStockist);
+         $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
+         $exStock->total = $exStock->total - $number;
+         $exStock->save();
+
+         $this->item_stockables()->create([
+            'base_id' => $collect->id,
+            'base_type' => get_class($collect),
+            'unit_amount' => (-1) * ($number),
+            'stockist' => $exStockist,
+         ]);
+         
+         if($stockist==false) return $exStock;
+      }
+
+      if($stockist !== false) {
+      
+         $stockist = ItemStock::getValidStockist($stockist);
+         $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
+         $stock->total = $stock->total + $number;
+         $stock->save();
+   
+         $this->item_stockables()->create([
+            'base_id' => $collect->id,
+            'base_type' => get_class($collect),
+            'unit_amount' => ($number),
+            'stockist' => $stockist,
+         ]);
+   
+         return $stock;
+      }
+   }
+
+   public function distransfer($collect, $delete=true) {
+      if ($collect->stockable->count() == 0) return;
+      foreach ($collect->stockable as $key => $log) {
+         // abort(501, json_encode($log));
+         $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
+         $stock->total -= $log->unit_amount;
+         $stock->save();
+
+         if($delete) $log->delete();
+      }
    }
 }
  

@@ -28,16 +28,14 @@ class CreateDeliveryOrdersTables extends Migration
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
 
-            // $table->integer('transport_id')->nullable();
             $table->string('transport_number')->nullable();
             $table->integer('transport_rate')->nullable();
             $table->integer('operator_id')->nullable();
-
-            $table->tinyInteger('is_revision')->default(0);
             $table->text('description')->nullable();
 
-            $table->integer('request_order_id')->nullable();
+            $table->integer('revise_id')->nullable();
             $table->integer('ship_delivery_id')->nullable();
+            $table->integer('request_order_id')->nullable();
             $table->timestamps();
         });
 
@@ -49,6 +47,8 @@ class CreateDeliveryOrdersTables extends Migration
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
+
+            $table->integer('request_order_item_id')->nullable();
 
             $table->timestamps();
         });

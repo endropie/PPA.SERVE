@@ -7,6 +7,7 @@ use App\Http\Requests\Income\ShipDelivery as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\ShipDelivery; 
 use App\Models\Income\ShipDeliveryItem; 
+use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
@@ -22,12 +23,12 @@ class ShipDeliveries extends ApiController
                 break;
 
             case 'datagrid':    
-                $ship_deliveries = ShipDelivery::with(['customer','operator','vehicle'])->filter($filters)->get();
+                $ship_deliveries = ShipDelivery::with(['customer','operator'])->filter($filters)->get();
                 $ship_deliveries->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $ship_deliveries = ShipDelivery::filter($filters)->with(['operator','vehicle', 
+                $ship_deliveries = ShipDelivery::filter($filters)->with(['operator', 
                     'delivery_orders' => function($q) { $q->select(['id', 'ship_delivery_id', 'number', 'numrev']);},
                     'customer' => function($q) { $q->select(['id', 'name']);}
                 ])->collect();
@@ -56,7 +57,7 @@ class ShipDeliveries extends ApiController
             $ship_delivery_items = ShipDeliveryItem::whereIn('id',$ids)
                 ->wait()
                 ->update(['ship_delivery_id' => $ship_delivery->id]);
-            $this->storeDeliveryOrder($ship_delivery, $rows);
+            $this->storeDeliveryOrder($ship_delivery);
         }
         else {
             abort(501, 'Part detail not found!');
@@ -79,67 +80,119 @@ class ShipDeliveries extends ApiController
         return response()->json($ship_delivery);
     }
 
+    public function storeRequestOrder($ship_delivery) 
+    {
+        if ($ship_delivery->customer->order_mode == "ACCUMULATE") {
+            $model = RequestOrder::where(function ($query) use ($ship_delivery) {
+                $query->whereDate('begin_date' , '<=', $ship_delivery->date)
+                      ->whereDate('until_date' , '>=', $ship_delivery->date);
+              })->where('customer_id', $ship_delivery->customer_id)
+                ->where('order_mode', $ship_delivery->customer->order_mode)
+                ->latest()->first();
+
+            if(!$model) {
+                $model = new RequestOrder;
+                $begin = Carbon()->parse($ship_delivery->date)->startOfMonth()->format('Y-m-d');
+                $until = Carbon()->parse($ship_delivery->date)->endOfMonth()->format('Y-m-d');
+                $order_mode = $ship_delivery->customer->order_mode;
+
+                $model->date  = $ship_delivery->date;
+                $model->begin_date  = $begin;
+                $model->until_date  = $until;
+                $model->customer_id = $ship_delivery->customer_id;
+                $model->order_mode   = $order_mode;
+                $model->description   = "ACCUMULATE P/O. FOR ". $begin." - ". $until;
+                // For model update 
+                if(!$model->id) {
+                    $model->number = $this->getNextRequestOrderNumber($ship_delivery->date);
+                }
+                $model->save();
+
+                $ship_delivery->request_order_id = $model->id;
+                $ship_delivery->save();
+            }
+
+            $rows = $ship_delivery->ship_delivery_items
+                ->groupBy('item_id')
+                ->map(function($group) {
+                    return [
+                        'item_id' => $group[0]->item_id,
+                        'unit_id' => $group[0]->item->unit_id,
+                        'unit_rate' => 1,
+                        'quantity' => $group->sum('unit_amount'),
+                        'price' => 0,
+                    ];
+                });
+
+            foreach ($rows as $key => $row) {
+                // $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate', 'quantity'])->merge(['price'=>0])->toArray();
+                
+                $detail = $model->request_order_items()->create($row);
+
+                // COMPUTE ITEMSTOCK !!
+                // $detail->item->transfer($detail, $detail->unit_amount, 'RO');
+                $detail->ship_delivery_id = $ship_delivery->id;
+                $detail->save();
+            }
+        }
+    }
+
     public function storeDeliveryOrder($ship_delivery) {
+
+        $this->storeRequestOrder($ship_delivery);
+
         $delivery_orders = $ship_delivery->delivery_orders;
         foreach ($delivery_orders as $delivery_order) {
-            foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
-                $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
-                $delivery_order_item->ship_delivery_items()->delete();
-                // $delivery_order_item->request_order_item()->delete();
-                $delivery_order_item->delete();
+            foreach ($delivery_order->delivery_order_items as $detail) {
+                $detail->item->distransfer($detail);
+                $detail->delete();
             }
             $delivery_order->delete();
         }
 
-        $list = []; $extract=[]; $mounted=[];
-
+        $list = [];
         $request_order_items = RequestOrderItem::whereHas('request_order', function($q) use($ship_delivery) {
             $q->where('customer_id', $ship_delivery->customer_id);
-        })->get()->filter(function($x) {
+          })
+          ->get()
+          ->filter(function($x) {
             return ($x->unit_amount > $x->total_delivery_order_item);
+          })
+          ->map(function($detail) {
+            $detail->sort_date = $detail->request_order->date;
+            return $detail;
+          })->sortBy('sort_date'); 
+
+        $rows = $ship_delivery->ship_delivery_items->groupBy('item_id')->map(function($group, $key){
+            return $group->sum('unit_amount');
         });
 
-        // abort(500, json_encode($request_order_items->count()));
-        foreach ($ship_delivery->ship_delivery_items as $ship_delivery_item) {
-            $max_amount = $ship_delivery_item->unit_amount;
-            $sum_amount = 0;
+        // $this->error($request_order_items);
 
-            foreach ($request_order_items as $key => $base) {
-                if($base->item_id == $ship_delivery_item->item_id) {
-                    $unit_amount = $base->unit_amount - $base->total_delivery_order_item - ($mounted[$base->id] ?? 0);
-                    $unit_amount = ($max_amount > $unit_amount ? $unit_amount : $max_amount);
-                    $max_amount -= $unit_amount;
-                    $sum_amount += $unit_amount;
+        foreach ($request_order_items as $detail) {
+            if(isset($rows[$detail->item_id])) {
 
-                    if(!isset($mounted[$base->id])) $mounted[$base->id] = 0;
-                    $mounted[$base->id] += $unit_amount;
-                    
-                    if($unit_amount > 0 ){
-                        $RO = $base->request_order_id;
-                        $ITEM = $base->id;
-        
-                        $list[$RO][$ITEM] = [
-                            'item_id' => $ship_delivery_item->item_id,
-                            'unit_id' => $ship_delivery_item->item->unit_id,
-                            'unit_rate' => 1,
-                            'quantity' => $sum_amount
-                        ];
-        
-                        $extract[$RO][$ITEM][] = [
-                            'base_id' => $ship_delivery_item->id,
-                            'base_type' => get_class($ship_delivery_item),
-                            'unit_amount' => ($unit_amount)
-                        ];
+                $max_amount = $rows[$detail->item_id];
+                $unit_amount = $detail->unit_amount - $detail->total_delivery_order_item;
+                $unit_amount = ($max_amount < $unit_amount ? $max_amount : $unit_amount);
 
-                    }
+                $rows[$detail->item_id] -= $unit_amount;
+                
+                if($unit_amount > 0 ){
+                    $RO = $detail->request_order_id;
+                    $DTL = $detail->id;
+    
+                    $list[$RO][$DTL] = [
+                        'item_id' => $detail->item_id,
+                        'unit_id' => $detail->item->unit_id,
+                        'unit_rate' => 1,
+                        'quantity' => $unit_amount
+                    ];
                 }
-
             }
-
-            //  if($max_amount > 0.1) abort(501, 'Total unit invalid! --> '. $max_amount .' from '. $ship_delivery_item->unit_amount);
         }
 
-        foreach ($list as $ID => $rows) {
+        foreach ($list as $RO => $rows) {
             $delivery_order = $ship_delivery->delivery_orders()->create([
                 'number' => $this->getNextDeliveryOrderNumber(),
                 'transaction' => 'REGULER',
@@ -155,27 +208,16 @@ class ShipDeliveries extends ApiController
                 'due_time' => $ship_delivery->due_time,
             ]);
 
-            foreach ($rows as $ITEM => $row) {
-                $row['quantity'] = 0;
+            foreach ($rows as $DTL => $row) {
 
-                foreach ($extract[$ID][$ITEM] as $val) {
-                    $row['quantity'] += $val['unit_amount'];
-                }
-                
-                // abort(501, json_encode($row['quantity']));
+                $detail = $delivery_order->delivery_order_items()->create($row);
+                $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-                $newDetail = $delivery_order->delivery_order_items()->create($row);
-                $newDetail->item->decrease($newDetail->unit_amount, 'FG');
-                // $newDetail->request_order_item_id = $row['request_order_item_id'];
-                $newDetail->ship_delivery_items()->createMany($extract[$ID][$ITEM]);
-                $newDetail->request_order_item()->create([
-                    'base_type' => RequestOrderItem::class,
-                    'base_id' => $ITEM,
-                    'unit_amount' => $newDetail->unit_amount,
-                ]);
+                $detail->request_order_item_id = $DTL;
+                $detail->save();
             }
             
-            $delivery_order->request_order_id = $ID;
+            $delivery_order->request_order_id = $RO;
             $delivery_order->save();
         }
 
@@ -185,20 +227,33 @@ class ShipDeliveries extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        $ship_delivery = ShipDelivery::findOrFail($id);
+        $ship_delivery = ShipDelivery::findOrFail($id);        
+
+        $latest = ShipDelivery::latest('created_at')->first();
         
-        if ($ship_delivery->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
-        }
+        if ($ship_delivery->is_relationship == true) $this->error('The data has relationships, is not allowed to be changed !');
+        
+
+        if ($latest->id != $ship_delivery->id) $this->error('Data cannot to deleted, For delete latest only!');
+        
 
         foreach ($ship_delivery->delivery_orders as $delivery_order) {
-            foreach ($delivery_order->delivery_order_items as $delivery_order_item) {
-                $delivery_order_item->item->increase($delivery_order_item->unit_amount, 'FG');
-                $delivery_order_item->ship_delivery_items()->delete();
-                $delivery_order_item->request_order_item()->delete();
-                $delivery_order_item->delete();
+            foreach ($delivery_order->delivery_order_items as $detail) {
+                $detail->item->distransfer($detail);
+                $detail->delete();
             }
             $delivery_order->delete();
+        }
+
+        if ($ship_delivery->customer->order_mode == 'ACCUMULATE') {
+            $request_order_items = RequestOrderItem::where('ship_delivery_id', $ship_delivery->id);
+            
+            $request_order_items->each(function($detail) {
+                $detail->delete();
+
+                $request_order = RequestOrder::find($detail->request_order_id);
+                if($request_order->request_order_items->count() == 0) $request_order->delete();
+            });
         }
 
         $ship_delivery->ship_delivery_items()->update(['ship_delivery_id' => null]);

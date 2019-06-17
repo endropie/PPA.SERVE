@@ -46,7 +46,6 @@ class CreateItemsTable extends Migration
             $table->increments('id');
             $table->integer('line_id');
             $table->string('note')->nullable();
-
             $table->integer('item_id');  // =>> the field "belongsTo" relation with "Items" table.
             $table->timestamps();
         });
@@ -62,11 +61,22 @@ class CreateItemsTable extends Migration
         Schema::create('item_stocks', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('item_id');
-            $table->tinyInteger('stockist');
+            $table->string('stockist', 5);
             $table->float('total')->default(0);
             $table->timestamps();
 
             $table->unique(['item_id','stockist']);
+        });
+
+        Schema::create('item_stockables', function (Blueprint $table) {
+            $table->increments('id');
+            $table->morphs('base');
+            $table->integer('item_id');
+            $table->string('stockist', 5);
+            $table->float('unit_amount')->default(0);
+            $table->timestamps();
+
+            // $table->unique(['item_id','stockist']);
         });
     }
 
@@ -81,5 +91,6 @@ class CreateItemsTable extends Migration
         Schema::dropIfExists('item_prelines');
         Schema::dropIfExists('item_units');
         Schema::dropIfExists('item_stocks');
+        Schema::dropIfExists('item_stockables');
     }
 }

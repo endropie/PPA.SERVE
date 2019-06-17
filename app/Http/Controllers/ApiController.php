@@ -51,8 +51,10 @@ class ApiController extends BaseController
         return $counter;
     }
 
-    public function error($message = 'NOT ALLOWED!', $context = null, $code = 501) {
-        return response()->json(['message' => $message, 'context' => $context], $code);
-        // abort($code, $message, [$context]);
+    public function error($message = 'The Rosource is not Allowed!', $code = 501) {
+        // return response()->json(['message' => $message, 'context' => $context], $code);
+        if(! is_numeric($code)) $code = 501;
+        if(! is_string($message)) $message = json_encode($message);
+        abort(501, $message);
     }
 }

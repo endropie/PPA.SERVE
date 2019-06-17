@@ -7,31 +7,31 @@ use App\Models\Model;
 class ItemStock extends Model
 {
    static $stockists = [
-      'FM' => 1,
-      'WO' => 2,
-      'FG' => 3,
-      'NG' => 4,
-      'NGR' => 5,
+      // 'FM' => 1,
+      // 'WO' => 2,
+      // 'FG' => 3,
+      // 'NG' => 4,
+      // 'NGR' => 5,
+      'FM' => 'Fresh Material',
+      'WO' => 'Work Order',
+      'FG' => 'Final Good',
+      'NG' => 'Not Good',
+      'NGR' => 'Not Good Repair',
+      'RO' => 'RO amounable',
+      'PDO' => 'PDO amounable',
    ];
 
    protected $fillable = ['item_id', 'stockist', 'total'];
 
-   protected $appends = ['stockist_name'];
+   protected $appends = [
+      // 'stockist_name'
+   ];
 
    protected $hidden = ['created_at', 'updated_at'];
-
-   protected $relationships = [];
 
    public function item()
    {
       return $this->belongsTo('App\Models\Common\Item');
-   }
-
-   public function getStockistNameAttribute(){
-      $code = $this->stockist;
-      $enum = static::getStockists();
-      $find = $enum->search(function ($item) use($code) { return $item == $code; });
-      return $find;
    }
 
    public static function getStockists() {
@@ -39,6 +39,14 @@ class ItemStock extends Model
    }
 
    public static function getValidStockist($code) {
+      $enum = static::getStockists();      
+      if(!$enum->has($code)) {
+         abort(500, 'CODE STOCK INVALID!');
+      }
+      return $code;
+    }
+
+   public static function XXgetValidStockist($code) {
       $enum = static::getStockists();
 
          if(!is_integer($code)) {

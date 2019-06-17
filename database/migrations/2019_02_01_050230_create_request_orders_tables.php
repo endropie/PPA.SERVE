@@ -25,6 +25,7 @@ class CreateRequestOrdersTables extends Migration
             
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });
@@ -40,6 +41,7 @@ class CreateRequestOrdersTables extends Migration
             $table->float('price');
             $table->string('note')->nullable();
 
+            $table->integer('ship_delivery_id')->nullable();
             $table->timestamps();
         });
     }

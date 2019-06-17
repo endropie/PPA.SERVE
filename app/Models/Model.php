@@ -16,8 +16,9 @@ class Model extends Eloquent
 
     public function getIsRelationshipAttribute()
     {
-        foreach ($this->relationships as $relationship => $text) {
-            if(count(static::relate($relationship, $this)) > 0) {
+        $relationships = $this->getRelationships();
+        foreach ($relationships as $relationship => $text) {
+            if(static::relate($relationship, $this)) {
                 return true;
             }
         }
@@ -26,13 +27,48 @@ class Model extends Eloquent
 
     public function getHasRelationshipAttribute()
     {
-        return $this->relationship()
-        ->map(function($col, $key){
-            return count($col);
-        });
+        return $this->relationship();
     }
 
-    public static function relate ($relationship, $model, $i = 0, $result = null) {
+    public static function relate ($relationship, $model) 
+    {
+        $find = $model->has($relationship)->find($model->getKey());
+        return  (boolean) $find;
+    }
+
+    public function getRelationships ($parameter = null) 
+    {
+        if($parameter === null) $params = $this->relationships;
+        else $params = is_string($parameter) ? [$parameter] : $parameter;
+        
+        $relationships = [];
+        foreach ($params as $key => $value) {
+            if(is_string($key)) {
+                $relationships[$key] = is_string($value) ? $value : $key;
+            }
+            else $relationships[$value] = $value;
+        }
+
+        return $relationships;
+    }
+
+    public function relationship($parameter = null)
+    {
+        $relationships = $this->getRelationships($parameter);
+
+        $counter = array();
+        foreach ($relationships as $relationship => $text) {
+            $relate = static::relate($relationship, $this);
+            if($relate) $counter[$text] = $relate;
+        }
+
+
+        return collect($counter);
+    }
+
+    
+
+    public static function XXrelateCount ($relationship, $model, $i = 0, $result = null) {
 
         if($result == null) $result = [];
         
@@ -87,70 +123,6 @@ class Model extends Eloquent
 
         
         return $result;
-    }
-
-    public function relationship($parameter = null)
-    {
-        $baseModel = $this;
-        if($parameter === null) $params = $this->relationships;
-        else $params = is_string($parameter) ? [$parameter] : $parameter;
-        
-        $relationships = [];
-        foreach ($params as $key => $value) {
-            if(is_string($key)) {
-                $relationships[$key] = is_string($value) ? $value : $key;
-            }
-            else $relationships[$value] = $value;
-        }
-
-        $counter = array();
-        foreach ($relationships as $relationship => $text) {
-            $relation = explode('.', $relationship);
-            $relate = static::relate($relationship, $baseModel);
-            if(count($relate) > 0) {
-                if (is_string($parameter)) {
-                    return collect($relate);
-                }
-                else $counter[$text] = array_values($relate);
-            }
-        }
-
-
-        return collect($counter);
-    }
-
-    public function Xrelationship($values = []) 
-    {
-        $baseModel = $this;
-        if (!is_array($values) || count($values) === 0) $values = $this->relationships;
-
-        $relationships = [];
-        foreach ($values as $key => $value) {
-            if(!is_string($key)) $key = $value;
-            $relationships[$key] = $value;
-        }
-
-        $counter = array();
-        foreach ($relationships as $relationship => $text) {
-            $relation = explode('.', $relationship);
-            
-            $model = $baseModel;
-            for ($i=0; $i < count($relation); $i++) { 
-                $function = $relation[$i];
-                
-                if($i!=0){
-                   dd( $model->$function );
-                }
-                else{
-                    $model = $model->$function();
-                }
-                
-                if ($i == count($relation)-1 && $c = $model->count()) {
-                    $counter[] = $c . ' ' . strtolower($text);
-                }
-            }
-        }
-        return $counter;
     }
     
 }

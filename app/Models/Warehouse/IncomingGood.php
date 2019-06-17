@@ -15,8 +15,7 @@ class IncomingGood extends Model
    ];
 
    protected $relationships = [
-      'incoming_good_items.request_order_item.request_order.delivery_orders' => 'delivery_orders',
-      'incoming_good_items.request_order_item.pre_delivery_items' => 'pre_delivery_items',
+      'request_order.delivery_orders' => 'delivery_orders'
    ];
 
    protected $hidden = [];
@@ -26,14 +25,13 @@ class IncomingGood extends Model
       return $this->hasMany('App\Models\Warehouse\IncomingGoodItem');
    }
 
+   public function request_order() {
+      return $this->belongsTo('App\Models\Income\RequestOrder');
+   }
+
    public function customer()
    {
       return $this->belongsTo('App\Models\Income\Customer');
    }
-
-   public function request_order() {
-      return $this->hasOne('App\Models\Income\RequestOrder');
-   }
-   
 }
  

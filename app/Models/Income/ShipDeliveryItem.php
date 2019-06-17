@@ -9,7 +9,7 @@ class ShipDeliveryItem extends Model
 {
    use Filterable;
 
-   protected $appends = ['total_delivery_order_item'];
+   protected $appends = ['unit_amount'];
 
    protected $fillable = [
       'item_id', 'unit_id', 'unit_rate', 'quantity',
@@ -26,29 +26,19 @@ class ShipDeliveryItem extends Model
       return $this->belongsTo('App\Models\Income\ShipDelivery');
    }
 
-   public function pre_delivery_item()
-   {
-      return $this->belongsTo('App\Models\Income\PreDeliveryItem');
-   }
-
    public function item()
    {
       return $this->belongsTo('App\Models\Common\Item');
    }
 
+   public function stockable()
+   {
+      return $this->morphMany('App\Models\Common\ItemStockable', 'base');
+   }
+
    public function unit()
    {
       return $this->belongsTo('App\Models\Reference\Unit');
-   }
-
-   public function delivery_order_items() {
-      return $this->morphMany('App\Models\Common\MountBaseItemable', 'base')
-         ->where('mount_type', 'App\Models\Income\DeliveryOrderItem');
-   }
-
-   public function getTotalDeliveryOrderItemAttribute() {
-      
-      return (double) $this->delivery_order_items->sum('unit_amount');
    }
 
    public function getUnitAmountAttribute() {
@@ -59,12 +49,7 @@ class ShipDeliveryItem extends Model
    }
 
    public function scopeWait($query) {
-      $query->whereNull('ship_delivery_id');
-   }
-
-   public function scopeDelivered($query) {
-      // $query->where('id', '>', 1);
-      $query->whereNotNull('ship_delivery_id');
+      return $query->doesntHave('ship_delivery');
    }
 }
  

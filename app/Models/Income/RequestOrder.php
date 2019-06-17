@@ -15,7 +15,7 @@ class RequestOrder extends Model
    ];
  
    protected $relationships = [
-      'incoming_good',
+      'incoming_goods',
       'delivery_orders'
    ];
 
@@ -33,30 +33,8 @@ class RequestOrder extends Model
       return $this->hasMany('App\Models\Income\DeliveryOrder');
    }
 
-   public function incoming_good() {
-      return $this->hasOne('App\Models\Warehouse\IncomingGood');
-   }
-
-   public function getTotalDeliveryOrderItemAttribute() {
-      $result = []; //collect();
-
-      $delivery_orders = $this->delivery_orders;
-      // dd($delivery_orders);
-      foreach ($delivery_orders->toArray() as $delivery_order) {
-         dd($delivery_order);
-         foreach ($delivery_order as $detail) {
-            dd($detail);
-            if(!isset($result[$delivery_order->id][$detail->item_id])) $result[$delivery_order->id][$detail->item_id] = 0;
-            $result[$delivery_order->id][$detail->item_id] += $detail->unit_amount;
-         }
-      }
-
-      return $result;
-      // return $delivery_orders->get()->map(function($c) {
-      //    return $c->delivery_order_items->groupBy('item_id')->map(function($x) {
-      //       return $x->sum('unit_amount');
-      //    });
-      // });
+   public function incoming_goods() {
+      return $this->hasMany('App\Models\Warehouse\IncomingGood');
    }
 }
  

@@ -49,11 +49,11 @@ class PreDeliveries extends ApiController
 
         $pre_delivery = PreDelivery::create($request->all());
 
-        $item = $request->pre_delivery_items;
-        for ($i=0; $i < count($item); $i++) { 
+        $rows = $request->pre_delivery_items;
+        for ($i=0; $i < count($rows); $i++) { 
             // create detail item created!
-            $pre_delivery_item = $pre_delivery->pre_delivery_items()->create($item[$i]);
-            $this->storeMountUnitAmount($pre_delivery, $pre_delivery_item);
+            $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
+            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', 'RO');
         }
 
         $this->DATABASE::commit();
@@ -69,8 +69,39 @@ class PreDeliveries extends ApiController
         ])->findOrFail($id);
 
         $pre_delivery->setAppends(['has_relationship']);
-        // dd($pre_delivery->relationship(['pre_delivery_items.request_order_items']));
 
+        return response()->json($pre_delivery);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+        $pre_delivery = PreDelivery::findOrFail($id);
+        
+        if ($pre_delivery->is_relationship == true) {
+            $this->error('The data has relationships, is not allowed to be changed!');
+        }
+
+        // Delete old incoming goods items when $request detail rows has not ID
+        if($pre_delivery->pre_delivery_items) {
+            foreach ($pre_delivery->pre_delivery_items as $detail) {
+              // Delete detail of "Request Order"
+              $detail->item->distransfer($detail);
+              $detail->delete();
+            }
+        }
+
+        $rows = $request->pre_delivery_items;
+        for ($i=0; $i < count($rows); $i++) { 
+            // create detail item created!
+            $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
+            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', 'RO');
+            
+            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be changed!');
+            // abort(501, $detail->item_id .' -> '.$detail->item->stock('RO')->total .'->'. $detail->item->stock('PDO')->total);
+        }
+
+        $this->DATABASE::commit();
         return response()->json($pre_delivery);
     }
 
@@ -80,69 +111,20 @@ class PreDeliveries extends ApiController
 
         $pre_delivery = PreDelivery::findOrFail($id);
         if ($pre_delivery->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+            $this->error('The data has relationships, is not allowed to be deleted!');
         }
 
-        $pre_delivery->pre_delivery_items->map(function($detail) {
-            $detail->request_order_items()->delete();
-            $detail->delete();
-        });
-        $pre_delivery->delete();
+        
+        foreach ($pre_delivery->pre_delivery_items as $detail) {
+            $detail->item->distransfer($detail);
 
+            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be deleted');
+            $detail->delete();
+        }
+        $pre_delivery->delete();
         
         $this->DATABASE::commit();
 
         return response()->json(['success' => true]);
     }
-
-    public function storeMountUnitAmount($pre_delivery, $pre_delivery_item) {
-        if ($pre_delivery->order_mode == 'PO') {
-            //Code..
-            abort(501, 'is POmode');
-        }
-        else {
-            $request_order_items = RequestOrderItem::with('item')
-              ->where('item_id', $pre_delivery_item->item_id)
-              ->whereHas('request_order', function($q) use($pre_delivery) {
-                $q->where('customer_id', $pre_delivery->customer_id);
-              })->get();
-              
-
-            $item_amount = $pre_delivery_item->unit_amount;
-            $assosiate = collect([]);
-
-            for ($i=0; $i < count($request_order_items); $i++) { 
-                $detail = $request_order_items[$i];
-                $detail->unit_available = ( $detail->unit_amount - $detail->total_pre_delivery_item );
-
-                if ($item_amount <= 0) break;
-                if ($detail->unit_available <= 0)  continue;
-
-                $quantity = $item_amount > $detail->unit_available ? $detail->unit_available : $item_amount;
-
-                if($quantity > 0) {
-                    $assosiate->push([
-                        'base_type' => get_class($detail),
-                        'base_id' => $detail->id,
-                        'unit_amount' => $quantity
-                    ]);
-                }
-
-                $item_amount -= $quantity;
-            }
-
-            if($item_amount > 0.5) {
-                $name = $detail->item->part_name;
-                $code = $detail->item->code;
-
-                $message = 'Item '. ($code ? '['.$code.'] ': '') . ($name ?? '').' total unit invalid!';
-                // abort()
-                abort(501, $message);
-            }
-            $pre_delivery_item->request_order_items()->createMany($assosiate->toArray());
-
-            // $this->error(501, 'Item unit amount invalid!', $assosiate);
-        }
-    }
-
 }

@@ -26,24 +26,16 @@ class IncomingGood extends QueryFilters
         return $this->builder->where('date', '<=',  $value);
     }
 
-    public function sortBy($value) {
-        $order = Request('sortDesc') === "1" ? 'desc' : 'asc';
-        switch ($value) 
-        {
-            case 'customer_id': return $this->builder->with([
-                'customer' => function($query) use($order) {
-                    $query->where('id', 1);
-                    // dd ($query);
-                }
-              ]);        
-            break;
-            
-            default:return $this->builder->orderBy($value, $order);
-            break;
-        }
+    public function sort_customer_id($order) {
+        
+        $table = 'incoming_goods';
+        $with = 'customers';
+        $key = 'customer_id';
+        $field = 'name';
 
+        return $this->builder->select($table.'.*', \DB::raw('(SELECT '.$field.' FROM '.$with.' WHERE '. $with .'.id ='.$table.'.'.$key.' ) as fieldsort'))
+        ->orderBy('fieldsort', $order);
         
         
     }
-
 }

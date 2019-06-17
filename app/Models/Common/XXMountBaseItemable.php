@@ -4,7 +4,7 @@ namespace App\Models\Common;
 
 use App\Models\Model;
 
-class MountBaseItemable extends Model
+class XXMountBaseItemable extends Model
 {
     protected $fillable = [
         'unit_amount', 'base_id', 'base_type'

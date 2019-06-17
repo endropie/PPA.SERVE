@@ -15,28 +15,40 @@ class WorkOrders extends ApiController
     {
         switch (request('mode')) {
             case 'all':            
-            $work_orders = WorkOrder::filterable()->get();    
+            $work_orders = WorkOrder::filter($filter)->get();
             break;
 
             case 'datagrid':    
-            $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->filterable()->get();
+            $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->filter($filter)->get();
             break;
 
-            // case 'items':    
-            // $work_orders = \App\Models\Factory\WorkOrderItem::with([
-            //     'work_order'=> function($q) { $q->select(['id','number']); },
-            // ])->get();
-            // break;
+            case 'items': 
+            $work_orders = WorkOrder::with('work_order_items')->filter($filter)->get()
+              ->filter(function($x) {
+                  return $x; //($x->unit_amount > $x->total_packing_item);
+              });
+            break;
+
+            case 'itemsX':    
+            $work_orders = \App\Models\Factory\WorkOrderItem::with([
+                'work_order'=> function($q) use ($filter){ 
+                    $q->filter($filter); 
+                }
+            ])->get()
+              ->filter(function($x) {
+                  return ($x->unit_amount > $x->total_packing_item);
+              });
+            break;
             
-            // case 'item-lines':    
-            //     // $work_orders = \App\Models\Factory\WorkOrderItemLine::with([
-            //     //     'work_order_item.work_order'=> function($q) { 
-            //     //         $q->select(['id','number']); 
-            //     //     },
-            //     // ])->get();
-            //     $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->get();
+            case 'item-lines':    
+                // $work_orders = \App\Models\Factory\WorkOrderItemLine::with([
+                //     'work_order_item.work_order'=> function($q) { 
+                //         $q->select(['id','number']); 
+                //     },
+                // ])->get();
+                $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->get();
                 
-            // break;
+            break;
 
             default:
                 $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->collect();                
@@ -59,8 +71,8 @@ class WorkOrders extends ApiController
             // create item row on the Work Orders updated!
             $detail = $work_order->work_order_items()->create($row);
             // Calculate stock on after the Work Orders updated!
-            $From = $work_order->stockist_from;
-            $detail->item->increase($detail->unit_amount, 'WO', $From);
+            $FROM = $work_order->stockist_from;
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
 
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
@@ -98,39 +110,28 @@ class WorkOrders extends ApiController
 
         $rows = $request->work_order_items;
 
-        $deletes = $work_order->work_order_items()->whereNotIn('id', array_filter(array_column($rows, 'id')))->get();
-        foreach ($deletes as $detail) {
-            $From = $work_order->stockist_from;
-            $detail->item->decrease($detail->unit_amount, 'WO', $From);
+        foreach ($work_order->work_order_items as $detail) {
+            $detail->item->distransfer($detail);
+
+            $detail->work_order_item_lines()->delete();
             $detail->delete();
         }
 
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            $oldDetail = $work_order->work_order_items()->find($row['id']);
-            if($oldDetail) {
-                // Calculate stock on before the incoming Goods updated!
-                $From = $work_order->stockist_from;
-                $oldDetail->item->decrease($oldDetail->unit_amount, 'WO', $From);
-            }
+            // $oldDetail = $work_order->work_order_items()->find($row['id']);
 
-            // Update or Create detail row
-            // if($row['stockist_from'] != 'FM') abort(501, $row['stockist_from']);
-
-            $newDetail = $work_order->work_order_items()->updateOrCreate(['id' => $row['id']], $row);
+            $detail = $work_order->work_order_items()->create($row);
             // Calculate stock on after Detail item updated!
-            $From = $newDetail->stockist_from;
-            $newDetail->item->increase($newDetail->unit_amount, 'WO', $From);
-
+            $FROM = $work_order->stockist_from;
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
-                $newDetail->work_order_item_lines()
-                    ->whereNotIn('id', array_filter(array_column($row_lines, 'id')))
-                    ->delete();
 
                 for ($j=0; $j < count($row_lines); $j++) { 
                     $row_line = $row_lines[$j];
-                    $newDetail->work_order_item_lines()->updateOrCreate(['id' => $row_line['id'] ?? null ],$row_line);
+                    $detail->work_order_item_lines()->create($row_line);
                 }
             }
         }
@@ -144,10 +145,13 @@ class WorkOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $work_order = WorkOrder::findOrFail($id);
-        $work_order->work_order_items->map(function($detail) use($work_order) {
-            $detail->item->decrease($detail->unit_amount, 'WO', $work_order->stockist_from);
-        });
-        $work_order->work_order_items()->delete();
+        foreach ($work_order->work_order_items as $detail) {
+            $detail->item->distransfer($detail);
+
+            $detail->work_order_item_lines()->delete();
+            $detail->delete();
+        }
+
         $work_order->delete();
 
         $this->DATABASE::commit();

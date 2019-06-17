@@ -57,7 +57,7 @@ class Packings extends ApiController
             $detail = $packing->packing_items()->create($request->packing_items);
             
             // Calculate stock on after the Packing items Created!
-            $detail->item->increase($detail->unit_amount, 'FG', 'WO');
+            $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WO');
 
             $faults = $row['packing_item_faults'];
             for ($i=0; $i < count($faults); $i++) {
@@ -71,9 +71,8 @@ class Packings extends ApiController
             // Calculate "NG" stock on after the Item Faults Created!
             $NG = (double) $detail->packing_item_faults()->sum('quantity');
             if ($NG > 0) {
-                $detail->item->increase($NG, 'NG', 'WO');
-            } 
-            else if ($NG < 0) abort(500, 'Total NG FAILED');
+                $detail->item->transfer($detail, $NG, 'NG', 'WO');
+            }
         }
 
         $this->DATABASE::commit();
@@ -97,8 +96,6 @@ class Packings extends ApiController
             'packing_items.packing_item_faults.fault'
         ], $addWith))->findOrFail($id);
 
-        // $packing->has_relationship = [];
-
         return response()->json($packing);
     }
 
@@ -115,37 +112,30 @@ class Packings extends ApiController
             $oldDetail = $packing->packing_items->find($row['id']);
             if($oldDetail) {
                 // Calculate stock on before the Packing items updated!
-                $oldDetail->item->decrease($oldDetail->unit_amount, 'FG', 'WO');
-                // Calculate stock on before the NG items updated!
-                $NG = (double) $packing->packing_items->packing_item_faults()->sum('quantity');
-                $oldDetail->item->decrease($NG, 'NG', 'WO');
+                $oldDetail->item->distransfer($oldDetail);
             }
 
             // Update or Create detail row
             $newDetail = $packing->packing_items->updateOrCreate(['id' => $row['id']], $row);
             // Calculate stock on after the Packing items updated!
-            $newDetail->item->increase($newDetail->unit_amount, 'FG', 'WO');
+            $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'FG', 'WO');
 
             $faults = $row['packing_item_faults'];
             // Delete fault on the Packing Good updated!
-            $packing->packing_items->packing_item_faults()
-                ->whereNotIn('id', array_filter(array_column($faults, 'id')))
-                ->delete();
+            $packing->packing_items->packing_item_faults()->delete();
 
             for ($i=0; $i < count($faults); $i++) {
                 $fault = $faults[$i];
                 if($fault['fault_id'] || $fault['quantity'] ) {
                     // create fault on the Packing Good updated!
-                    $packing->packing_items->packing_item_faults()->updateOrCreate(['id'=>$fault['id']],$fault);
+                    $packing->packing_items->packing_item_faults()->create($fault);
                 }
             }
             
             // Calculate stock on after the NG items updated!
             $NG = (double) $packing->packing_items->packing_item_faults()->sum('quantity');
-            if ($NG > 0) {
-                $newDetail->item->increase($NG, 'NG', 'WO');
-            }
-            else if ($NG < 0) abort(500, 'Total NG FAILED');
+            if ($NG > 0) $newDetail->item->transfer($newDetail, $NG, 'NG', 'WO');
+            
         }
 
         $this->DATABASE::commit();
@@ -159,11 +149,7 @@ class Packings extends ApiController
         $detail = $packing->packing_items;
 
         // Calculate Stok Before deleting
-        $detail->item->decrease($detail->unit_amount, 'FG', 'WO');
-        $NG = (double) $detail->packing_item_faults()->sum('quantity');
-        if ($NG > 0) {
-            $detail->item->decrease($NG, 'NG', 'WO');
-        }
+        $detail->item->distransfer($detail);
 
         // Delete Packing.
         $detail->packing_item_faults()->delete();

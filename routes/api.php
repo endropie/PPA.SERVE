@@ -33,7 +33,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     // Route::post('auth', 'Auth\Authentication@user');
 
     Route::middleware([
-        // 'auth:api'
+        'auth:api'
         ])->group( function(){
     
         Route::prefix('auth')->name('auth.')->group(function () {

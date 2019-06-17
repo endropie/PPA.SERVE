@@ -42,9 +42,9 @@ class ShipDeliveryItems extends ApiController
         foreach ($request->ship_delivery_items as $key => $row) {
             
             if($row['quantity'] > 0) {
-                $ship_delivery_item = ShipDeliveryItem::create($row);
-                $ship_delivery_item->pre_delivery_item_id = $row["pre_delivery_item_id"];
-                $ship_delivery_item->save();
+                $detail = ShipDeliveryItem::create($row);
+                if($detail->item->stock('PDO')->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be created!');
+                $detail->item->transfer($detail, $detail->unit_amount, null, 'PDO');
             }
         }
 
@@ -68,28 +68,35 @@ class ShipDeliveryItems extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        $ship_delivery_item = ShipDeliveryItem::findOrFail($id);
+        $detail = ShipDeliveryItem::findOrFail($id);
         
-        if ($ship_delivery_item->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        if ($detail->is_relationship == true) {
+            $this->error('The data has relationships, is not allowed to be changed');
         }
 
-        $ship_delivery_item->update($request->input());
+        $detail->item->distransfer($detail);
+
+        $detail->update($request->input());
+
+        if($detail->item->stock('PDO')->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be updated!');
+        $detail->item->transfer($detail, $detail->unit_amount, null, 'PDO');
 
         $this->DATABASE::commit();
-        return response()->json($ship_delivery_item);
+        return response()->json($detail);
     }
 
     public function destroy($id)
     {
         $this->DATABASE::beginTransaction();
 
-        $ship_delivery_item = ShipDeliveryItem::findOrFail($id);
+        $detail = ShipDeliveryItem::findOrFail($id);
         
-        if ($ship_delivery_item->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+        if ($detail->is_relationship == true) {
+            $this->error('The data has relationships, is not allowed to be deleted');
         }
-        $ship_delivery_item->delete();
+        
+        $detail->item->distransfer($detail);
+        $detail->delete();
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);

@@ -43,6 +43,7 @@ class DeliveryOrders extends ApiController
         
         $delivery_order = DeliveryOrder::with([
             'customer', 
+            'request_order',
             'delivery_order_items.item.item_units', 
             'delivery_order_items.unit',
         ])->findOrFail($id);
@@ -58,17 +59,13 @@ class DeliveryOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $associate = [];
-        $revision = DeliveryOrder::findOrFail($id);        
-        if($revision) {
-          foreach ($revision->delivery_order_items as $detail) {
-            $detail->item->increase($detail->unit_amount, 'FG');
-            $detail->ship_delivery_items()->delete();
-            // $detail->request_order_items()->delete();
-          }
+        $revise = DeliveryOrder::findOrFail($id);   
+        if($revise) {
+            $revise->delivery_order_items->each(function($detail, $i) {
+                $detail->request_order_item_id = null;
+                $detail->save();
+            });
         }
-
-        $revision->is_revision = true;
-        $revision->save();
 
         // Auto generate number of revision
         if($request->number) {
@@ -78,59 +75,40 @@ class DeliveryOrders extends ApiController
 
         $delivery_order = DeliveryOrder::create($request->all());
 
-        $ship_delivery_items = ShipDeliveryItem::whereHas('ship_delivery', 
-          function($q) use($delivery_order) {
-            $q->where('customer_id', $delivery_order->customer_id);
-          }
-        )->get()->filter(function($detail){
-                return ($detail->unit_amount - $detail->total_delivery_order_item) > 0;
-          });
-
         $rows = $request->delivery_order_items;
         $mounting = []; $check = [];
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
             $oldDetail = DeliveryOrderItem::find($row["id"]);
-            // abort(500, json_encode($oldDetail->request_order_item->base->quantity));
-
+            
             // create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            // Calculate stock on after the Delivery order revision!
-            $detail->item->decrease($detail->unit_amount, 'FG');
+            $detail->item->transfer($detail, (-1*$oldDetail->unit_amount), null, 'FG');
+            $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-            $detail->request_order_item()->create([
-                'base_type' => get_class($oldDetail->request_order_item->base),
-                'base_id' => $oldDetail->request_order_item->base->id,
-                'unit_amount' => $detail->unit_amount
-            ]);
+            $detail->item->transfer($detail, (-1*$oldDetail->unit_amount), null, 'PDO');
+            $detail->item->transfer($detail, $detail->unit_amount, null, 'PDO');
 
-            $max_amount = $detail->unit_amount;
-            foreach ($ship_delivery_items as $base) {
-                if($base->item_id == $detail->item_id) {
+            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be changed');
 
-                    if($max_amount <= 0 ) break;
-                    if(!isset($mounting[$base->id])) $mounting[$base->id] = 0;
+            $detail->request_order_item_id = $row['request_order_item_id'];
+            $detail->save();
 
-                    $available = $base->unit_amount - ($base->total_delivery_order_item + $mounting[$base->id]);
-                    $quantity = $max_amount > $available ? $available : $max_amount;
-
-                    $detail->ship_delivery_items()->create([
-                        'base_type' => get_class($base),
-                        'base_id' => $base->id,
-                        'unit_amount' => $quantity
-                    ]);
-
-                    $mounting[$base->id] += (double) $quantity;
-                    $max_amount -= $quantity;                    
-                }
+            if($detail->request_order_item->total_delivery_order_item > ($detail->request_order_item->unit_amount + 0.1)) {
+                $this->error('Data is not allowed to be changed');
             }
+            
         }
 
         $delivery_order->request_order_id = $request->request_order_id;
         $delivery_order->ship_delivery_id = $request->ship_delivery_id;
         $delivery_order->save();
+
+
+        $revise->revise_id = $delivery_order->id;
+        $revise->save();
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);

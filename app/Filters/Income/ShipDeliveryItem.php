@@ -14,20 +14,20 @@ class ShipDeliveryItem extends QueryFilters
     }
   
     public function customer_id($value) {
-        return $this->builder->whereHas('pre_delivery_item.pre_delivery', 
+        return $this->builder->whereHas('item', 
           function ($q) use($value) {
             $q->where('customer_id', $value);
         });
     }
 
-    public function sort_part_name($name, $order = 'asc') {
+    public function sort_part_name($order = 'asc') {
         // return $this->builder->leftJoin('items', 'items.id' , '=', 'ship_delivery_items.item_id')->orderBy('part_name', $order);
         $table = 'ship_delivery_items';
         $field = 'part_name';
         $join = 'items';
         $foreign = 'item_id';
 
-        $this->builder->select($table.'.*', \DB::raw('(SELECT '.$field.' FROM items WHERE '. $join .'.id ='.$table.'.'.$foreign.' ) as fieldsort'))
+        return $this->builder->select($table.'.*', \DB::raw('(SELECT '.$field.' FROM items WHERE '. $join .'.id ='.$table.'.'.$foreign.' ) as fieldsort'))
             ->orderBy('fieldsort', $order);
     }
 

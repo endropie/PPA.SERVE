@@ -55,7 +55,7 @@ class RequestOrders extends ApiController
         }
 
         $request_orders->map(function($row) {
-            $row->request_order_items->each->setAppends(['unit_amount','total_pre_delivery_item']);
+            $row->request_order_items->each->setAppends(['unit_amount']);
         });
 
         return response()->json($request_orders);
@@ -73,7 +73,8 @@ class RequestOrders extends ApiController
         for ($i=0; $i < count($item); $i++) { 
 
             // create item production on the request orders updated!
-            $request_order->request_order_items()->create($item[$i]);
+            $detail = $request_order->request_order_items()->create($item[$i]);
+            $detail->item->transfer($detail, $detail->unit_amount, 'RO');
         }
 
         // DB::Commit => Before return function!
@@ -104,18 +105,17 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::findOrFail($id);
         
         if ($request_order->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+            $this->error('The data has relationships, is not allowed to be changed');
         }
 
         $request_order->update($request->input());
 
         // Delete old incoming goods items when $request detail rows has not ID
-        $ids =  array_filter((array_column($request->request_order_items, 'id')));
-        $delete_details = $request_order->request_order_items()->whereNotIn('id', $ids)->get();
-        
-        if($delete_details) {
-          foreach ($delete_details as $detail) {
+        if($request_order->request_order_items) {
+          foreach ($request_order->request_order_items as $detail) {
             // Delete detail of "Request Order"
+            $detail->item->distransfer($detail);
+            if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be changed');
             $detail->delete();
           }
         }
@@ -123,15 +123,10 @@ class RequestOrders extends ApiController
         $rows = $request->request_order_items;
         for ($i=0; $i < count($rows); $i++) { 
             $row = $rows[$i];
-            $detail = $request_order->request_order_items()->find($row['id']);
-            if($detail) {                
-                // update item row on the request orders updated!
-                $detail->update($row);
-            }
-            else{
-                // create item row on the request orders updated!
-                $request_order->request_order_items()->create($row);
-            }
+
+            // abort(501, json_encode($fields));
+            $detail = $request_order->request_order_items()->create($row);
+            $detail->item->transfer($detail, $detail->unit_amount, 'RO');
         }
 
         // DB::Commit => Before return function!
@@ -147,10 +142,16 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::findOrFail($id);
         
         if ($request_order->is_relationship == true) {
-            return $this->error('SUBMIT FAIELD!', 'The data was relationship');
+            $this->error('The data has relationships, is not allowed to be deleted');
         }
 
-        $request_order->request_order_items()->delete();
+        foreach ($request_order->request_order_items as $detail) {
+            // Delete detail of "Request Order"
+            $detail->item->distransfer($detail);
+            if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be changed');
+            $detail->delete();
+        }
+        
         $request_order->delete();
 
         // DB::Commit => Before return function!

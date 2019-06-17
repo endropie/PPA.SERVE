@@ -28,7 +28,7 @@ class Settings extends Seeder
             // 'general.date_format'               => 'DD/MM/YYYYY',
             // 'general.percent_position'          => 'after',
 
-            'financial.begin_start'             => carbon()->startOfYear()->format('d-m'),
+            'financial.begin_start'             => Carbon()->startOfYear()->format('d-m'),
             
             'modules.invoice.number_prefix'     => 'INV-',
             'modules.invoice.number_digit'      => '5',

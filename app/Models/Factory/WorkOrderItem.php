@@ -10,7 +10,7 @@ class WorkOrderItem extends Model
       'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'
    ];
 
-   protected $appends = ['unit_amount'];
+   protected $appends = ['unit_amount', 'total_packing_item'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
@@ -19,6 +19,11 @@ class WorkOrderItem extends Model
    public function work_order_item_lines()
    {
       return $this->hasMany('App\Models\Factory\WorkOrderItemLine');
+   }
+
+   public function packing_items() 
+   {
+      return $this->hasMany('App\Models\Factory\PackingItem');
    }
 
    public function work_order()
@@ -31,6 +36,11 @@ class WorkOrderItem extends Model
       return $this->belongsTo('App\Models\Common\Item');
    }
 
+   public function stockable()
+   {
+      return $this->morphMany('App\Models\Common\ItemStockable', 'base');
+   }
+
    public function unit()
    {
       return $this->belongsTo('App\Models\Reference\Unit');
@@ -41,8 +51,13 @@ class WorkOrderItem extends Model
       return $this->hasMany('App\Models\Factory\WorkinProductionItem');
    }
 
-   public function getUnitAmountAttribute() {
+   public function getTotalPackingItemAttribute()
+   {
+      return $this->packing_items->sum('unit_amount');
+   }
 
+   public function getUnitAmountAttribute() 
+   {
       // return false when rate is not valid
       if($this->unit_rate <= 0) return null;
       

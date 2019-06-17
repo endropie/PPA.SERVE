@@ -16,10 +16,7 @@ class PreDelivery extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $relationships = [
-      'pre_delivery_items.ship_delivery_items' => 'ship_delivery_items',
-      'request_order',
-   ];
+   protected $relationships = [];
 
    public function pre_delivery_items()
    {
@@ -29,11 +26,6 @@ class PreDelivery extends Model
    public function customer()
    {
       return $this->belongsTo('App\Models\Income\Customer');
-   }
-
-   public function request_order()
-   {
-      return $this->belongsTo('App\Models\Income\RequestOrder');
    }
 }
  
