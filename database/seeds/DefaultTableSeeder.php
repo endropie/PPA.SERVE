@@ -20,6 +20,8 @@ class DefaultTableSeeder extends Seeder
 			\Artisan::call('passport:install');
 		}
 
+		// \Artisan::call('passport:install');
+
 		$this->auth();
 		$this->type_items();
 		$this->category_items();

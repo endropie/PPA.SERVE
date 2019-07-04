@@ -19,12 +19,14 @@ Route::middleware('auth')->get('/user', function () {
 Route::get('migrate', function (Request $request) {
     $print = [];
 
-    Artisan::call('migrate:fresh', array('--seed' => true));
+    Artisan::call('migrate:fresh');
     $print[] = Artisan::output();
     
     Artisan::call('migrate',['--path' => 'vendor/laravel/passport/database/migrations','--force' => true]);
     $print[] = Artisan::output();
-	shell_exec('php ../artisan passport:install');
+    
+    Artisan::call('passport:install');
+    $print[] = Artisan::output();
     
     dd($print);
 });
