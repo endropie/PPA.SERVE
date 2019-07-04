@@ -19,7 +19,7 @@ Route::middleware('auth')->get('/user', function () {
 Route::get('migrate', function (Request $request) {
     $print = [];
 
-    Artisan::call('migrate:fresh');
+    Artisan::call('migrate:fresh', ['--seed' => true]);
     $print[] = Artisan::output();
     
     Artisan::call('migrate',['--path' => 'vendor/laravel/passport/database/migrations','--force' => true]);
