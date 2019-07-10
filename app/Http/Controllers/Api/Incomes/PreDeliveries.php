@@ -77,6 +77,10 @@ class PreDeliveries extends ApiController
     {
         $this->DATABASE::beginTransaction();
         $pre_delivery = PreDelivery::findOrFail($id);
+
+        if ($pre_delivery->status == 'VOID') {
+            $this->error('The data has been VOID state, is not allowed to be changed!');
+        }
         
         if ($pre_delivery->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be changed!');
@@ -107,13 +111,21 @@ class PreDeliveries extends ApiController
 
     public function destroy($id)
     {
+        if(strtoupper(request('mode')) == 'VOID') {
+            return $this->void($id);
+        }
+
         $this->DATABASE::beginTransaction();
 
         $pre_delivery = PreDelivery::findOrFail($id);
+
+        if ($pre_delivery->status == 'VOID') {
+            $this->error('The data has been VOID state, is not allowed to be void!');
+        }
+
         if ($pre_delivery->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be deleted!');
         }
-
         
         foreach ($pre_delivery->pre_delivery_items as $detail) {
             $detail->item->distransfer($detail);
@@ -122,6 +134,24 @@ class PreDeliveries extends ApiController
             $detail->delete();
         }
         $pre_delivery->delete();
+        
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function void($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $pre_delivery = PreDelivery::findOrFail($id);
+
+        foreach ($pre_delivery->pre_delivery_items as $detail) {
+            $detail->item->distransfer($detail);
+        }
+
+        $pre_delivery->status = "VOID";
+        $pre_delivery->save();
         
         $this->DATABASE::commit();
 

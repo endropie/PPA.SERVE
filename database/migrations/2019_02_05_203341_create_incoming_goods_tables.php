@@ -29,6 +29,7 @@ class CreateIncomingGoodsTables extends Migration
             $table->string('transport_number')->nullable();
             $table->integer('transport_rate')->nullable();
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->integer('request_order_id')->nullable();
             $table->timestamps();

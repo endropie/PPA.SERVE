@@ -30,6 +30,7 @@ class CreatePreDeliveriesTables extends Migration
             $table->date('plan_until_date');
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });

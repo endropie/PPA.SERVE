@@ -20,6 +20,7 @@ class CreateWorkOrdersTables extends Migration
             $table->string('stockist_from', 5);
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });

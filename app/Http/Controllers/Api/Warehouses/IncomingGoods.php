@@ -124,13 +124,17 @@ class IncomingGoods extends ApiController
 
     public function destroy($id)
     {
+        if(strtoupper(request('mode')) == 'VOID') {
+            return $this->void($id);
+        }
+
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
         
         if ($incoming_good->is_relationship) $this->error('The data has relationships, is not allowed to be deleted');
-
+        if ($incoming_good->status != 'OPEN') $this->error('The data has not OPEN, is not allowed to be deleted');
         
         if($request_order = $incoming_good->request_order) {
             if($incoming_good->order_mode == 'NONE') {
@@ -161,6 +165,53 @@ class IncomingGoods extends ApiController
 
         $incoming_good->incoming_good_items()->delete();
         $incoming_good->delete();
+
+        // DB::Commit => Before return function!
+        $this->DATABASE::commit();
+        return response()->json(['success' => true]);
+    }
+
+    public function void($id)
+    {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
+        $incoming_good = IncomingGood::findOrFail($id);
+        
+        if ($incoming_good->status == 'VOID') $this->error('The data has VOID state, is not allowed to be void!');
+
+        
+        if($request_order = $incoming_good->request_order) {
+            if($incoming_good->order_mode == 'NONE') {
+                foreach ($request_order->request_order_items as $detail) {
+                    $detail->item->distransfer($detail);
+                    // if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
+                    // $detail->delete();
+                }
+                // $request_order->delete();
+            }
+            else if($incoming_good->order_mode == 'ACCUMULATE') {
+                if($details = $incoming_good->incoming_good_items) {
+                    foreach ($details as $detail) {
+                        $detail->request_order_item->item->distransfer($detail);
+                        // if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
+                        // $detail->request_order_item->delete();
+                    }
+                }
+            }    
+        }
+
+        if($details = $incoming_good->incoming_good_items) {
+            foreach ($details as $detail) {
+                $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
+                $detail->item->distransfer($detail);
+            }
+        }
+
+        // $incoming_good->incoming_good_items()->delete();
+        // $incoming_good->delete();
+        $incoming_good->status = 'VOID';
+        $incoming_good->save();
 
         // DB::Commit => Before return function!
         $this->DATABASE::commit();

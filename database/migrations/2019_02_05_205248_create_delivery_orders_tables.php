@@ -32,6 +32,7 @@ class CreateDeliveryOrdersTables extends Migration
             $table->integer('transport_rate')->nullable();
             $table->integer('operator_id')->nullable();
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->integer('revise_id')->nullable();
             $table->integer('ship_delivery_id')->nullable();

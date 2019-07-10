@@ -22,6 +22,7 @@ class CreateWorkinProductionsTables extends Migration
             $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });

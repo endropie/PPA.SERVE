@@ -108,6 +108,10 @@ class RequestOrders extends ApiController
             $this->error('The data has relationships, is not allowed to be changed');
         }
 
+        if ($request_order->status !== 'OPEN') {
+            $this->error('The data has not OPEN state, is not allowed to be changed');
+        }
+
         $request_order->update($request->input());
 
         // Delete old incoming goods items when $request detail rows has not ID
@@ -136,6 +140,9 @@ class RequestOrders extends ApiController
 
     public function destroy($id)
     {
+        if(strtoupper(request('mode')) == 'VOID') {
+            return $this->void($id);
+        }
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
         
@@ -143,6 +150,10 @@ class RequestOrders extends ApiController
         
         if ($request_order->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be deleted');
+        }
+
+        if ($request_order->status !== 'OPEN') {
+            $this->error('The data has not OPEN state, is not allowed to be deleted');
         }
 
         foreach ($request_order->request_order_items as $detail) {
@@ -153,6 +164,28 @@ class RequestOrders extends ApiController
         }
         
         $request_order->delete();
+
+        // DB::Commit => Before return function!
+        $this->DATABASE::commit();
+        return response()->json(['success' => true]);
+    }
+
+    public function void($id)
+    {
+        
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+        
+        $request_order = RequestOrder::findOrFail($id);
+
+        if($request_order->status == 'VOID') $this->error('The data has void state, is not allowed to be void!');
+        
+        foreach ($request_order->request_order_items as $detail) {
+            $detail->item->distransfer($detail);
+        }
+        
+        $request_order->status = 'VOID';
+        $request_order->save();
 
         // DB::Commit => Before return function!
         $this->DATABASE::commit();

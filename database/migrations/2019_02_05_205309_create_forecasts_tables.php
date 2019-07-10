@@ -22,6 +22,7 @@ class CreateForecastsTables extends Migration
             $table->integer('customer_id');
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });

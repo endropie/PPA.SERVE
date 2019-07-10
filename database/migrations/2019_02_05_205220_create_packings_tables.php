@@ -25,6 +25,7 @@ class CreatePackingsTables extends Migration
             $table->integer('operator_id')->nullable();
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
 
             $table->timestamps();
         });

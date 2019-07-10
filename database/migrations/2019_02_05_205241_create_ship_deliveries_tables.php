@@ -32,6 +32,8 @@ class CreateShipDeliveriesTables extends Migration
             $table->integer('operator_id')->nullable();
 
             $table->text('description')->nullable();
+            $table->string('status')->default('OPEN');
+            
             $table->integer('request_order_id')->nullable();
             $table->timestamps();
         });
