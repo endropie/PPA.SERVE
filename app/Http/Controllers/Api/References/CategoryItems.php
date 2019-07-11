@@ -55,6 +55,9 @@ class CategoryItems extends ApiController
 
     public function destroy($id)
     {
-        //
+        $brand = CategoryItem::findOrFail($id);
+        $brand->delete();
+
+        return response()->json(['success' => true]);
     }
 }
