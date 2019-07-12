@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Http\Controllers\Api\Factories;
 
+use App\Filters\Factory\Packing as Filters;
 use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
 
@@ -12,7 +12,7 @@ class Packings extends ApiController
 {
     use GenerateNumber;
 
-    public function index()
+    public function index(Filters $filter)
     {
         switch (request('mode')) {
             case 'all':            
@@ -25,7 +25,7 @@ class Packings extends ApiController
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->filterable()->get();
+                ])->filter($filter)->get();
                 
                 break;
 
@@ -35,7 +35,7 @@ class Packings extends ApiController
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->collect();                
+                ])->filter($filter)->collect();                
                 break;
         }
 

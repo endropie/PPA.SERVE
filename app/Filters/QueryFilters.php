@@ -21,12 +21,12 @@ class QueryFilters
     {
         $this->builder = $builder;
         $fields = \Schema::getColumnListing($builder->getQuery()->from);
-
-        // dd($this->filters());
+        
         foreach ($this->filters() as $name => $value) {
+
             if ( ! method_exists($this, $name)) {
                 if(strlen($value) && in_array($name, $fields)) {
-                    return $this->builder->where($name, $value);
+                    $this->builder->where($name, $value);
                 }
                 continue;
             }
@@ -95,5 +95,25 @@ class QueryFilters
             return $this->builder->orderBy($value, $order);
         }
         else return $this->builder;
+    }
+
+    public function search($value = '') {
+        if(!strlen($value)) return $this->builder;
+
+        $tableName = $this->builder->getQuery()->from;
+        $fields = \Schema::getColumnListing($tableName);
+        $keywords = explode('|', $value);
+
+        return $this->builder->where(function ($query) use ($fields, $keywords) {
+            foreach ($keywords as $keyword) {
+                if(strlen($keyword)) {
+                  $query->where(function ($query) use ($fields, $keyword) {
+                    foreach ($fields as $field) {
+                        $query->orWhere($field, 'like', '%'.$keyword.'%');
+                    }
+                  });
+                }
+            }
+        });
     }
 }

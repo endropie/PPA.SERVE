@@ -66,7 +66,15 @@ class Model extends Eloquent
         return collect($counter);
     }
 
-    
+    public function getTableColumns() {
+        $builder = $this->getConnection()->getSchemaBuilder();
+        $columns = $builder->getColumnListing($this->getTable());
+        $columnsWithType = collect($columns)->mapWithKeys(function ($item, $key) use ($builder) {
+            $key = $builder->getColumnType($this->getTable(), $item);
+            return [$item => $key];
+        });
+        return $columnsWithType->toArray();
+    }
 
     public static function XXrelateCount ($relationship, $model, $i = 0, $result = null) {
 

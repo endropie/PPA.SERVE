@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api\Factories;
 
+use App\Filters\Factory\WorkinProduction as Filters;
 use App\Http\Requests\Factory\WorkinProduction as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Factory\WorkinProduction; 
@@ -11,19 +12,21 @@ class WorkinProductions extends ApiController
 {
     use GenerateNumber;
 
-    public function index()
+    public function index(Filters $filter)
     {
         switch (request('mode')) {
             case 'all':            
-                $workin_productions = WorkinProduction::filterable()->get();    
+                $workin_productions = WorkinProduction::filter($filter)->get();    
                 break;
 
             case 'datagrid':    
-                $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])->filterable()->get();
+                $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])
+                    ->filter($filter)->get();
                 break;
 
             default:
-                $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])->collect();                
+                $workin_productions = WorkinProduction::with(['line', 'shift', 'workin_production_items'])
+                    ->filter($filter)->collect();                
                 break;
         }
 

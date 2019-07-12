@@ -28,17 +28,6 @@ class WorkOrders extends ApiController
                   return $x; //($x->unit_amount > $x->total_packing_item);
               });
             break;
-
-            case 'itemsX':    
-            $work_orders = \App\Models\Factory\WorkOrderItem::with([
-                'work_order'=> function($q) use ($filter){ 
-                    $q->filter($filter); 
-                }
-            ])->get()
-              ->filter(function($x) {
-                  return ($x->unit_amount > $x->total_packing_item);
-              });
-            break;
             
             case 'item-lines':    
                 // $work_orders = \App\Models\Factory\WorkOrderItemLine::with([
@@ -46,12 +35,13 @@ class WorkOrders extends ApiController
                 //         $q->select(['id','number']); 
                 //     },
                 // ])->get();
-                $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->get();
+                $work_orders = WorkOrder::with(['work_order_items.work_order_item_lines'])->filter($filter)->get();
                 
             break;
 
             default:
-                $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])->collect();                
+                $work_orders = WorkOrder::with(['line', 'work_order_items.item', 'work_order_items.work_order_item_lines'])
+                    ->filter($filter)->collect();                
                 break;
         }
 

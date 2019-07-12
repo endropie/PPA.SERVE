@@ -13,16 +13,12 @@ class IncomingGood extends QueryFilters
         $this->request = $request;
         parent::__construct($request);
     }
-  
-    public function customer_id($value) {
-        return $this->builder->where('customer_id', $value);
-    }
 
-    public function date_start($value) {
+    public function begin_date($value) {
         return $this->builder->where('date', '>=',  $value);
     }
 
-    public function date_end($value) {
+    public function until_date($value) {
         return $this->builder->where('date', '<=',  $value);
     }
 
