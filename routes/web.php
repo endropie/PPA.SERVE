@@ -15,6 +15,20 @@ Route::middleware('auth')->get('/user', function () {
     return auth()->user;
 });
 
+
+Route::get('migrate', function (Request $request) {
+    $print = [];
+
+    Artisan::call('migrate:fresh', array('--seed' => true));
+    $print[] = Artisan::output();
+    
+    Artisan::call('migrate',['--path' => 'vendor/laravel/passport/database/migrations','--force' => true]);
+    $print[] = Artisan::output();
+	shell_exec('php ../artisan passport:install');
+    
+    dd($print);
+});
+
 Auth::routes();
 
 Route::get('/', function () { return view('welcome'); });

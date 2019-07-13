@@ -16,7 +16,9 @@ class DefaultTableSeeder extends Seeder
 		// Create generate Passport Client: personal
 		// \Artisan::call('passport:client --personal');
 		// \Artisan::call('passport:client --password');
-		\Artisan::call('passport:install');
+		if(app()->runningInConsole()) {
+			\Artisan::call('passport:install');
+		}
 
 		$this->auth();
 		$this->type_items();

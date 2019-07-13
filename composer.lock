@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b99c732ae6ec31ce83531924b81e37a",
+    "content-hash": "237221e6d5a140f9a529e3e46e2273c7",
     "packages": [
         {
             "name": "akaunting/setting",
@@ -1305,16 +1305,16 @@
         },
         {
             "name": "laravel/passport",
-            "version": "v7.2.2",
+            "version": "v7.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/passport.git",
-                "reference": "c0c3fca80d8f5af90dcbf65e62bdd1abee9ac25d"
+                "reference": "89c81aa8ced151f8e67f47972e1dab71d60e90b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/passport/zipball/c0c3fca80d8f5af90dcbf65e62bdd1abee9ac25d",
-                "reference": "c0c3fca80d8f5af90dcbf65e62bdd1abee9ac25d",
+                "url": "https://api.github.com/repos/laravel/passport/zipball/89c81aa8ced151f8e67f47972e1dab71d60e90b4",
+                "reference": "89c81aa8ced151f8e67f47972e1dab71d60e90b4",
                 "shasum": ""
             },
             "require": {
@@ -1371,7 +1371,7 @@
                 "oauth",
                 "passport"
             ],
-            "time": "2019-03-13T14:21:06+00:00"
+            "time": "2019-07-02T15:36:59+00:00"
         },
         {
             "name": "laravel/tinker",

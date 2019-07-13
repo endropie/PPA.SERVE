@@ -22,9 +22,6 @@ Route::get('set', function(){
     setting()->save();
 });
 
-Route::middleware('auth')->get('/test', function (Request $request) {
-    return 'logined'; //$request->user();
-});
 
 Route::prefix('v1')->namespace('Api')->group(function() {
 
@@ -33,7 +30,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     // Route::post('auth', 'Auth\Authentication@user');
 
     Route::middleware([
-        'auth:api'
+        // 'auth:api'
         ])->group( function(){
     
         Route::prefix('auth')->name('auth.')->group(function () {
