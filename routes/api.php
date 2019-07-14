@@ -24,10 +24,14 @@ Route::get('set', function(){
 
 
 Route::prefix('v1')->namespace('Api')->group(function() {
-
+    
     Route::post('login', 'Auth\Authentication@login');
     Route::post('register', 'Auth\Authentication@register');
     // Route::post('auth', 'Auth\Authentication@user');
+
+    Route::get('app', function() {
+        return response()->json(setting()->all());
+    });
 
     Route::middleware([
         // 'auth:api'
