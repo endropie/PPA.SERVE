@@ -63,20 +63,21 @@ class DefaultTableSeeder extends Seeder
 			'users' => ['c','r','u','d'],
 			'roles' => ['c','r','u','d'],
 			'permissions' => ['c','r','u','d'],
-			'personal'=> ['r','u'],
+			'profile'=> ['r','u'],
 			// Common 
 			'items' => ['c','r','u','d'],
 			// Factories
-			'packing-items' => ['c','r','u','d'],
+			'packings' => ['c','r','u','d'],
 			'workin-productions' => ['c','r','u','d'],
 			'work-orders' => ['c','r','u','d'],
 			// Incomes
 			'customers' => ['c','r','u','d'],
 			'forecasts' => ['c','r','u','d'],
-			'requests' 	=> ['c','r','u','d'],
-			'pre-deliveries'=> ['c','r','u','d'],
-			'ship-deliveries'=> ['c','r','u','d'],
-			'delivery-orders'=> ['c','r','u','d'],
+			'request-orders' => ['c','r','u','d'],
+			'pre-deliveries' => ['c','r','u','d'],
+			'ship-deliveries' => ['c','r','u','d'],
+			'ship-delivery-items' => ['c','r','u','d'],
+			'delivery-orders' => ['c','r','u','d'],
 			'invoices' 	=> ['c','r','u','d'],
 			// Expenses
 			'vendors'	=> ['c','r','u','d'], 
@@ -87,18 +88,19 @@ class DefaultTableSeeder extends Seeder
 		];
 
 		$roles = [
-			'user-auth'	=> ['users', 'roles', 'permissions'],
+			'user-auth'	=> ['users', 'roles', 'permissions', 'profile'],
 			'user-common'	=> ['items'],
-			'user-factory'	=> ['packing-items', 'workin-productions', 'work-orders'],
-			'user-income'	=> ['customers', 'forecasts', 'requests', 'deliveries', 'invoices'],
+			'user-factory'	=> ['packings', 'workin-productions', 'work-orders'],
+			'user-income'	=> ['customers', 'forecasts', 'request-orders', 'pre-deliveries', 'ship-deliveries', 'ship-delivery-items', 'delivery-orders', 'invoices' ],
 			'user-expense'	=> ['vendors', 'purchases', 'bills'],
 			'user-warehouse'=> ['incoming-goods'],
+
 		];
 
 		
 		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
 		foreach ($roles as $key => $value) {
-			$name = str_replace('-','.', $key);
+			$name = str_replace('user-','', $key);
 			$user = User::create(['name' => $name, 'password' => Hash::make($name.'ppa'), 'email' => $name .'@ppa.com']);
 			$role = Role::create(['name' => $key]);
 			$user->assignRole($key);
