@@ -1,0 +1,12 @@
+extend type Query {
+  users: [User!]! @all(model: "App\\Models\\Auth\\User") 
+  user(id: ID @eq): User @find(model: "App\\Models\\Auth\\User") 
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+}

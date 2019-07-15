@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Passport\Passport; 
 use App\Http\Controllers\Controller;
 use App\Models\Auth\User;
 use Validator;
@@ -26,7 +27,9 @@ class Authentication extends Controller
         ]);
 
         if($attempt) {
-           return $this->result(['message'=>'Login success!']);
+            Passport::tokensExpireIn(Carbon()->now()->addDays(1));
+            Passport::refreshTokensExpireIn(Carbon()->now()->addDays(7));
+            return $this->result(['message'=>'Login success!']);
         } 
         else { 
             return response()->json(['message'=>'Username and password not match!'], 422); 
