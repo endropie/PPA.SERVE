@@ -85,6 +85,19 @@ class DefaultTableSeeder extends Seeder
 			'bills'		=> ['c','r','u','d'],
 			// Warehouse
 			'incoming-goods' => ['c','r','u','d'],
+			// Reference
+			'brands'		=> ['c','r','u','d'],
+			'colors' => ['c','r','u','d'],
+			'faults'	=> ['c','r','u','d'],
+			'lines'	=> ['c','r','u','d'],
+			'shifts'	=> ['c','r','u','d'],
+			'sizes'	=> ['c','r','u','d'],
+			'specifications' => ['c','r','u','d'],
+			'specification-details'	=> ['c','r','u','d'],
+			'type-faults'	=> ['c','r','u','d'],
+			'type-items'	=> ['c','r','u','d'],
+			'units'	=> ['c','r','u','d'],
+			'vehicles'	=> ['c','r','u','d'],
 		];
 
 		$roles = [
@@ -94,14 +107,21 @@ class DefaultTableSeeder extends Seeder
 			'user-income'	=> ['customers', 'forecasts', 'request-orders', 'pre-deliveries', 'ship-deliveries', 'ship-delivery-items', 'delivery-orders', 'invoices' ],
 			'user-expense'	=> ['vendors', 'purchases', 'bills'],
 			'user-warehouse'=> ['incoming-goods'],
-
+			'user-reference'=> [
+				'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes', 
+				'specifications', 'specification-details', 
+				'type-faults', 'type-items', 'units', 'vehicles'
+			]
 		];
 
 		
 		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
 		foreach ($roles as $key => $value) {
-			$name = str_replace('user-','', $key);
-			$user = User::create(['name' => $name, 'password' => Hash::make($name.'ppa'), 'email' => $name .'@ppa.com']);
+			$name = str_replace('-','.', $key); 						
+			$pass = Hash::make(str_replace('user-','', $key).'ppa');
+			// Ex: username: user.reference@ppa.com password: referenceppa
+
+			$user = User::create(['name' => $name, 'password' => $pass, 'email' => $name .'@ppa.com']);
 			$role = Role::create(['name' => $key]);
 			$user->assignRole($key);
 			$admin->assignRole($key);
