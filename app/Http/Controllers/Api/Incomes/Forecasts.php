@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Incomes;
 
 use App\Http\Requests\Income\Forecast as Request;
 use App\Http\Controllers\ApiController;
-
+use App\Filters\Income\RequestOrder as Filters;
 use App\Models\Income\Forecast; 
 use App\Traits\GenerateNumber;
 
@@ -12,20 +12,20 @@ class Forecasts extends ApiController
 {
     use GenerateNumber;
 
-    public function index()
+    public function index(Filters $filters)
     {
         switch (request('mode')) {
             case 'all':            
-                $forecasts = Forecast::filterable()->get();    
+                $forecasts = Forecast::filter($filters)->get();    
                 break;
 
             case 'datagrid':    
-                $forecasts = Forecast::with(['customer'])->filterable()->get();
+                $forecasts = Forecast::with(['customer'])->filter($filters)->get();
                 
                 break;
 
             default:
-                $forecasts = Forecast::with(['customer'])->collect();                
+                $forecasts = Forecast::with(['customer'])->filter($filters)->collect();                
                 break;
         }
 
@@ -55,7 +55,7 @@ class Forecasts extends ApiController
 
     public function show($id)
     {
-        $forecast = Forecast::with(['forecast_items.item.item_units', 'forecast_items.unit'])->findOrFail($id);
+        $forecast = Forecast::with(['customer', 'forecast_items.item.item_units', 'forecast_items.unit'])->findOrFail($id);
         $forecast->is_editable = (!$forecast->is_related);
 
         return response()->json($forecast);
