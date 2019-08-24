@@ -22,17 +22,22 @@ class CreateIncomingGoodsTables extends Migration
 
             $table->integer('customer_id');
             $table->string('reference_number')->nullable();
-            
+            $table->date('reference_date')->nullable();
+
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
 
-            $table->string('transport_number')->nullable();
-            $table->integer('transport_rate')->nullable();
+            $table->integer('vehicle_id')->nullable();
+            $table->tinyInteger('rit')->nullable();
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
             $table->integer('request_order_id')->nullable();
+            $table->integer('pre_delivery_id')->nullable();
+
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('incoming_good_items', function (Blueprint $table) {
@@ -41,12 +46,16 @@ class CreateIncomingGoodsTables extends Migration
 
             $table->integer('item_id');
             $table->float('quantity');
+            $table->float('valid')->nullable();
 
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
 
             $table->integer('request_order_item_id')->nullable();
+
+            $table->text('note')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

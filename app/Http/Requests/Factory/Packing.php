@@ -15,15 +15,19 @@ class Packing extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->packing;
-        } 
+
+            if($this->exists('nodata')) return [];
+        }
         else $id = null;
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:packings,NULL,' . $id,
             'customer_id' => 'required',
+            'date' => 'required',
+            'shift_id' => 'required',
             'packing_items.item_id' => 'required',
             'packing_items.quantity' => 'required|numeric|gt:0',
             'packing_items.unit_id' => 'required',

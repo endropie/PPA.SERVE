@@ -19,20 +19,21 @@ class CreatePreDeliveriesTables extends Migration
             $table->enum('transaction', ['REGULER', 'RETURN']);
 
             $table->integer('customer_id');
-            $table->string('customer_name')->nullable();
-            $table->string('customer_phone')->nullable();
-            $table->text('customer_address')->nullable();
 
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->integer('request_order_id')->nullable();
 
-            $table->date('plan_begin_date');
-            $table->date('plan_until_date');
+            $table->date('date');
+            $table->tinyInteger('rit')->nullable();
+            // $table->date('plan_begin_date');
+            // $table->date('plan_until_date');
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('pre_delivery_items', function (Blueprint $table) {
@@ -44,6 +45,7 @@ class CreatePreDeliveriesTables extends Migration
             $table->float('quantity');
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -1,11 +1,11 @@
 <?php
 namespace App\Filters\Factory;
 
-use App\Filters\QueryFilters;
+use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class Packing extends QueryFilters
+class Packing extends Filter
 {
     protected $request;
     public function __construct(Request $request)

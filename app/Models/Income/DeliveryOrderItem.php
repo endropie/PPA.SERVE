@@ -3,46 +3,48 @@
 namespace App\Models\Income;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryOrderItem extends Model
 {
-   protected $fillable = [
-      'item_id', 'unit_id', 'unit_rate', 'quantity'
-   ];
+    use SoftDeletes;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = [
+        'item_id', 'unit_id', 'unit_rate', 'quantity'
+    ];
 
-   public function delivery_order()
-   {
-      return $this->belongsTo('App\Models\Income\DeliveryOrder');
-   }
+    protected $hidden = ['created_at', 'updated_at'];
 
-   public function request_order_item()
-   {
-      return $this->belongsTo('App\Models\Income\RequestOrderItem');
-   }
+    public function delivery_order()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryOrder');
+    }
 
-   public function item()
-   {
-      return $this->belongsTo('App\Models\Common\Item');
-   }
+    public function request_order_item()
+    {
+        return $this->belongsTo('App\Models\Income\RequestOrderItem');
+    }
 
-   public function stockable()
-   {
-      return $this->morphMany('App\Models\Common\ItemStockable', 'base');
-   }
+    public function item()
+    {
+        return $this->belongsTo('App\Models\Common\Item');
+    }
 
-   public function unit()
-   {
-      return $this->belongsTo('App\Models\Reference\Unit');
-   }
+    public function stockable()
+    {
+        return $this->morphMany('App\Models\Common\ItemStockable', 'base');
+    }
 
-   public function getTotalRequestOrderItemAttribute() {
-      return (double) $this->request_order_item->unit_amount; 
-   }
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Reference\Unit');
+    }
 
-   public function getUnitAmountAttribute() {
-      return (double) $this->quantity * $this->unit_rate;
-   }
+    public function getTotalRequestOrderItemAttribute() {
+        return (double) $this->request_order_item->unit_amount;
+    }
+
+    public function getUnitAmountAttribute() {
+        return (double) $this->quantity * $this->unit_rate;
+    }
 }
- 

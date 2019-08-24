@@ -2,13 +2,14 @@
 
 namespace App\Models\Factory;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Filters\Filterable;
 
 class Packing extends Model
 {
-    use Filterable;
-    
+    use Filterable, SoftDeletes;
+
     protected $fillable = [
         'number', 'customer_id', 'date', 'time', 'shift_id', 'description',
         'worktime', 'operator_id'
@@ -18,7 +19,7 @@ class Packing extends Model
 
     public function packing_items()
     {
-        return $this->hasOne('App\Models\Factory\PackingItem');
+        return $this->hasOne('App\Models\Factory\PackingItem')->withTrashed();
     }
 
     public function work_order()
@@ -33,7 +34,7 @@ class Packing extends Model
 
     public function operator()
     {
-        return $this->belongsTo('App\Models\Reference\Operator');
+        return $this->belongsTo('App\Models\Common\Employee');
     }
 
     public function shift()

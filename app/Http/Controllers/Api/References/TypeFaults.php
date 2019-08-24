@@ -1,62 +1,61 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\TypeFault as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\TypeFault;
 
 class TypeFaults extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $type_faults = TypeFault::filterable()->get();    
+            case 'all':
+                $typeFaults = TypeFault::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $type_faults = TypeFault::filterable()->get();
-                
+                $typeFaults = TypeFault::filter($filter)->get();
+
                 break;
 
             default:
-                $type_faults = TypeFault::collect();                
+                $typeFaults = TypeFault::filter($filter)->collect();
                 break;
         }
 
-        return response()->json($type_faults);
+        return response()->json($typeFaults);
     }
 
     public function store(Request $request)
     {
-        $type_fault = TypeFault::create($request->all());
+        $typeFault = TypeFault::create($request->all());
 
-        return response()->json($type_fault);
+        return response()->json($typeFault);
     }
 
     public function show($id)
     {
-        $type_fault = TypeFault::findOrFail($id);
-        $type_fault->is_editable = (!$type_fault->is_related);
+        $typeFault = TypeFault::findOrFail($id);
+        $typeFault->setAppends(['has_relationship']);
 
-        return response()->json($type_fault);
+        return response()->json($typeFault);
     }
 
     public function update(Request $request, $id)
     {
-        $type_fault = TypeFault::findOrFail($id);
+        $typeFault = TypeFault::findOrFail($id);
 
-        $type_fault->update($request->input());
+        $typeFault->update($request->input());
 
-        return response()->json($type_fault);
+        return response()->json($typeFault);
     }
 
     public function destroy($id)
     {
-        $type_fault = TypeFault::findOrFail($id);
-        $type_fault->delete();
+        $typeFault = TypeFault::findOrFail($id);
+        $typeFault->delete();
 
         return response()->json(['success' => true]);
     }

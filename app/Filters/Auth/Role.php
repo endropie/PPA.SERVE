@@ -1,10 +1,10 @@
 <?php
 namespace App\Filters\Auth;
 
-use App\Filters\QueryFilters;
+use App\Filters\Filter;
 use Illuminate\Http\Request;
 
-class Role extends QueryFilters
+class Role extends Filter
 {
     protected $request;
     public function __construct(Request $request)
@@ -12,7 +12,7 @@ class Role extends QueryFilters
         $this->request = $request;
         parent::__construct($request);
     }
-  
+
     public function name($value) {
         return $this->builder->where('name',  'like', '%' . $value. '%');
     }

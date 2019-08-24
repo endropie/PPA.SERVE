@@ -1,11 +1,11 @@
 <?php
 namespace App\Filters\Income;
 
-use App\Filters\QueryFilters;
+use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class Forecast extends QueryFilters
+class Forecast extends Filter
 {
     protected $request;
     public function __construct(Request $request)

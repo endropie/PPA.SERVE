@@ -2,21 +2,24 @@
 
 namespace App\Models\Factory;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 
 class PackingItem extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id', 'work_order_item_id'
     ];
 
-    protected $appends = ['unit_amount'];
+    protected $appends = ['unit_amount', 'unit_total'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
     public function packing_item_faults()
     {
-        return $this->hasMany('App\Models\Factory\PackingItemFault');
+        return $this->hasMany('App\Models\Factory\PackingItemFault')->withTrashed();
     }
 
     public function work_order_item()
@@ -47,7 +50,17 @@ class PackingItem extends Model
     public function getUnitAmountAttribute() {
       // return false when rate is not valid
       if($this->unit_rate <= 0) return false;
-      
+
       return (double) $this->quantity * $this->unit_rate;
+    }
+
+    public function getUnitTotalAttribute() {
+      // return false when rate is not valid
+      if($this->unit_rate <= 0) return false;
+
+      $faults = (double) $this->packing_item_faults->sum('quantity') * $this->unit_rate;
+
+      return $this->unit_amount + $faults;
+
     }
 }

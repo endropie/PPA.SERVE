@@ -17,17 +17,17 @@ class CreateRequestOrdersTables extends Migration
             $table->increments('id');
             $table->string('number');
             $table->date('date');
-            $table->date('begin_date')->nullable();
-            $table->date('until_date')->nullable();
 
             $table->integer('customer_id');
             $table->string('reference_number')->nullable();
-            
+
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('request_order_items', function (Blueprint $table) {
@@ -41,8 +41,10 @@ class CreateRequestOrdersTables extends Migration
             $table->float('price');
             $table->string('note')->nullable();
 
-            $table->integer('ship_delivery_id')->nullable();
+            $table->integer('outgoing_good_id')->nullable();
+
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

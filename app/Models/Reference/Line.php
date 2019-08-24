@@ -2,11 +2,14 @@
 
 namespace App\Models\Reference;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 
 class Line extends Model
 {
-   protected $fillable = ['name', 'description'];
+    use Filterable;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = ['name', 'ismain', 'description'];
+
+    protected $hidden = ['created_at', 'updated_at'];
 }

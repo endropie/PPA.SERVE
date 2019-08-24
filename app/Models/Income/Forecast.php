@@ -2,14 +2,16 @@
 
 namespace App\Models\Income;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Filters\Filterable;
+
 class Forecast extends Model
 {
-   use Filterable;
+   use Filterable, SoftDeletes;
 
    protected $fillable = [
-      'number', 'begin_date', 'until_date', 'customer_id', 'description', 
+      'number', 'begin_date', 'until_date', 'customer_id', 'description',
    ];
 
    protected $hidden = [];
@@ -18,7 +20,7 @@ class Forecast extends Model
 
    public function forecast_items()
    {
-      return $this->hasMany('App\Models\Income\ForecastItem');
+      return $this->hasMany('App\Models\Income\ForecastItem')->withTrashed();
    }
 
    public function customer()
@@ -26,4 +28,3 @@ class Forecast extends Model
       return $this->belongsTo('App\Models\Income\Customer');
    }
 }
- 

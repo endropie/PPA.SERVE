@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Shift as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Shift;
 
 class Shifts extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $shifts = Shift::filterable()->get();    
+            case 'all':
+                $shifts = Shift::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $shifts = Shift::filterable()->get();
-                
+                $shifts = Shift::filter($filter)->get();
+
                 break;
 
             default:
-                $shifts = Shift::collect();                
+                $shifts = Shift::filter($filter)->collect();
                 break;
         }
 
@@ -39,7 +38,7 @@ class Shifts extends ApiController
     public function show($id)
     {
         $shift = Shift::findOrFail($id);
-        $shift->is_editable = (!$shift->is_related);
+        $shift->setAppends(['has_relationship']);
 
         return response()->json($shift);
     }

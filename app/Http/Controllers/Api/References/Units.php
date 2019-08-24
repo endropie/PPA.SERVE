@@ -1,29 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Unit as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Unit;
 
 class Units extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $units = Unit::filterable()->get();    
+            case 'all':
+                $units = Unit::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $units = Unit::filterable()->get();
-                
+                $units = Unit::filter($filter)->get();
+
                 break;
 
             default:
-                $units = Unit::collect();                
+                $units = Unit::filter($filter)->collect();
                 break;
         }
 
@@ -32,7 +30,9 @@ class Units extends ApiController
 
     public function store(Request $request)
     {
-        $unit = Unit::create($request->all());
+
+        $input = $request->merge(['code' => strtoupper($request->code)])->input();
+        $unit = Unit::create($input);
 
         return response()->json($unit);
     }
@@ -40,7 +40,7 @@ class Units extends ApiController
     public function show($id)
     {
         $unit = Unit::findOrFail($id);
-        $unit->is_editable = (!$unit->is_related);
+        $unit->setAppends(['has_relationship']);
 
         return response()->json($unit);
     }
@@ -49,7 +49,8 @@ class Units extends ApiController
     {
         $unit = Unit::findOrFail($id);
 
-        $unit->update($request->input());
+        $input = $request->merge(['code' => strtoupper($request->code)])->input();
+        $unit->update($input);
 
         return response()->json($unit);
     }

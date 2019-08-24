@@ -7,161 +7,135 @@ use App\Filters\Filterable;
 
 class Item extends Model
 {
-   use Filterable;
+    use Filterable;
 
-   protected $fillable = [
-      'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
-      'packing_duration', 'sa_area', 'weight', 'number_hanger', 'price', 
-      'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description'
-   ];
+    protected $allowTransferDisabled;
 
-   protected $appends = ['totals'];
+    protected $fillable = [
+        'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
+        'packing_duration', 'sa_area', 'weight', 'number_hanger', 'price',
+        'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable'
+    ];
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $appends = ['totals'];
 
-   protected $relationships = ['incoming_good_items'];
+    protected $hidden = ['created_at', 'updated_at'];
 
-   public function item_prelines()
-   {
-      return $this->hasMany('App\Models\Common\ItemPreline');
-   }
+    protected $relationships = ['incoming_good_items'];
 
-   public function item_units()
-   {
-      return $this->hasMany('App\Models\Common\ItemUnit');
-   }
+    public function item_prelines()
+    {
+        return $this->hasMany('App\Models\Common\ItemPreline');
+    }
 
-   public function item_stocks()
-   {
-      return $this->hasMany('App\Models\Common\ItemStock');
-   }
-   
-   public function item_stockables()
-   {
-      return $this->hasMany('App\Models\Common\ItemStockable');
-   }
-   
-   public function unit()
-   {
-      return $this->belongsTo('App\Models\Reference\Unit');
-   }
+    public function item_units()
+    {
+        return $this->hasMany('App\Models\Common\ItemUnit');
+    }
 
-   public function customer()
-   {
-      return $this->belongsTo('App\Models\Income\Customer');
-   }
+    public function item_stocks()
+    {
+        return $this->hasMany('App\Models\Common\ItemStock');
+    }
 
-   public function brand()
-   {
-      return $this->belongsTo('App\Models\Reference\Brand');
-   }
+    public function item_stockables()
+    {
+        return $this->hasMany('App\Models\Common\ItemStockable');
+    }
 
-   public function specification()
-   {
-      return $this->belongsTo('App\Models\Reference\Specification');
-   }
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Reference\Unit');
+    }
 
-   public function getTotalsAttribute()
-   {
-      $stocks = [];
-      foreach (ItemStock::getStockists() as $key => $value) {
-         $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
-      }
-      return $stocks;
-   }
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\Income\Customer');
+    }
 
-   public function stock($stockist)
-   {
-      $stockist = ItemStock::getValidStockist($stockist);
+    public function brand()
+    {
+        return $this->belongsTo('App\Models\Reference\Brand');
+    }
 
-      return $this->item_stocks->where('stockist', $stockist)->first();
-   }
+    public function specification()
+    {
+        return $this->belongsTo('App\Models\Reference\Specification');
+    }
 
-   public function Xincreasing($number, $stockist, $exStockist = false)
-   {
-      if($exStockist) {
-         $exStockist = ItemStock::getValidStockist($exStockist);
+    public function getTotalsAttribute()
+    {
+        $stocks = [];
+        foreach (ItemStock::getStockists() as $key => $value) {
+            $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
+        }
+        return $stocks;
+    }
 
-         $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
-         $exStock->total = $exStock->total - $number;
-         $exStock->save();
-      }
+    public function stock($stockist)
+    {
+        $stockist = ItemStock::getValidStockist($stockist);
 
-      $stockist = ItemStock::getValidStockist($stockist);
+        return $this->item_stocks->where('stockist', $stockist)->first();
+    }
 
-      $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-      $stock->total = $stock->total + $number;
-      $stock->save();
+    public function transfer($collect, $number, $stockist = false, $exStockist = false) {
 
-      return $stock;
-   }
+        if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
 
-   public function Xdecreasing($number, $stockist, $exStockist = false)
-   {
-      if($exStockist) {
-         $exStockist = ItemStock::getValidStockist($exStockist);
+        $collect = $collect->fresh();
 
-         $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
-         $exStock->total = $exStock->total + $number;
-         $exStock->save();
-      }
+        if($exStockist) {
+            $exStockist = ItemStock::getValidStockist($exStockist);
+            $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
+            $exStock->total = $exStock->total - $number;
+            $exStock->save();
 
-      $stockist = ItemStock::getValidStockist($stockist);
+            $this->item_stockables()->create([
+                'base_id' => $collect->id,
+                'base_type' => get_class($collect),
+                'unit_amount' => (-1) * ($number),
+                'stockist' => $exStockist,
+            ]);
 
-      $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-      $stock->total = $stock->total - $number;
-      $stock->save();
+            if($stockist==false) return $exStock;
+        }
 
-      return $stock;
-   }
+        if($stockist !== false) {
 
-   public function transfer($collect, $number, $stockist = false, $exStockist = false) {
-      $collect = $collect->fresh();
-   
-      if($exStockist) {
-         $exStockist = ItemStock::getValidStockist($exStockist);
-         $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
-         $exStock->total = $exStock->total - $number;
-         $exStock->save();
+            $stockist = ItemStock::getValidStockist($stockist);
+            $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
+            $stock->total = $stock->total + $number;
+            $stock->save();
 
-         $this->item_stockables()->create([
-            'base_id' => $collect->id,
-            'base_type' => get_class($collect),
-            'unit_amount' => (-1) * ($number),
-            'stockist' => $exStockist,
-         ]);
-         
-         if($stockist==false) return $exStock;
-      }
+            $this->item_stockables()->create([
+                'base_id' => $collect->id,
+                'base_type' => get_class($collect),
+                'unit_amount' => ($number),
+                'stockist' => $stockist,
+            ]);
 
-      if($stockist !== false) {
-      
-         $stockist = ItemStock::getValidStockist($stockist);
-         $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-         $stock->total = $stock->total + $number;
-         $stock->save();
-   
-         $this->item_stockables()->create([
-            'base_id' => $collect->id,
-            'base_type' => get_class($collect),
-            'unit_amount' => ($number),
-            'stockist' => $stockist,
-         ]);
-   
-         return $stock;
-      }
-   }
+            return $stock;
+        }
+    }
 
-   public function distransfer($collect, $delete=true) {
-      if ($collect->stockable->count() == 0) return;
-      foreach ($collect->stockable as $key => $log) {
-         // abort(501, json_encode($log));
-         $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
-         $stock->total -= $log->unit_amount;
-         $stock->save();
+    public function distransfer($collect, $delete=true) {
+        if ($collect->stockable->count() == 0) return;
 
-         if($delete) $log->delete();
-      }
-   }
+        if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
+
+        foreach ($collect->stockable as $key => $log) {
+            // abort(501, json_encode($log));
+            $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
+            $stock->total -= $log->unit_amount;
+            $stock->save();
+
+            if($delete) $log->delete();
+        }
+    }
+
+    public function allowDisableTransfer () {
+        $this->allowTransferDisabled = true;
+        return $this;
+    }
 }
- 

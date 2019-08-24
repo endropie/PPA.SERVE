@@ -15,17 +15,20 @@ class Vehicle extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
-        if ($method == 'PATCH' || $method == 'PUT') 
+
+        if ($method == 'PATCH' || $method == 'PUT')
         {
             $id = $this->vehicle;
-        } else 
+        } else
         {
             $id = null;
         }
 
         return [
-            'name' => ($id ? 'required|string|' : '') .'max:191|unique:vehicles,NULL,' . $id,
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:vehicles,NULL,' . $id,
+            'owner' => 'required',
+            'type' => 'required',
+            'department_id' => 'required',
         ];
     }
 }

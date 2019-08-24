@@ -1,11 +1,11 @@
 <?php
 namespace App\Filters\Income;
 
-use App\Filters\QueryFilters;
+use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class RequestOrder extends QueryFilters
+class RequestOrder extends Filter
 {
     protected $request;
     public function __construct(Request $request)

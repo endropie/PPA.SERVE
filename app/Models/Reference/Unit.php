@@ -1,12 +1,14 @@
 <?php
-
 namespace App\Models\Reference;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 
 class Unit extends Model
 {
-   protected $fillable = ['code', 'name'];
+    use Filterable;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = ['code', 'name'];
+
+    protected $hidden = ['created_at', 'updated_at'];
 }

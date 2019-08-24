@@ -5,7 +5,7 @@ use App\Filters\Factory\Packing as Filters;
 use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
 
-use App\Models\Factory\Packing; 
+use App\Models\Factory\Packing;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -15,18 +15,18 @@ class Packings extends ApiController
     public function index(Filters $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $packings = Packing::filterable()->get();    
+            case 'all':
+                $packings = Packing::filter($filter)->get();
                 break;
 
-            case 'datagrid':    
+            case 'datagrid':
                 $packings = Packing::with([
                     'packing_items',
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->filter($filter)->get();
-                
+                ])->filter($filter)->latest()->get();
+
                 break;
 
             default:
@@ -35,7 +35,18 @@ class Packings extends ApiController
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->filter($filter)->collect();                
+                ])->filter($filter)->latest()->collect();
+
+                $packings->getCollection()->transform(function($row) {
+                    $row->setAppends(['is_relationship']);
+
+                    $row->packing_items->work_order_number = (
+                      $row->packing_items->work_order_item
+                        ?  $row->packing_items->work_order_item->work_order->number : null
+                    );
+                    // $row->work_order_number
+                    return $row;
+                });
                 break;
         }
 
@@ -55,9 +66,9 @@ class Packings extends ApiController
         if($row) {
             // Create the Packing item. Note: with "hasOne" Relation.
             $detail = $packing->packing_items()->create($request->packing_items);
-            
+
             // Calculate stock on after the Packing items Created!
-            $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WO');
+            $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
 
             $faults = $row['packing_item_faults'];
             for ($i=0; $i < count($faults); $i++) {
@@ -71,8 +82,12 @@ class Packings extends ApiController
             // Calculate "NG" stock on after the Item Faults Created!
             $NG = (double) $detail->packing_item_faults()->sum('quantity');
             if ($NG > 0) {
-                $detail->item->transfer($detail, $NG, 'NG', 'WO');
+                $detail->item->transfer($detail, $NG, 'NG', 'WIP');
             }
+            $detail->amount_faulty = $NG * $detail->unit_rate;
+            $detail->save();
+
+            $detail->work_order_item->calculate('packing');
         }
 
         $this->DATABASE::commit();
@@ -83,6 +98,7 @@ class Packings extends ApiController
     {
         if(request('mode') == 'view') {
             $addWith = [
+                'shift',
                 'operator',
                 'packing_items.work_order_item.work_order'
             ];
@@ -94,7 +110,9 @@ class Packings extends ApiController
             'packing_items.item.item_units',
             'packing_items.unit',
             'packing_items.packing_item_faults.fault'
-        ], $addWith))->findOrFail($id);
+        ], $addWith))->withTrashed()->findOrFail($id);
+
+        $packing->setAppends(['has_relationship']);
 
         return response()->json($packing);
     }
@@ -104,6 +122,10 @@ class Packings extends ApiController
         $this->DATABASE::beginTransaction();
 
         $packing = Packing::findOrFail($id);
+
+        if($packing->is_relationship) $this->error('The data has RELATIONSHIP, is not allowed to be updated!');
+        if($packing->status != "OPEN") $this->error("The data on $packing->satus state , is not allowed to be updated!");
+
         $packing->update($request->input());
 
         $row = $request->packing_items;
@@ -118,11 +140,11 @@ class Packings extends ApiController
             // Update or Create detail row
             $newDetail = $packing->packing_items->updateOrCreate(['id' => $row['id']], $row);
             // Calculate stock on after the Packing items updated!
-            $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'FG', 'WO');
+            $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'FG', 'WIP');
 
             $faults = $row['packing_item_faults'];
             // Delete fault on the Packing Good updated!
-            $packing->packing_items->packing_item_faults()->delete();
+            $packing->packing_items->packing_item_faults()->forceDelete();
 
             for ($i=0; $i < count($faults); $i++) {
                 $fault = $faults[$i];
@@ -131,12 +153,18 @@ class Packings extends ApiController
                     $packing->packing_items->packing_item_faults()->create($fault);
                 }
             }
-            
+
             // Calculate stock on after the NG items updated!
-            $NG = (double) $packing->packing_items->packing_item_faults()->sum('quantity');
-            if ($NG > 0) $newDetail->item->transfer($newDetail, $NG, 'NG', 'WO');
-            
+            $NG = (double) $packing->packing_items->packing_item_faults()->sum('quantity') * $newDetail->unit_rate;
+            if ($NG > 0) $newDetail->item->transfer($newDetail, $NG, 'NG', 'WIP');
+
+            $newDetail->amount_faulty = $NG ;
+            $newDetail->save();
+
+            $newDetail->work_order_item->calculate('packing');
         }
+
+        // $this->error('LOLOS!');
 
         $this->DATABASE::commit();
         return response()->json($packing);
@@ -146,6 +174,17 @@ class Packings extends ApiController
     {
         $this->DATABASE::beginTransaction();
         $packing = Packing::findOrFail($id);
+
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+        if($packing->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
+        if($mode == "DELETED" && $packing->status != "OPEN") $this->error("The data $packing->status state, is not allowed to be $mode!");
+
+
+        if ($mode == 'VOID') {
+            $packing->status = "VOID";
+            $packing->save();
+        }
+
         $detail = $packing->packing_items;
 
         // Calculate Stok Before deleting
@@ -154,6 +193,8 @@ class Packings extends ApiController
         // Delete Packing.
         $detail->packing_item_faults()->delete();
         $detail->delete();
+        $detail->work_order_item->calculate('packing');
+
         $packing->delete();
 
         $this->DATABASE::commit();

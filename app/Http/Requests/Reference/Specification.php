@@ -15,18 +15,18 @@ class Specification extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->specification;
-        } 
+        }
         else $id = null;
 
         return [
-            'code' => 'required|string|max:191|unique:specifications,NULL,' . $id,
+            // 'code' => 'required|string|max:191|unique:specifications,NULL,' . $id,
             'name' => 'required|string|max:191',
             'color_id' => 'required',
-            'times_spray_white' => 'required',
-            'times_spray_red' => 'required',
+            'salt_white' => 'required',
+            'salt_red' => 'required',
         ];
     }
 

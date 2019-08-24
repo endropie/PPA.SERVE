@@ -7,18 +7,19 @@ use App\Models\Model;
 class ItemStock extends Model
 {
    static $stockists = [
-      // 'FM' => 1,
-      // 'WO' => 2,
-      // 'FG' => 3,
-      // 'NG' => 4,
-      // 'NGR' => 5,
       'FM' => 'Fresh Material',
       'WO' => 'Work Order',
-      'FG' => 'Final Good',
+      'WIP' => 'Work In Process',
+      'FG' => 'Finish Good',
       'NG' => 'Not Good',
-      'NGR' => 'Not Good Repair',
-      'RO' => 'RO amounable',
-      'PDO' => 'PDO amounable',
+      'RET' => 'Not Good Return',
+      // 'RDO' => 'Request-DO amounable',
+      // 'PDO' => 'Pre-DO amounable',
+      'VDO' => 'Verification-DO amounable',
+      'PDO.REG' => 'REGULER-PDO amounable', // REGDO
+      'PDO.RET' => 'RETURN-PDO amounable', // RETDO
+      'RDO.REG' => 'REGULER Request-DO amounable',
+      'RDO.RET' => 'RETURN Request-DO amounable',
    ];
 
    protected $fillable = ['item_id', 'stockist', 'total'];
@@ -39,7 +40,7 @@ class ItemStock extends Model
    }
 
    public static function getValidStockist($code) {
-      $enum = static::getStockists();      
+      $enum = static::getStockists();
       if(!$enum->has($code)) {
          abort(500, 'CODE STOCK INVALID!');
       }
@@ -59,6 +60,5 @@ class ItemStock extends Model
          }
          return $code;
     }
-   
+
 }
- 

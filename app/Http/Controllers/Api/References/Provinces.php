@@ -1,27 +1,27 @@
 <?php
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Province as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Province;
 
 class Provinces extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $provinces = Province::filterable()->get();    
+            case 'all':
+                $provinces = Province::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $provinces = Province::filterable()->get();
-                
+                $provinces = Province::filter($filter)->get();
+
                 break;
 
             default:
-                $provinces = Province::collect();                
+                $provinces = Province::filter($filter)->collect();
                 break;
         }
 
@@ -38,7 +38,7 @@ class Provinces extends ApiController
     public function show($id)
     {
         $province = Province::findOrFail($id);
-        $province->is_editable = (!$province->is_related);
+        $province->setAppends(['has_relationship']);
 
         return response()->json($province);
     }

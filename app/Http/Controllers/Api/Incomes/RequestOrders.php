@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\RequestOrder as Filters;
-use App\Models\Income\RequestOrder; 
+use App\Models\Income\RequestOrder;
 use App\Traits\GenerateNumber;
 
 class RequestOrders extends ApiController
@@ -19,34 +19,19 @@ class RequestOrders extends ApiController
 
         switch (request('mode')) {
             case 'all':
-                $request_orders = RequestOrder::filter($filters)->get();    
+                $request_orders = RequestOrder::filter($filters)->get();
                 break;
 
             case 'datagrid':
-                $request_orders = RequestOrder::with(['customer'])->filterable()->get();
+                $request_orders = RequestOrder::with(['customer'])->filter($filters)
+                  ->latest()->get();
                 $request_orders->each->setAppends(['is_relationship']);
-                break;
-            
-            case 'detail-items':
-                $request_orders = RequestOrder::with('request_order_items')->filterable()->get(array_merge(['id'], $fields));
-            break;
-
-            case 'has-items':
-                $fields = request('fields');
-                $fields = $fields ? explode(',', $fields) : [];
-                
-                $request_orders = RequestOrder::filterable()->get(array_merge(['id'], $fields));
-                $request_orders = $request_orders->map(function($rs) {
-                    return array_merge($rs->toArray(), 
-                        ['has_items' => $rs->request_order_items->mapToGroups(function($item, $key) {
-                            return [$item->item_id => $item->id];
-                        })]
-                    );
-                });
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['customer'])->filter($filters)->collect();
+                $request_orders = RequestOrder::with(['customer'])
+                  ->filter($filters)
+                  ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
                     return $item;
@@ -70,11 +55,11 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::create($request->all());
 
         $item = $request->request_order_items;
-        for ($i=0; $i < count($item); $i++) { 
+        for ($i=0; $i < count($item); $i++) {
 
             // create item production on the request orders updated!
             $detail = $request_order->request_order_items()->create($item[$i]);
-            $detail->item->transfer($detail, $detail->unit_amount, 'RO');
+            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
         }
 
         // DB::Commit => Before return function!
@@ -88,11 +73,9 @@ class RequestOrders extends ApiController
             'customer',
             'request_order_items.item.item_units',
             'request_order_items.unit'
-        ])->findOrFail($id);
+        ])->withTrashed()->findOrFail($id);
 
         $request_order->setAppends(['has_relationship']);
-
-        // dd($request_order->total_delivery_order_item);
 
         return response()->json($request_order);
     }
@@ -103,7 +86,7 @@ class RequestOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $request_order = RequestOrder::findOrFail($id);
-        
+
         if ($request_order->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be changed');
         }
@@ -119,18 +102,18 @@ class RequestOrders extends ApiController
           foreach ($request_order->request_order_items as $detail) {
             // Delete detail of "Request Order"
             $detail->item->distransfer($detail);
-            if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be changed');
-            $detail->delete();
+            if($detail->item->stock('RDO.REG')->total < (0)) $this->error('Data is not allowed to be changed');
+            $detail->forceDelete();
           }
         }
-        
+
         $rows = $request->request_order_items;
-        for ($i=0; $i < count($rows); $i++) { 
+        for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
             // abort(501, json_encode($fields));
             $detail = $request_order->request_order_items()->create($row);
-            $detail->item->transfer($detail, $detail->unit_amount, 'RO');
+            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
         }
 
         // DB::Commit => Before return function!
@@ -140,52 +123,37 @@ class RequestOrders extends ApiController
 
     public function destroy($id)
     {
-        if(strtoupper(request('mode')) == 'VOID') {
-            return $this->void($id);
-        }
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
-        
+
         $request_order = RequestOrder::findOrFail($id);
-        
-        if ($request_order->is_relationship == true) {
-            $this->error('The data has relationships, is not allowed to be deleted');
+
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        if ($mode == "VOID") {
+            if ($request_order->status == 'VOID') $this->error("The data $request_order->status state, is not allowed to be $mode");
+
+            $rels = $request_order->has_relationship;
+            unset($rels["incoming_good"]);
+            if ($rels->count() > 0)  $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
+        }
+        else {
+            if ($request_order->status != 'OPEN') $this->error("The data $request_order->status state, is not allowed to be $mode");
+            if ($request_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
         }
 
-        if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, is not allowed to be deleted');
+        if($mode == "VOID") {
+            $request_order->status = "VOID";
+            $request_order->save();
         }
 
         foreach ($request_order->request_order_items as $detail) {
             // Delete detail of "Request Order"
             $detail->item->distransfer($detail);
-            if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be changed');
             $detail->delete();
         }
-        
+
         $request_order->delete();
-
-        // DB::Commit => Before return function!
-        $this->DATABASE::commit();
-        return response()->json(['success' => true]);
-    }
-
-    public function void($id)
-    {
-        
-        // DB::beginTransaction => Before the function process!
-        $this->DATABASE::beginTransaction();
-        
-        $request_order = RequestOrder::findOrFail($id);
-
-        if($request_order->status == 'VOID') $this->error('The data has void state, is not allowed to be void!');
-        
-        foreach ($request_order->request_order_items as $detail) {
-            $detail->item->distransfer($detail);
-        }
-        
-        $request_order->status = 'VOID';
-        $request_order->save();
 
         // DB::Commit => Before return function!
         $this->DATABASE::commit();

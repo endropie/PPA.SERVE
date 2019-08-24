@@ -1,63 +1,60 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\TypeItem as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\TypeItem;
 
 class TypeItems extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $itemtypes = TypeItem::filterable()->get();    
+            case 'all':
+                $typeItems = TypeItem::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $itemtypes = TypeItem::filterable()->get();
-                
+                $typeItems = TypeItem::filter($filter)->get();
                 break;
 
             default:
-                $itemtypes = TypeItem::collect();                
+                $typeItems = TypeItem::filter($filter)->collect();
                 break;
         }
 
-        return response()->json($itemtypes);
+        return response()->json($typeItems);
     }
 
     public function store(Request $request)
     {
-        $itemtype = TypeItem::create($request->all());
+        $typeItem = TypeItem::create($request->all());
 
-        return response()->json($itemtype);
+        return response()->json($typeItem);
     }
 
     public function show($id)
     {
-        $itemtype = TypeItem::findOrFail($id);
-        $itemtype->is_editable = (!$itemtype->is_related);
+        $typeItem = TypeItem::findOrFail($id);
+        $typeItem->setAppends(['has_relationship']);
 
-        return response()->json($itemtype);
+        return response()->json($typeItem);
     }
 
     public function update(Request $request, $id)
     {
-        $itemtype = TypeItem::findOrFail($id);
+        $typeItem = TypeItem::findOrFail($id);
 
-        $itemtype->update($request->input());
+        $typeItem->update($request->input());
 
-        return response()->json($itemtype);
+        return response()->json($typeItem);
     }
 
     public function destroy($id)
     {
-        $itemtype = TypeItem::findOrFail($id);
-        $itemtype->delete();
+        $typeItem = TypeItem::findOrFail($id);
+        $typeItem->delete();
 
         return response()->json(['success' => true]);
     }

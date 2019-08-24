@@ -1,62 +1,61 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Fault as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Fault;
 
 class Faults extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $faults = Fault::filterable()->get();    
+            case 'all':
+                $faulties = Fault::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $faults = Fault::filterable()->get();
-                
+                $faulties = Fault::filter($filter)->get();
+
                 break;
 
             default:
-                $faults = Fault::collect();                
+                $faulties = Fault::filter($filter)->collect();
                 break;
         }
 
-        return response()->json($faults);
+        return response()->json($faulties);
     }
 
     public function store(Request $request)
     {
-        $fault = Fault::create($request->all());
+        $faulty = Fault::create($request->all());
 
-        return response()->json($fault);
+        return response()->json($faulty);
     }
 
     public function show($id)
     {
-        $fault = Fault::findOrFail($id);
-        $fault->is_editable = (!$fault->is_related);
+        $faulty = Fault::findOrFail($id);
+        $faulty->setAppends(['has_relationship']);
 
-        return response()->json($fault);
+        return response()->json($faulty);
     }
 
     public function update(Request $request, $id)
     {
-        $fault = Fault::findOrFail($id);
+        $faulty = Fault::findOrFail($id);
 
-        $fault->update($request->input());
+        $faulty->update($request->input());
 
-        return response()->json($fault);
+        return response()->json($faulty);
     }
 
     public function destroy($id)
     {
-        $fault = Fault::findOrFail($id);
-        $fault->delete();
+        $faulty = Fault::findOrFail($id);
+        $faulty->delete();
 
         return response()->json(['success' => true]);
     }

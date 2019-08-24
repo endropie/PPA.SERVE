@@ -13,18 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('set', function(){
-    setting()->set([
-        'app.name'                      => 'ADMIN PLAY',
-        'app.logo'                      => '/logo.jpg',
-        'app.logo_thumbnail'            => '/logo-thumbnail.jpg',
-    ]);
-    setting()->save();
-});
-
-
 Route::prefix('v1')->namespace('Api')->group(function() {
-    
+
     Route::post('login', 'Auth\Authentication@login');
     Route::post('register', 'Auth\Authentication@register');
     // Route::post('auth', 'Auth\Authentication@user');
@@ -36,7 +26,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::middleware([
         // 'auth:api'
         ])->group( function(){
-    
+
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::middleware(['auth:api'])->group( function(){
                 Route::name('user')->post('/', 'Auth\Authentication@user');
@@ -48,48 +38,55 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('permissions', 'Auth\Permissions');
         });
 
+        Route::prefix('setting')->name('setting.')->group(function () {
+            Route::post('/{name}', 'Setting@set');
+        });
+
+
         Route::prefix('accounting')->name('accounting.')->group(function () {
-        
+
             Route::apiResource('accounts', 'Accounting\Accounts');
             // Route::apiResource('account-type', 'Accounting\AccountTypes');
             // Route::apiResource('journals', 'Accounting\Journals');
             // Route::post('journals/import', 'Accounting\Journals@setImport');
-    
+
             // Route::get('journal-entries', 'Accounting\Journals@entries');
             // Route::get('reports/ProfitLoss', 'Accounting\reports@viewProfitLoss');
             // Route::get('reports/BalanceSheet', 'Accounting\reports@viewBalanceSheet');
         });
-    
+
         Route::prefix('common')->name('common.')->group(function () {
             Route::apiResource('items', 'Common\Items');
+            Route::apiResource('employees', 'Common\Employees');
         });
-        
+
         Route::prefix('incomes')->name('incomes.')->group(function () {
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
-            Route::apiResource('ship-deliveries', 'Incomes\ShipDeliveries');
-            Route::apiResource('ship-delivery-items', 'Incomes\ShipDeliveryItems');
             Route::patch('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
         });
-    
+
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
+            Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
+            Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
         });
-    
+
         Route::prefix('factories')->name('factories.')->group(function () {
             Route::post('work-orders/newgroup', 'Factories\WorkOrders@storeGroup');
-    
-            Route::apiResource('workin-productions', 'Factories\WorkinProductions');
+
+            Route::apiResource('productions', 'Factories\Productions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
             Route::apiResource('packings', 'Factories\Packings');
         });
-    
+
         Route::prefix('references')->name('references.')->group(function () {
-            Route::apiResource('operators', 'References\Operators');
+            Route::apiResource('departments', 'References\Departments');
+            Route::apiResource('positions', 'References\Positions');
             Route::apiResource('vehicles', 'References\Vehicles');
             Route::apiResource('faults', 'References\Faults');
             Route::apiResource('type_faults', 'References\TypeFaults');
@@ -105,5 +102,5 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('specifications', 'References\Specifications');
         });
 
-    });   
+    });
 });

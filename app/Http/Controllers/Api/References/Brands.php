@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Brand as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Brand;
 
 class Brands extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $brands = Brand::filterable()->get();    
+            case 'all':
+                $brands = Brand::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $brands = Brand::filterable()->get();
-                
+                $brands = Brand::filter($filter)->get();
+
                 break;
 
             default:
-                $brands = Brand::collect();                
+                $brands = Brand::filter($filter)->collect();
                 break;
         }
 
@@ -39,7 +38,7 @@ class Brands extends ApiController
     public function show($id)
     {
         $brand = Brand::findOrFail($id);
-        $brand->is_editable = (!$brand->is_related);
+        $brand->setAppends(['has_relationship']);
 
         return response()->json($brand);
     }

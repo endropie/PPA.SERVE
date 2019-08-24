@@ -7,8 +7,8 @@ use App\Http\Controllers\ApiController;
 use App\Filters\Warehouse\IncomingGood as Filters;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
+use App\Models\Income\PreDelivery;
 use App\Traits\GenerateNumber;
-use Carbon\Carbon;
 
 class IncomingGoods extends ApiController
 {
@@ -17,17 +17,17 @@ class IncomingGoods extends ApiController
     public function index(Filters $filters)
     {
         switch (request('mode')) {
-            case 'all':            
-                $incoming_goods = IncomingGood::filterable()->filter($filters)->get();    
+            case 'all':
+                $incoming_goods = IncomingGood::filter($filters)->get();
                 break;
 
-            case 'datagrid':    
-                $incoming_goods = IncomingGood::with(['customer'])->filterable()->get();
+            case 'datagrid':
+                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->get();
                 $incoming_goods->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->collect();
+                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->collect();
                 $incoming_goods->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
                     return $item;
@@ -53,15 +53,10 @@ class IncomingGoods extends ApiController
             $row = $rows[$i];
 
             // create item row on the incoming Goods updated!
-            $detail = $incoming_good->incoming_good_items()->create($row);
+            $incoming_good->incoming_good_items()->create($row);
 
-            // Calculate stock on before the incoming Goods updated!
-            $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
-            $detail->item->transfer($detail, $detail->unit_amount, $to);
         }
 
-        $this->storeRequestOrder($incoming_good);
-        
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($incoming_good);
@@ -69,101 +64,69 @@ class IncomingGoods extends ApiController
 
     public function show($id)
     {
-        $incoming_good = IncomingGood::with([
+        $incoming_good = IncomingGood::withTrashed()->with([
             'customer',
             'incoming_good_items.item.item_units',
             'incoming_good_items.unit'
         ])->findOrFail($id);
 
         $incoming_good->setAppends(['is_relationship','has_relationship']);
-        
+
         return response()->json($incoming_good);
     }
 
     public function update(Request $request, $id)
     {
+        if(request('mode') === 'validation') return $this->validation($request, $id);
 
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
-        
-        if ($incoming_good->is_relationship == true) $this->error('The data has relationships, is not allowed to be changed');
+
+        if ($incoming_good->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
+        if ($incoming_good->is_relationship) $this->error('The data has relationships, is not allowed to be changed');
 
         $incoming_good->update($request->input());
 
-        // Delete old incoming goods items when $request detail rows has not ID
-        $ids =  array_filter((array_column($request->incoming_good_items, 'id')));
-        $deletes = $incoming_good->incoming_good_items;
-        if($deletes) {
-          foreach ($deletes as $detail) {
-            // Calculate first, before deleting!
-            $detail->item->distransfer($detail);
-            $detail->delete();
-          }
-        }
+        // Before Update Force delete incoming goods items
+        $incoming_good->incoming_good_items()->forceDelete();
 
         // Update incoming goods items
         $rows = $request->incoming_good_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
             // Update or Create detail row
-            $detail = $incoming_good->incoming_good_items()->create($row);
-            // Calculate stock on after the Incoming Goods updated!
-            $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
-            $detail->item->transfer($detail, $detail->unit_amount, $to);
+            $incoming_good->incoming_good_items()->create($row);
         }
 
-        // Create or update Request Order as referense
-        $this->storeRequestOrder($incoming_good);
-
-        // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($incoming_good);
     }
 
     public function destroy($id)
     {
-        if(strtoupper(request('mode')) == 'VOID') {
-            return $this->void($id);
-        }
-
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
-        
-        if ($incoming_good->is_relationship) $this->error('The data has relationships, is not allowed to be deleted');
-        if ($incoming_good->status != 'OPEN') $this->error('The data has not OPEN, is not allowed to be deleted');
-        
-        if($request_order = $incoming_good->request_order) {
-            if($incoming_good->order_mode == 'NONE') {
-                foreach ($request_order->request_order_items as $detail) {
-                    $detail->item->distransfer($detail);
-                    if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
-                    $detail->delete();
-                }
-                $request_order->delete();
-            }
-            else if($incoming_good->order_mode == 'ACCUMULATE') {
-                if($details = $incoming_good->incoming_good_items) {
-                    foreach ($details as $detail) {
-                        $detail->request_order_item->item->distransfer($detail);
-                        if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
-                        $detail->request_order_item->delete();
-                    }
-                }
-            }    
+
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+        if($incoming_good->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
+        if($mode == "DELETED" && $incoming_good->status != 'OPEN') $this->error("The data $incoming_good->status state, is not allowed to be $mode");
+
+        if($mode == 'VOID') {
+            $incoming_good->status = "VOID";
+            $incoming_good->save();
         }
 
         if($details = $incoming_good->incoming_good_items) {
             foreach ($details as $detail) {
-                $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
                 $detail->item->distransfer($detail);
+                $detail->delete();
             }
         }
 
-        $incoming_good->incoming_good_items()->delete();
         $incoming_good->delete();
 
         // DB::Commit => Before return function!
@@ -171,106 +134,116 @@ class IncomingGoods extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function void($id)
+    public function validation($request, $id)
     {
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
-        
-        if ($incoming_good->status == 'VOID') $this->error('The data has VOID state, is not allowed to be void!');
 
-        
-        if($request_order = $incoming_good->request_order) {
-            if($incoming_good->order_mode == 'NONE') {
-                foreach ($request_order->request_order_items as $detail) {
-                    $detail->item->distransfer($detail);
-                    // if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
-                    // $detail->delete();
-                }
-                // $request_order->delete();
-            }
-            else if($incoming_good->order_mode == 'ACCUMULATE') {
-                if($details = $incoming_good->incoming_good_items) {
-                    foreach ($details as $detail) {
-                        $detail->request_order_item->item->distransfer($detail);
-                        // if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be deleted!');
-                        // $detail->request_order_item->delete();
-                    }
-                }
-            }    
+        $rows = $request->incoming_good_items ?? [];
+
+        foreach ($rows as $row) {
+            $detail = $incoming_good->incoming_good_items()->find($row["id"]);
+            $detail->update($row);
         }
 
-        if($details = $incoming_good->incoming_good_items) {
-            foreach ($details as $detail) {
-                $to = $incoming_good->transaction == 'RETURN' ? 'NGR' : 'FM';
-                $detail->item->distransfer($detail);
+        if ($incoming_good->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
+
+        foreach ($incoming_good->incoming_good_items as $detail) {
+            // Calculate stock on "validation" Incoming Goods!
+            $to = $incoming_good->transaction == 'RETURN' ? 'RET' : 'FM';
+            $detail->item->transfer($detail, $detail->unit_valid, $to);
+
+            if (strtoupper($incoming_good->order_mode) === 'ACCUMULATE') {
+                $detail->item->transfer($detail, $detail->unit_valid, 'RDO.REG');
             }
         }
 
-        // $incoming_good->incoming_good_items()->delete();
-        // $incoming_good->delete();
-        $incoming_good->status = 'VOID';
+        if (strtoupper($incoming_good->order_mode) === 'NONE') {
+            $this->storeRequestOrder($incoming_good);
+            $this->storePreDelivery($incoming_good);
+        }
+
+        $incoming_good->status = 'VALIDATED';
         $incoming_good->save();
 
-        // DB::Commit => Before return function!
         $this->DATABASE::commit();
-        return response()->json(['success' => true]);
+        return response()->json($incoming_good);
     }
 
     private function storeRequestOrder($incoming_good) {
         $incoming_good = $incoming_good->fresh();
-        
+
         $mode = $incoming_good->order_mode;
 
         if (strtoupper($mode) === 'NONE') {
-            $model = RequestOrder::firstOrNew(['id' => $incoming_good->request_order_id]);
-            
-            // if ($model->is_relationship == true) $this->error('The data has relationships, is not allowed to be changed');
+            $number = $this->getNextRequestOrderNumber($incoming_good->date);
 
-            $model->date  = $incoming_good->date;
-            $model->begin_date  = null;
-            $model->until_date  = null;
-            $model->customer_id = $incoming_good->customer_id;
-            $model->reference_number = $incoming_good->reference_number;
-
-            $model->order_mode   = $incoming_good->order_mode;
-            $model->description   = "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number";
-            // For model update 
-            if(!$model->id) {
-                $model->number = $this->getNextRequestOrderNumber($incoming_good->date);
-            }
-            $model->save();
+            $model = RequestOrder::create([
+                'number'        => $number,
+                'date'          => $incoming_good->date,
+                'customer_id'   => $incoming_good->customer_id,
+                'reference_number' => $incoming_good->reference_number,
+                'order_mode'    => $incoming_good->order_mode,
+                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number",
+            ]);
             $incoming_good->request_order_id = $model->id;
             $incoming_good->save();
 
-            foreach ($model->request_order_items as $detail) {
-                // COMPUTE ITEMSTOCK !!
-                $detail->item->distransfer($detail);
-                if($detail->item->stock('RO')->total < (0)) $this->error('Data is not allowed to be changed!');
-                $detail->delete();  
-            }
-
             $rows = $incoming_good->incoming_good_items;
-            foreach ($rows as $key => $row) {
+            foreach ($rows as $row) {
                 $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate', 'quantity'])->merge(['price'=>0])->toArray();
-                
                 $detail = $model->request_order_items()->create($fields);
 
-                // COMPUTE ITEMSTOCK !!
-                $detail->item->transfer($detail, $detail->unit_amount, 'RO');
-                
+                $TO = $incoming_good->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
+                $detail->item->transfer($detail, $detail->unit_amount, $TO);
+
                 $row->request_order_item_id = $detail->id;
                 $row->save();
 
             }
         }
-        else if (strtoupper($mode) === 'ACCUMULATE') {
-            // loop detail items on incoming good, for create.
-            $incoming_good->incoming_good_items->each( function($detail) {
-                $detail->item->transfer($detail, $detail->unit_amount, 'RO');
-            });
-        }
+    }
 
+    private function storePreDelivery($incoming_good) {
+
+        // NOT CREATE PREDELIVERY 07/08
+        return false;
+        $incoming_good = $incoming_good->fresh();
+
+        if ($incoming_good->order_mode === 'NONE') {
+
+            $number = $this->getNextPreDeliveryNumber($incoming_good->date);
+
+            $model = PreDelivery::create([
+                'number'        => $number,
+                'date'          => $incoming_good->date,
+                'customer_id'   => $incoming_good->customer_id,
+                'customer_name'   => $incoming_good->customer->name,
+                'customer_phone'   => $incoming_good->customer->phone,
+                'customer_address'   => $incoming_good->customer->address,
+
+                'transaction'   => $incoming_good->transaction,
+                'order_mode'    => $incoming_good->order_mode,
+                'plan_begin_date'  => $incoming_good->date,
+                'plan_until_date'  => $incoming_good->date,
+                'reference_number' => $incoming_good->reference_number,
+                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number",
+            ]);
+
+
+            $incoming_good->pre_delivery_id = $model->id;
+            $incoming_good->save();
+
+            $rows = $incoming_good->incoming_good_items;
+            foreach ($rows as $row) {
+                $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate', 'quantity'])->toArray();
+                $detail = $model->pre_delivery_items()->create($fields);
+
+                // COMPUTE ITEMSTOCK !!
+                $detail->item->transfer($detail, $detail->unit_amount, 'PDO');
+            }
+        }
     }
 }

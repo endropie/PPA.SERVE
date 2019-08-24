@@ -5,9 +5,7 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Http\Requests\Income\PreDelivery as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\PreDelivery as Filters;
-use App\Models\Income\PreDelivery; 
-use App\Models\Income\PreDeliveryItem;
-use App\Models\Income\RequestOrderItem;
+use App\Models\Income\PreDelivery;
 use App\Traits\GenerateNumber;
 
 class PreDeliveries extends ApiController
@@ -17,21 +15,21 @@ class PreDeliveries extends ApiController
     public function index(Filters $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $pre_deliveries = PreDelivery::filter($filter)->get();    
+            case 'all':
+                $pre_deliveries = PreDelivery::filter($filter)->latest()->get();
                 break;
 
-            case 'datagrid':    
-                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->get();
+            case 'datagrid':
+                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->get();
                 $pre_deliveries->each->setAppends(['is_relationship']);
                 break;
 
-            case 'items':            
-                $pre_deliveries = PreDeliveryItem::hasAmount()->get();    
-                break;
+            // case 'items':
+            //     $pre_deliveries = PreDeliveryItem::hasAmount()->latest()->get();
+            //     break;
 
             default:
-                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->collect();
+                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
                     return $item;
@@ -47,13 +45,18 @@ class PreDeliveries extends ApiController
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPreDeliveryNumber()]);
 
-        $pre_delivery = PreDelivery::create($request->all());
+        $pre_delivery = PreDelivery::create($request->input());
 
         $rows = $request->pre_delivery_items;
-        for ($i=0; $i < count($rows); $i++) { 
+        for ($i=0; $i < count($rows); $i++) {
             // create detail item created!
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
-            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', 'RO');
+
+            $TransRDO = $pre_delivery->transaction === 'RETURN' ? 'RDO.RET' : 'RDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', $TransRDO);
+
+            $TransPDO = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO);
         }
 
         $this->DATABASE::commit();
@@ -64,9 +67,10 @@ class PreDeliveries extends ApiController
     {
         $pre_delivery = PreDelivery::with([
             'customer',
-            'pre_delivery_items.item',
+            'pre_delivery_items.item.item_units',
+            'pre_delivery_items.item.unit',
             'pre_delivery_items.unit'
-        ])->findOrFail($id);
+        ])->withTrashed()->findOrFail($id);
 
         $pre_delivery->setAppends(['has_relationship']);
 
@@ -76,33 +80,40 @@ class PreDeliveries extends ApiController
     public function update(Request $request, $id)
     {
         $this->DATABASE::beginTransaction();
+
         $pre_delivery = PreDelivery::findOrFail($id);
 
         if ($pre_delivery->status == 'VOID') {
             $this->error('The data has been VOID state, is not allowed to be changed!');
         }
-        
+
         if ($pre_delivery->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be changed!');
         }
+
+        $pre_delivery->update($request->input());
 
         // Delete old incoming goods items when $request detail rows has not ID
         if($pre_delivery->pre_delivery_items) {
             foreach ($pre_delivery->pre_delivery_items as $detail) {
               // Delete detail of "Request Order"
               $detail->item->distransfer($detail);
-              $detail->delete();
+              $detail->forceDelete();
             }
         }
 
         $rows = $request->pre_delivery_items;
-        for ($i=0; $i < count($rows); $i++) { 
+        for ($i=0; $i < count($rows); $i++) {
             // create detail item created!
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
-            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', 'RO');
-            
+
+            $TransRDO = $pre_delivery->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', $TransRDO);
+
+            $TransPDO = $pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO);
+
             if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be changed!');
-            // abort(501, $detail->item_id .' -> '.$detail->item->stock('RO')->total .'->'. $detail->item->stock('PDO')->total);
         }
 
         $this->DATABASE::commit();
@@ -111,48 +122,40 @@ class PreDeliveries extends ApiController
 
     public function destroy($id)
     {
-        if(strtoupper(request('mode')) == 'VOID') {
-            return $this->void($id);
-        }
-
         $this->DATABASE::beginTransaction();
 
         $pre_delivery = PreDelivery::findOrFail($id);
 
-        if ($pre_delivery->status == 'VOID') {
-            $this->error('The data has been VOID state, is not allowed to be void!');
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        if ($mode == "VOID") {
+            if ($pre_delivery->status == 'VOID') $this->error("The data $pre_delivery->status state, is not allowed to be $mode");
+
+            $rels = $pre_delivery->has_relationship;
+            unset($rels["incoming_good"]);
+            if ($rels->count() > 0)  $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
+        }
+        else {
+            if ($pre_delivery->status != 'OPEN') $this->error("The data $pre_delivery->status state, is not allowed to be $mode");
+            if ($pre_delivery->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
         }
 
-        if ($pre_delivery->is_relationship == true) {
-            $this->error('The data has relationships, is not allowed to be deleted!');
+        if($mode == "VOID") {
+            $pre_delivery->status = "VOID";
+            $pre_delivery->save();
         }
-        
+
         foreach ($pre_delivery->pre_delivery_items as $detail) {
             $detail->item->distransfer($detail);
 
-            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be deleted');
+            // if($detail->item->stock('PDO')->total < (0 - 0.1)) {
+            //     $this->error('Data is not allowed to be deleted!');
+            // }
+
             $detail->delete();
         }
         $pre_delivery->delete();
-        
-        $this->DATABASE::commit();
 
-        return response()->json(['success' => true]);
-    }
-
-    public function void($id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $pre_delivery = PreDelivery::findOrFail($id);
-
-        foreach ($pre_delivery->pre_delivery_items as $detail) {
-            $detail->item->distransfer($detail);
-        }
-
-        $pre_delivery->status = "VOID";
-        $pre_delivery->save();
-        
         $this->DATABASE::commit();
 
         return response()->json(['success' => true]);

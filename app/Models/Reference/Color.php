@@ -2,11 +2,14 @@
 
 namespace App\Models\Reference;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 
 class Color extends Model
 {
-   protected $fillable = ['name', 'description'];
+    use Filterable;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = ['name', 'description'];
+
+    protected $hidden = ['created_at', 'updated_at'];
 }

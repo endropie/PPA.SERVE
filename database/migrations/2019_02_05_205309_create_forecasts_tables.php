@@ -24,7 +24,9 @@ class CreateForecastsTables extends Migration
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('forecast_items', function (Blueprint $table) {
@@ -39,6 +41,7 @@ class CreateForecastsTables extends Migration
             $table->string('note')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

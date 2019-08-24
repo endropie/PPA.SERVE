@@ -3,14 +3,17 @@
 namespace App\Models\Factory;
 
 use App\Models\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkOrderItemLine extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'line_id', 'shift_id', 'begin_date', 'until_date'
+        'line_id', 'shift_id'
     ];
 
-    protected $appends = ['unit_amount', 'total_workin_production_item'];
+    protected $appends = [];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -26,28 +29,22 @@ class WorkOrderItemLine extends Model
         return $this->belongsTo('App\Models\Reference\Line');
     }
 
-    public function workin_production_items()
+    public function production_items()
     {
         $line = (int) $this->line_id;
-        return $this->hasMany('App\Models\Factory\WorkinProductionItem', 'work_order_item_id', 'work_order_item_id')
-                ->whereHas('workin_production', function($q) use($line) {
+        return $this->hasMany('App\Models\Factory\ProductionItem', 'work_order_item_id', 'work_order_item_id')
+                ->whereHas('production', function($q) use($line) {
                     $q->where('line_id', $line);
                 });
     }
 
-    public function getTotalWorkinProductionItemAttribute() {
+    public function getTotalProductionItemAttribute() {
        // return false when rate is not valid
-       return (double) $this->workin_production_items()->sum('quantity');
+       return (double) $this->production_items()->sum('quantity');
     }
 
    public function getUnitAmountAttribute() {
-    $detail = $this->belongsTo('App\Models\Factory\WorkOrderItem', 'work_order_item_id');
-    
-    if(!$detail) return null;
+    return  (double) $this->quantity * $this->work_order_item->unit_rate;
 
-    return  $detail->first()->unit_amount;
-
-    // ->get()->unit_amount;
  }
 }
- 

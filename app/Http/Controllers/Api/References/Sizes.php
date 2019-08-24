@@ -1,29 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Size as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Size;
 
 class Sizes extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $sizes = Size::filterable()->get();    
+            case 'all':
+                $sizes = Size::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $sizes = Size::filterable()->get();
-                
+                $sizes = Size::filter($filter)->get();
+
                 break;
 
             default:
-                $sizes = Size::collect();                
+                $sizes = Size::filter($filter)->collect();
                 break;
         }
 
@@ -40,7 +38,7 @@ class Sizes extends ApiController
     public function show($id)
     {
         $size = Size::findOrFail($id);
-        $size->is_editable = (!$size->is_related);
+        $size->setAppends(['has_relationship']);
 
         return response()->json($size);
     }

@@ -15,10 +15,12 @@ class WorkOrder extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->work_order;
-        } 
+
+            if($this->exists('nodata')) return [];
+        }
         else $id = null;
 
         return [

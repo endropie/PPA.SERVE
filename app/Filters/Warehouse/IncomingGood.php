@@ -1,11 +1,11 @@
 <?php
 namespace App\Filters\Warehouse;
 
-use App\Filters\QueryFilters;
+use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class IncomingGood extends QueryFilters
+class IncomingGood extends Filter
 {
     protected $request;
     public function __construct(Request $request)
@@ -23,7 +23,7 @@ class IncomingGood extends QueryFilters
     }
 
     public function sort_customer_id($order) {
-        
+
         $table = 'incoming_goods';
         $with = 'customers';
         $key = 'customer_id';
@@ -31,7 +31,7 @@ class IncomingGood extends QueryFilters
 
         return $this->builder->select($table.'.*', \DB::raw('(SELECT '.$field.' FROM '.$with.' WHERE '. $with .'.id ='.$table.'.'.$key.' ) as fieldsort'))
         ->orderBy('fieldsort', $order);
-        
-        
+
+
     }
 }

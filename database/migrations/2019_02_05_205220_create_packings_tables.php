@@ -13,21 +13,23 @@ class CreatePackingsTables extends Migration
      */
     public function up()
     {
-        
+
         Schema::create('packings', function (Blueprint $table) {
             $table->increments('id');
             $table->string('number');
             $table->integer('customer_id');
             $table->date('date');
-            $table->time('time');
-            $table->integer('shift_id')->nullable();
+            $table->time('time')->nullable();
+            $table->integer('shift_id');
             $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
             $table->integer('operator_id')->nullable();
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
         Schema::create('packing_items', function (Blueprint $table) {
             $table->increments('id');
@@ -36,10 +38,12 @@ class CreatePackingsTables extends Migration
             $table->integer('unit_id');
             $table->float('unit_rate');
             $table->float('quantity');
+            $table->float('amount_faulty')->default(0);
             $table->integer('type_fault_id')->nullable();
             $table->integer('work_order_item_id');
 
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('packing_item_faults', function (Blueprint $table) {
@@ -50,6 +54,7 @@ class CreatePackingsTables extends Migration
             $table->float('quantity');
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

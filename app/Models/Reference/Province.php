@@ -1,12 +1,14 @@
 <?php
-
 namespace App\Models\Reference;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 
 class Province extends Model
 {
-   protected $fillable = ['name'];
+    use Filterable;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = ['name'];
+
+    protected $hidden = ['created_at', 'updated_at'];
 }

@@ -1,28 +1,26 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\CategoryItem as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\CategoryItem;
 
 class CategoryItems extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $itemCategories = CategoryItem::filterable()->get();
+            case 'all':
+                $itemCategories = CategoryItem::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $itemCategories = CategoryItem::filterable()->get();
+                $itemCategories = CategoryItem::filter($filter)->get();
                 break;
 
             default:
-                $itemCategories = CategoryItem::collect();                
+                $itemCategories = CategoryItem::filter($filter)->collect();
                 break;
         }
 
@@ -39,7 +37,7 @@ class CategoryItems extends ApiController
     public function show($id)
     {
         $itemCategory = CategoryItem::findOrFail($id);
-        $itemCategory->is_editable = (!$itemCategory->is_related);
+        $itemCategory->setAppends(['has_relationship']);
 
         return response()->json($itemCategory);
     }

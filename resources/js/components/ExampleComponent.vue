@@ -11,6 +11,9 @@
                                 ({{index}}) {{user.name}} - {{user.email}} 
                             </li>
                         </ul>
+                        <div class="card-body">
+                            {{ brands || 'kosong'}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -22,24 +25,35 @@
     export default {
         data(){
             return {
-                users: []
+                users: [],
+                brands: null,
             }
         },
         mounted() {
             console.log('Component mounted!', Echo)
-            Echo.join('chat')
-            .here( users => {
-                this.users = users
-                console.log('USER', users)
-            })
-            .joining((user) => {
-                this.users.push(user)
-                console.log(user.name);
-            })
-            .leaving((user) => {
-                this.users = this.users.filter(x => x.id !== user.id)
-                console.log(user.name);
-            });
+            // Echo.join('chat')
+            // .here( users => {
+            //     this.users = users
+            //     console.log('USER', users)
+            // })
+            // .joining((user) => {
+            //     this.users.push(user)
+            //     console.log(user.name);
+            // })
+            // .leaving((user) => {
+            //     this.users = this.users.filter(x => x.id !== user.id)
+            //     console.log(user.name);
+            // });
+
+            Echo.private('realtime')
+            // .here( e => {
+            //     console.log('EE', e)
+            // })
+            .listen('NewMessageNotification', (e) => {
+                alert(e)
+                console.log(e)
+                this.brands = e
+          });
         }
     }
 </script>

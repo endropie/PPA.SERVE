@@ -2,37 +2,40 @@
 
 namespace App\Models\Factory;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
+use App\Models\WithUserBy;
 use App\Filters\Filterable;
 
 class WorkOrder extends Model
 {
-   use Filterable;
+    use Filterable, SoftDeletes, WithUserBy;
 
-   protected $fillable = [
-      'number', 'line_id', 'stockist_from', 'description', 
-   ];
+    protected $fillable = [
+        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'description',
+    ];
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $relationships = [
+        'work_order_items.packing_items',
+        // 'delivery_orders'
+    ];
 
-   public function work_order_items()
-   {
-      return $this->hasMany('App\Models\Factory\WorkOrderItem');
-   }
+    protected $hidden = ['created_at', 'updated_at'];
 
-   public function work_order_item_lines()
-    {
-        return $this->hasManyThrough('App\Models\Factory\WorkOrderItemLine', 'App\Models\Factory\WorkOrderItem');
+    public function work_order_items() {
+        return $this->hasMany('App\Models\Factory\WorkOrderItem')->withTrashed();
     }
 
-   public function line()
-   {
-      return $this->belongsTo('App\Models\Reference\Line');
-   }
+    public function work_order_item_lines() {
+        return $this->hasManyThrough('App\Models\Factory\WorkOrderItemLine', 'App\Models\Factory\WorkOrderItem')
+                    ->withTrashed();
+    }
 
-   public function workin_production_items()
-   {
-      return $this->work_order_items()->hasMany('App\Models\Factory\WorkinProductionItem');
-   }
+    public function line() {
+        return $this->belongsTo('App\Models\Reference\Line');
+    }
+
+    public function shift() {
+        return $this->belongsTo('App\Models\Reference\Shift');
+    }
 }
- 

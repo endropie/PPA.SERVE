@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\Warehouses;
 
+use App\Filters\Filter;
 use App\Http\Requests\Warehouse\Transport as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Warehouse\Transport;
 
 class Transports extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $transports = Transport::filterable()->get();    
+            case 'all':
+                $transports = Transport::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $transports = Transport::filterable()->get();
-                
+                $transports = Transport::filter($filter)->get();
+
                 break;
 
             default:
-                $transports = Transport::collect();                
+                $transports = Transport::filter($filter)->collect();
                 break;
         }
 

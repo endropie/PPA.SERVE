@@ -1,29 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Color as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Color;
 
 class Colors extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $colors = Color::filterable()->get();    
+            case 'all':
+                $colors = Color::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $colors = Color::filterable()->get();
-                
+                $colors = Color::filter($filter)->get();
+
                 break;
 
             default:
-                $colors = Color::collect();                
+                $colors = Color::filter($filter)->collect();
                 break;
         }
 
@@ -40,7 +38,7 @@ class Colors extends ApiController
     public function show($id)
     {
         $color = Color::findOrFail($id);
-        $color->is_editable = (!$color->is_related);
+        $color->setAppends(['has_relationship']);
 
         return response()->json($color);
     }

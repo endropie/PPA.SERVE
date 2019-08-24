@@ -3812,28 +3812,40 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
-      users: []
+      users: [],
+      brands: null
     };
   },
   mounted: function mounted() {
     var _this = this;
 
-    console.log('Component mounted!', Echo);
-    Echo.join('chat').here(function (users) {
-      _this.users = users;
-      console.log('USER', users);
-    }).joining(function (user) {
-      _this.users.push(user);
+    console.log('Component mounted!', Echo); // Echo.join('chat')
+    // .here( users => {
+    //     this.users = users
+    //     console.log('USER', users)
+    // })
+    // .joining((user) => {
+    //     this.users.push(user)
+    //     console.log(user.name);
+    // })
+    // .leaving((user) => {
+    //     this.users = this.users.filter(x => x.id !== user.id)
+    //     console.log(user.name);
+    // });
 
-      console.log(user.name);
-    }).leaving(function (user) {
-      _this.users = _this.users.filter(function (x) {
-        return x.id !== user.id;
-      });
-      console.log(user.name);
+    Echo.private('realtime') // .here( e => {
+    //     console.log('EE', e)
+    // })
+    .listen('NewMessageNotification', function (e) {
+      alert(e);
+      console.log(e);
+      _this.brands = e;
     });
   }
 });
@@ -50156,7 +50168,15 @@ var render = function() {
                 ])
               }),
               0
-            )
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "card-body" }, [
+              _vm._v(
+                "\n                        " +
+                  _vm._s(_vm.brands || "kosong") +
+                  "\n                    "
+              )
+            ])
           ])
         ])
       ])

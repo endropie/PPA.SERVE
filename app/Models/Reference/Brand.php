@@ -1,14 +1,16 @@
 <?php
-
 namespace App\Models\Reference;
 
+use App\Filters\Filterable;
 use App\Models\Model;
-use App\Models\Common\Item;
+
 class Brand extends Model
 {
-   protected $fillable = ['code', 'name', 'description'];
+    use Filterable;
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable = ['code', 'name', 'description'];
 
-   protected $relationships = ['items'];
+    protected $hidden = ['created_at', 'updated_at'];
+
+    protected $relationships = ['items'];
 }

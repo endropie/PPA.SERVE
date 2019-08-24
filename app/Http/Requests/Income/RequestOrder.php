@@ -15,10 +15,12 @@ class RequestOrder extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->request_order;
-        } 
+
+            if($this->exists('nodata')) return [];
+        }
         else $id = null;
 
         return [
@@ -30,13 +32,13 @@ class RequestOrder extends Request
             'request_order_items.*.item_id' => 'required',
             'request_order_items.*.unit_id' => 'required',
             'request_order_items.*.unit_rate' => 'required',
-            'request_order_items.*.quantity' => 
+            'request_order_items.*.quantity' =>
                 function ($attribute, $value, $fail) {
                     if (floatval($value) <= 0) {
                         $fail('Quantity must be more than 0 unit.');
                     }
                 },
-            'request_order_items.*.price' => 
+            'request_order_items.*.price' =>
                 function ($attribute, $value, $fail) {
                     if (floatval($value) <= 0) {
                         $fail('Price must be more than 0 unit.');

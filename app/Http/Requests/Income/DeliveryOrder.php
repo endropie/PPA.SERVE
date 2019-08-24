@@ -15,10 +15,12 @@ class DeliveryOrder extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->delivery_order;
-        } 
+
+            if($this->exists('nodata')) return [];
+        }
         else $id = null;
 
         return [

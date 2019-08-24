@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Vehicle as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Vehicle;
 
 class Vehicles extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $vehicles = Vehicle::filterable()->get();    
+            case 'all':
+                $vehicles = Vehicle::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $vehicles = Vehicle::filterable()->get();
-                
+                $vehicles = Vehicle::with('department')->filter($filter)->get();
+
                 break;
 
             default:
-                $vehicles = Vehicle::collect();                
+                $vehicles = Vehicle::with('department')->filter($filter)->collect();
                 break;
         }
 
@@ -39,7 +38,7 @@ class Vehicles extends ApiController
     public function show($id)
     {
         $vehicle = Vehicle::findOrFail($id);
-        $vehicle->is_editable = (!$vehicle->is_related);
+        $vehicle->setAppends(['has_relationship']);
 
         return response()->json($vehicle);
     }

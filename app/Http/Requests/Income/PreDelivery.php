@@ -14,17 +14,20 @@ class PreDelivery extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->pre_delivery;
-        } 
+
+            if($this->exists('nodata')) return [];
+        }
         else $id = null;
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:pre_deliveries,NULL,' . $id,
             'customer_id' => 'required',
-            'plan_begin_date' => 'required',
-            'plan_until_date' => 'required',
+            'date' => 'required',
+            // 'plan_begin_date' => 'required',
+            // 'plan_until_date' => 'required',
 
             'delivery_items.*.item_id' => 'required',
 

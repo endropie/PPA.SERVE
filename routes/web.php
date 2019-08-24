@@ -36,3 +36,14 @@ Auth::routes();
 Route::get('/', function () { return view('welcome'); });
 
 Route::get('/home', 'HomeController@index')->name('home');
+
+
+Route::get('/call', function () { 
+    $data = \App\Models\Reference\Brand::first();
+
+    event(new \App\Events\NewMessageNotification($data));
+    
+    // event(new \App\Events\BrandCreated($data));
+
+    return response()->json($data);
+});

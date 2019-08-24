@@ -15,7 +15,7 @@ class Settings extends Seeder
     private function create()
     {
         setting()->set([
-            
+
             'general.app_name'                  => 'PLAY',
             'general.app_subname'               => 'ADMIN PLAY',
             'general.app_description'           => 'Administration',
@@ -28,14 +28,52 @@ class Settings extends Seeder
             // 'general.date_format'               => 'DD/MM/YYYYY',
             // 'general.percent_position'          => 'after',
 
-            'financial.begin_start'             => Carbon()->startOfYear()->format('d-m'),
-            
-            'modules.invoice.number_prefix'     => 'INV-',
-            'modules.invoice.number_digit'      => '5',
-            'modules.invoice.number_next'       => '1',
+            'general.prefix_separator'  => '/',
+
+            'financial.begin_start'             => now()->startOfYear()->format('d-m'),
+
+            // 'invoice.number_prefix'     => 'INV-',
+            // 'invoice.number_interval'   => '{Y}',
+            // 'invoice.number_digit'      => '5',
+
+            'incoming_good.number_prefix'     => 'IMP',
+            'incoming_good.number_interval'   => '{Y}',
+            'incoming_good.number_digit'      => '5',
+
+            'outgoing_good.number_prefix'     => 'OMP',
+            'outgoing_good.number_interval'   => '{Y}',
+            'outgoing_good.number_digit'      => '5',
+
+            'work_order.number_prefix'     => 'SPK',
+            'work_order.number_interval'   => '{Y}',
+            'work_order.number_digit'      => '5',
+
+            'work_production.number_prefix'     => 'PP',
+            'work_production.number_interval'   => '{Y}',
+            'work_production.number_digit'      => '5',
+
+            'packing.number_prefix'     => 'MPK',
+            'packing.number_interval'   => '{Y}',
+            'packing.number_digit'      => '5',
+
+            'forecast.number_prefix'     => 'FCO',
+            'forecast.number_interval'   => '{Y}',
+            'forecast.number_digit'      => '5',
+
+            'request_order.number_prefix'     => 'SO',
+            'request_order.number_interval'   => '{Y}',
+            'request_order.number_digit'      => '5',
+
+            'pre_delivery.number_prefix'     => 'PDO',
+            'pre_delivery.number_interval'   => '{Y}',
+            'pre_delivery.number_digit'      => '5',
+
+            'sj_delivery.number_prefix'     => 'DOSJ',
+            'sj_delivery.number_interval'   => '{Y}',
+            'sj_delivery.number_digit'      => '5',
         ]);
 
-        
+
         setting()->save();
     }
 }

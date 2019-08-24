@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models\Income;
 
 use App\Models\Model;
@@ -11,8 +10,8 @@ class Customer extends Model
 
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
-        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service', 
-        'bill_mode', 'delivery_mode', 'order_mode', 'description'
+        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service',
+        'invoice_mode', 'delivery_mode', 'order_mode', 'description', 'enable'
     ];
 
     protected $appends = [ 'address_raw' ];
@@ -26,7 +25,7 @@ class Customer extends Model
         return $this->hasMany('App\Models\Income\CustomerContact');
     }
 
-    public function customer_items(){
+    public function customer_items() {
         return $this->hasMany('App\Models\Common\Item');
     }
 

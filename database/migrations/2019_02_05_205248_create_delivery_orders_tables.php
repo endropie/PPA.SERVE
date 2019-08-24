@@ -19,25 +19,26 @@ class CreateDeliveryOrdersTables extends Migration
             $table->string('numrev')->nullable();
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->date('date')->nullable();
-            $table->time('time')->nullable();
             $table->date('due_date')->nullable();
-            $table->time('due_time')->nullable();
 
             $table->integer('customer_id');
             $table->string('customer_name')->nullable();
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
 
-            $table->string('transport_number')->nullable();
+            $table->string('vehicle_id')->nullable();
             $table->integer('transport_rate')->nullable();
             $table->integer('operator_id')->nullable();
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
             $table->integer('revise_id')->nullable();
-            $table->integer('ship_delivery_id')->nullable();
+            $table->integer('outgoing_good_id')->nullable();
             $table->integer('request_order_id')->nullable();
+
+            $table->integer('created_by')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('delivery_order_items', function (Blueprint $table) {
@@ -52,6 +53,7 @@ class CreateDeliveryOrdersTables extends Migration
             $table->integer('request_order_item_id')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

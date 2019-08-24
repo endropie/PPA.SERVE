@@ -1,29 +1,29 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
-// use Illuminate\Http\Request;
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Specification as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Reference\Specification;
 
-use App\Models\Reference\Specification; 
+use function RingCentral\Psr7\str;
 
 class Specifications extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $specifications = Specification::filterable()->get();    
+            case 'all':
+                $specifications = Specification::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $specifications = Specification::with(['color'])->filterable()->get();
-                
+                $specifications = Specification::with(['color'])->filter($filter)->get();
+
                 break;
 
             default:
-                $specifications = Specification::collect();                
+                $specifications = Specification::with('color')->filter($filter)->collect();
                 break;
         }
 
@@ -32,16 +32,20 @@ class Specifications extends ApiController
 
     public function store(Request $request)
     {
+        $code = (int) Specification::max('code');
+        $code = str_pad(strval($code+1), 3, '0', STR_PAD_LEFT);
+        $request->merge(['code'=>$code]);
         $specification = Specification::create($request->all());
 
         // Delete pre production on the item updated!
         $specification->specification_details()->delete();
 
-        $details = $request->specification_details;
-        for ($i=0; $i < count($details); $i++) { 
-
-            // create pre production on the item updated!
-            $specification->specification_details()->create($details[$i]);
+        $rows = $request->specification_details;
+        for ($i=0; $i < count($rows); $i++) {
+            if(isset($rows['thick'])) {
+                // create pre production on the item updated!
+                $specification->specification_details()->create($rows[$i]);
+            }
         }
 
         return response()->json($specification);
@@ -50,7 +54,7 @@ class Specifications extends ApiController
     public function show($id)
     {
         $specification = Specification::with('specification_details')->findOrFail($id);
-        $specification->is_editable = (!$specification->is_related);
+        $specification->setAppends(['has_relationship']);
 
         return response()->json($specification);
     }
@@ -65,7 +69,7 @@ class Specifications extends ApiController
         $specification->specification_details()->delete();
 
         $details = $request->specification_details;
-        for ($i=0; $i < count($details); $i++) { 
+        for ($i=0; $i < count($details); $i++) {
 
             // create pre production on the item updated!
             $specification->specification_details()->create($details[$i]);

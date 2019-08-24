@@ -2,56 +2,62 @@
 
 namespace App\Models\Income;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Filters\Filterable;
 
 class DeliveryOrder extends Model
 {
-   use Filterable;
+    use Filterable, SoftDeletes;
 
-   protected $fillable = [
-      'number', 'numrev', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description', 
-      'transaction', 'date', 'time', 'due_date', 'due_time', 'operator_id', 'transport_number', 'transport_rate',
-      // 'ship_delivery_id',
-   ];
+    protected $fillable = [
+        'number', 'numrev', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description',
+        'transaction', 'date', 'due_date', 'operator_id', 'vehicle_id', 'transport_rate',
+    ];
 
-   protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = [];
 
-   protected $relationships = [];
+    protected $relationships = [
+        'request_order_closed'
+    ];
 
-   public function delivery_order_items()
-   {
-      return $this->hasMany('App\Models\Income\DeliveryOrderItem');
-   }
+    public function delivery_order_items()
+    {
+        return $this->hasMany('App\Models\Income\DeliveryOrderItem')->withTrashed();
+    }
 
-   public function ship_delivery()
-   {
-      return $this->hasMany('App\Models\Income\ShipDelivery');
-   }
+    public function outgoing_goods()
+    {
+        return $this->hasMany('App\Models\Warehouse\OurgoingGood');
+    }
 
-   public function request_order()
-   {
-      return $this->belongsTo('App\Models\Income\RequestOrder');
-   }
+    public function request_order()
+    {
+        return $this->belongsTo('App\Models\Income\RequestOrder');
+    }
 
-   public function customer()
-   {
-      return $this->belongsTo('App\Models\Income\Customer');
-   }
+    public function request_order_closed()
+    {
+        return $this->request_order()->where('status', 'CLOSED');
+    }
 
-   public function vehicle()
-   {
-      return $this->belongsTo('App\Models\Reference\Vehicle');
-   }
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\Income\Customer');
+    }
 
-   public function operator()
-   {
-      return $this->belongsTo('App\Models\Reference\Operator');
-   }
+    public function vehicle()
+    {
+        return $this->belongsTo('App\Models\Reference\Vehicle');
+    }
 
-   public function getHasRevisionAttribute()
-   {
-      return $this->hasMany(get_class($this),'id')->where('number', $this->number)->where('id', '!=', $this->id);
-   }
+    public function operator()
+    {
+        return $this->belongsTo('App\Models\Common\Employee');
+    }
+
+    public function getHasRevisionAttribute()
+    {
+        return $this->hasMany(get_class($this),'id')->where('number', $this->number)->where('id', '!=', $this->id);
+    }
 }
- 

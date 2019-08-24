@@ -16,7 +16,8 @@ class CreateLinesTable extends Migration
         Schema::create('lines', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->text('description');
+            $table->boolean('ismain');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

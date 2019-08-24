@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers\Api\References;
 
+use App\Filters\Filter;
 use App\Http\Requests\Reference\Line as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Reference\Line;
 
 class Lines extends ApiController
 {
-    public function index()
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
-            case 'all':            
-                $lines = Line::filterable()->get();    
+            case 'all':
+                $lines = Line::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $lines = Line::filterable()->get();
-                
+                $lines = Line::filter($filter)->get();
+
                 break;
 
             default:
-                $lines = Line::collect();                
+                $lines = Line::filter($filter)->collect();
                 break;
         }
 
@@ -39,7 +38,7 @@ class Lines extends ApiController
     public function show($id)
     {
         $line = Line::findOrFail($id);
-        $line->is_editable = (!$line->is_related);
+        $line->setAppends(['has_relationship']);
 
         return response()->json($line);
     }
