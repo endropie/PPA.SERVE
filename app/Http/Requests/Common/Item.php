@@ -15,14 +15,19 @@ class Item extends Request
     {
         // Check if store or update
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->item;
-        } 
-        else $id = null;
+            $code = 'required|';
+        }
+        else {
+            $id = null;
+            $code = '';
+        }
+
 
         return [
-            'code' => 'required|string|max:191|unique:items,NULL,' . $id,
+            'code' => ($id ? 'required|':'').'max:191|unique:items,NULL,' . $id,
             'brand_id' => 'required',
             'customer_id' => 'required',
             'specification_id' => 'required',

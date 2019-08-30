@@ -116,6 +116,7 @@ class OutgoingGoods extends ApiController
                 $model->date  = $outgoing_good->date;
                 $model->customer_id = $outgoing_good->customer_id;
                 $model->order_mode   = $order_mode;
+                $model->order_mode   = 'REGULER';
                 $model->description   = "ACCUMULATE P/O. $begin - $until";
                 // For model update
                 if(!$model->id) {
@@ -150,11 +151,9 @@ class OutgoingGoods extends ApiController
     public function storeDeliveryOrder($outgoing_good) {
 
         $list = [];
-        $request_order_items = RequestOrderItem::where('order_mode', $outgoing_good->order_mode)
-          ->whereHas('request_order', function($q) use($outgoing_good) {
-
-            $q->where('customer_id', $outgoing_good->customer_id);
-
+        $request_order_items = RequestOrderItem::whereHas('request_order', function($q) use($outgoing_good) {
+            return $q->where('transaction', $outgoing_good->transaction)
+              ->where('customer_id', $outgoing_good->customer_id);
           })->get()->filter(function($x) {
             return ($x->unit_amount > $x->total_delivery_order_item);
           })->map(function($detail) {

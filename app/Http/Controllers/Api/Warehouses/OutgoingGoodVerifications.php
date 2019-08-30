@@ -6,7 +6,6 @@ use App\Filters\Warehouse\OutgoingGoodVerification as Filters;
 use App\Http\Requests\Warehouse\OutgoingGoodVerification as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Warehouse\OutgoingGoodVerification;
-use App\Models\Income\PreDeliveryItem;
 use App\Traits\GenerateNumber;
 
 class OutgoingGoodVerifications extends ApiController
@@ -30,11 +29,12 @@ class OutgoingGoodVerifications extends ApiController
                 break;
 
             default:
-                $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit'])
+                $outgoing_good_verifications = OutgoingGoodVerification::with(['outgoing_good','item','unit'])
                 ->filter($filters)
                 ->latest()->collect();
                 $outgoing_good_verifications->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
+                    $item->setAppends(['pre_delivery_number']);
                     return $item;
                 });
                 break;
@@ -54,7 +54,7 @@ class OutgoingGoodVerifications extends ApiController
 
                 $STOCKIST = $detail->pre_delivery_item->pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
                 if($detail->item->stock($STOCKIST)->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be created!');
-                $detail->item->transfer($detail, $detail->unit_amount, 'VDO', $STOCKIST);
+                $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
             }
         }
 
@@ -65,6 +65,7 @@ class OutgoingGoodVerifications extends ApiController
     public function show($id)
     {
         $outgoing_good_verification = OutgoingGoodVerification::with([
+            'pre_delivery_item',
             'item.item_units',
             'unit',
         ])->withTrashed()->findOrFail($id);
@@ -91,8 +92,10 @@ class OutgoingGoodVerifications extends ApiController
 
         $detail->update($request->input());
 
-        if($detail->item->stock('PDO')->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be updated!');
-        $detail->item->transfer($detail, $detail->unit_amount, 'VDO', 'PDO');
+        $STOCKIST = $detail->pre_delivery_item->pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+
+        if($detail->item->stock($STOCKIST)->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be created!');
+        $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
 
         $this->DATABASE::commit();
         return response()->json($detail);

@@ -6,7 +6,6 @@ use App\Filters\Income\DeliveryOrder as Filters;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\DeliveryOrder;
-use App\Models\Income\DeliveryOrderItem;
 use App\Traits\GenerateNumber;
 
 class DeliveryOrders extends ApiController
@@ -83,13 +82,13 @@ class DeliveryOrders extends ApiController
 
         $this->DATABASE::beginTransaction();
 
-        $associate = [];
+        // $this->error('REVISION');
         $revise = DeliveryOrder::findOrFail($id);
         if($revise) {
-            $revise->delivery_order_items->each(function($detail, $i) {
-                $detail->request_order_item_id = null;
-                $detail->save();
-            });
+            // $revise->delivery_order_items->each(function($detail, $i) {
+            //     $detail->request_order_item_id = null;
+            //     $detail->save();
+            // });
         }
 
         // Auto generate number of revision
@@ -101,30 +100,20 @@ class DeliveryOrders extends ApiController
         $delivery_order = DeliveryOrder::create($request->all());
 
         $rows = $request->delivery_order_items;
-        $mounting = []; $check = [];
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-
-            $oldDetail = DeliveryOrderItem::find($row["id"]);
 
             // create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            $detail->item->transfer($detail, (-1*$oldDetail->unit_amount), null, 'FG');
-            $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+            // $detail->request_order_item_id = $row['request_order_item_id'];
+            // $detail->save();
 
-            $detail->item->transfer($detail, (-1*$oldDetail->unit_amount), null, 'PDO');
-            $detail->item->transfer($detail, $detail->unit_amount, null, 'PDO');
-
-            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be changed');
-
-            $detail->request_order_item_id = $row['request_order_item_id'];
-            $detail->save();
-
-            if($detail->request_order_item->total_delivery_order_item > ($detail->request_order_item->unit_amount + 0.1)) {
-                $this->error('Data is not allowed to be changed');
+            if($detail->request_order_item) {
+                if($detail->request_order_item->total_delivery_order_item > ($detail->request_order_item->unit_amount + 0.1)) {
+                    $this->error("Data is not allowed to be changed [".$detail->request_order_item->total_delivery_order_item .">". ($detail->request_order_item->unit_amount)."]");
+                }
             }
-
         }
 
         $delivery_order->request_order_id = $request->request_order_id;
@@ -133,7 +122,10 @@ class DeliveryOrders extends ApiController
 
 
         $revise->revise_id = $delivery_order->id;
+        $revise->status = 'REVISE';
         $revise->save();
+
+        $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);

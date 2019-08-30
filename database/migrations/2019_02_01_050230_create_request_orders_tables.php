@@ -21,6 +21,7 @@ class CreateRequestOrdersTables extends Migration
             $table->integer('customer_id');
             $table->string('reference_number')->nullable();
 
+            $table->enum('transaction', ['REGULER', 'RETURN'])->default('REGULER');
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');

@@ -79,14 +79,24 @@ class WorkOrders extends ApiController
 
     public function show($id)
     {
-        $work_order = WorkOrder::with([
-            'line',
-            'shift',
+        switch (request('mode')) {
+            case 'prelines':
+                $with = ['work_order_item_lines.line'];
+                break;
+
+            default:
+                $with = ['work_order_items.work_order_item_lines'];
+                break;
+        }
+
+        $work_order = WorkOrder::with(
+          array_merge([
+            'line', 'shift',
             'work_order_items.unit',
             'work_order_items.item.unit',
             'work_order_items.item.item_units',
-            'work_order_items.work_order_item_lines.line'
-        ])->withTrashed()->findOrFail($id);
+          ], $with)
+        )->withTrashed()->findOrFail($id);
 
         $work_order->setAppends(['is_relationship', 'has_relationship']);
 

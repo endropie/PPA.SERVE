@@ -14,10 +14,10 @@ class IncomingGood extends Model
         'number', 'registration', 'date', 'time', 'transaction', 'order_mode',
         'customer_id', 'reference_number', 'reference_date', 'request_order_id',
         'vehicle_id', 'transport_rate', 'description',
+        'revise_number'
     ];
 
     protected $relationships = [
-        'pre_delivery',
         'request_order',
         'request_order.delivery_orders' => 'delivery_orders'
     ];
@@ -31,10 +31,6 @@ class IncomingGood extends Model
 
     public function request_order() {
         return $this->belongsTo('App\Models\Income\RequestOrder');
-    }
-
-    public function pre_delivery() {
-        return $this->belongsTo('App\Models\Income\PreDelivery');
     }
 
     public function customer()

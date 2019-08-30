@@ -33,7 +33,9 @@ class CreateIncomingGoodsTables extends Migration
             $table->string('status')->default('OPEN');
 
             $table->integer('request_order_id')->nullable();
-            $table->integer('pre_delivery_id')->nullable();
+            // $table->integer('pre_delivery_id')->nullable();
+            $table->integer('revise_id')->nullable();
+            $table->integer('revise_number')->nullable();
 
             $table->integer('created_by')->nullable();
             $table->timestamps();

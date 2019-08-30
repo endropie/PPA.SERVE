@@ -19,6 +19,7 @@ class PreDelivery extends Model
 
     protected $relationships = [
         // 'incoming_good'
+        'pre_delivery_items.outgoing_verifications'
     ];
 
     public function pre_delivery_items()

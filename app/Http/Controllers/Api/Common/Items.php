@@ -6,7 +6,6 @@ use App\Filters\Common\Item as Filters;
 use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
-use App\Models\Common\ItemStock;
 
 class Items extends ApiController
 {
@@ -38,6 +37,14 @@ class Items extends ApiController
 
     public function store(Request $request)
     {
+        $this->DATABASE::beginTransaction();
+
+        if(!strlen($request->code)) {
+            $code = Item::select('id')->max('id');
+            $code = str_pad($code + 1, 6, '0', STR_PAD_LEFT);
+            $request->merge(['code' => $code]);
+        }
+
         $item = Item::create($request->all());
 
         $preline_rows = $request->item_prelines;
@@ -54,6 +61,7 @@ class Items extends ApiController
 
         if(!$item->code) $item->update(['code' => $item->id]);
 
+        $this->DATABASE::commit();
         return response()->json($item);
     }
 

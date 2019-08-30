@@ -24,7 +24,7 @@ class IncomingGood extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:incoming_goods,NULL,' . $id,
+            'number' => ($id ? 'required|' : '') .'unique:incoming_goods,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'date' => 'required',
             'time' => 'required',
             'customer_id' => 'required',

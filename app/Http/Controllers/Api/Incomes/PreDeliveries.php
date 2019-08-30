@@ -24,10 +24,6 @@ class PreDeliveries extends ApiController
                 $pre_deliveries->each->setAppends(['is_relationship']);
                 break;
 
-            // case 'items':
-            //     $pre_deliveries = PreDeliveryItem::hasAmount()->latest()->get();
-            //     break;
-
             default:
                 $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
@@ -53,10 +49,9 @@ class PreDeliveries extends ApiController
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
 
             $TransRDO = $pre_delivery->transaction === 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', $TransRDO);
-
             $TransPDO = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
-            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO);
+
+            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
         }
 
         $this->DATABASE::commit();
@@ -108,12 +103,10 @@ class PreDeliveries extends ApiController
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
 
             $TransRDO = $pre_delivery->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $detail->item->transfer($detail, $detail->unit_amount, 'PDO', $TransRDO);
-
             $TransPDO = $pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
-            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO);
 
-            if($detail->item->stock('PDO')->total < (0 + 0.1)) $this->error('Data is not allowed to be changed!');
+            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
+            if($detail->item->stock($TransPDO)->total < (0)) $this->error('Data is not allowed to be changed!');
         }
 
         $this->DATABASE::commit();
@@ -147,11 +140,6 @@ class PreDeliveries extends ApiController
 
         foreach ($pre_delivery->pre_delivery_items as $detail) {
             $detail->item->distransfer($detail);
-
-            // if($detail->item->stock('PDO')->total < (0 - 0.1)) {
-            //     $this->error('Data is not allowed to be deleted!');
-            // }
-
             $detail->delete();
         }
         $pre_delivery->delete();

@@ -216,10 +216,20 @@ class Basic extends Seeder
 		$roles = [
 			'auth'	    => ['users', 'roles', 'permissions', 'profile'],
 			'common'    => ['items', 'employees'],
-			'factory'   => ['packings', 'productions', 'work-orders', 'work-process'],
-			'income'    => ['customers', 'forecasts', 'request-orders' ],
-            'delivery'  => ['pre-deliveries', 'sj-delivery-orders', 'outgoing-goods', 'outgoing-verifications'],
-            'warehouse' => ['incoming-goods'],
+            // 'factory'   => ['packings', 'productions', 'work-orders', 'work-process'],
+            'packing' => ['packings'],
+            'work-order' => ['work-orders'],
+            'work-process' => ['work-process'],
+
+            // 'income'    => ['customers', 'forecasts', 'request-orders' ],
+            'marketing' => ['customers', 'forecasts', 'request-orders' ],
+            // 'delivery'  => ['pre-deliveries', 'sj-delivery-orders', 'outgoing-goods', 'outgoing-verifications'],
+            'outgoing.verify' => ['outgoing-verifications'],
+            'outgoing.good' => ['outgoing-goods'],
+            'sj.delivery' => ['sj-delivery-orders'],
+            'pre.delivery' => ['pre-deliveries'],
+            'incoming.good' => ['incoming-goods'],
+
 			'reference' => [
 				'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes',
 				'specifications', 'type-faults',
