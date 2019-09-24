@@ -194,7 +194,7 @@ class Basic extends Seeder
 			'outgoing-verifications' => ['c','r','u','d'],
 			'outgoing-goods' => ['c','r','d','void'],
 			'pre-deliveries' => ['c','r','u','d','close','revision','void'],
-			'sj-delivery-orders' => ['c','r','u','d','revision','void'],
+			'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
 			// Reference
 			'brands'		=> ['c','r','u','d'],
 			'colors' => ['c','r','u','d'],
