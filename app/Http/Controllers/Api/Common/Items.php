@@ -68,14 +68,19 @@ class Items extends ApiController
 
     public function show($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $item = Item::with(['item_prelines', 'item_units'])->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
+        $this->DATABASE::commit();
         return response()->json($item);
     }
 
     public function update(Request $request, $id)
     {
+        $this->DATABASE::beginTransaction();
+
         $item = Item::findOrFail($id);
 
         $item->update($request->input());
@@ -97,14 +102,23 @@ class Items extends ApiController
             $item->item_units()->create($unit_rows[$i]);
         }
 
+        $this->DATABASE::commit();
         return response()->json($item);
     }
 
     public function destroy($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $item = Item::findOrFail($id);
+
+        if ($item->is_relationship) $this->error("CODE:$item->code has data relation, Delete not allowed!");
+
+        $item->item_prelines()->delete();
+        $item->item_units()->delete();
         $item->delete();
 
-        return response()->json(['success' => true]);
+        $this->DATABASE::commit();
+        return response()->json(array_merge($item->toArray(), ['success' => true]));
     }
 }
