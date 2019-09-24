@@ -31,9 +31,9 @@ class OutgoingGoodVerification extends Filter
             ->orderBy('fieldsort', $order);
     }
 
-    public function isWait($value = null) {
+    public function unvalidated($value = null) {
         if($value == 'true' || $value == '1') {
-            return $this->builder->wait();
+            return $this->builder->whereNull('validated_at');
         }
 
         return $this->builder;

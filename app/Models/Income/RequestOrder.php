@@ -16,7 +16,7 @@ class RequestOrder extends Model
     protected $relationships = [
         // 'incoming_good',
         'delivery_orders',
-        'request_order_items.outgoing_good',
+        'request_order_items.delivery_order_items',
     ];
 
     public function request_order_items()
@@ -26,10 +26,6 @@ class RequestOrder extends Model
 
     public function delivery_orders() {
         return $this->hasMany('App\Models\Income\DeliveryOrder');
-    }
-
-    public function incoming_good() {
-        return $this->hasOne('App\Models\Warehouse\IncomingGood');
     }
 
     public function customer()

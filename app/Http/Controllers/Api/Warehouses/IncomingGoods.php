@@ -44,7 +44,7 @@ class IncomingGoods extends ApiController
         $this->DATABASE::beginTransaction();
 
         if(!$request->number) $request->merge(['number'=> $this->getNextIncomingGoodNumber()]);
-        if(!$request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
+        // if($request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
 
         $incoming_good = IncomingGood::create($request->all());
 
@@ -53,7 +53,8 @@ class IncomingGoods extends ApiController
             $row = $rows[$i];
 
             // create item row on the incoming Goods updated!
-            $incoming_good->incoming_good_items()->create($row);
+            $detail = $incoming_good->incoming_good_items()->create($row);
+            if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
 
         }
 
@@ -66,6 +67,7 @@ class IncomingGoods extends ApiController
     {
         $incoming_good = IncomingGood::withTrashed()->with([
             'customer',
+            'request_order',
             'incoming_good_items.item.item_units',
             'incoming_good_items.unit'
         ])->findOrFail($id);
@@ -98,7 +100,8 @@ class IncomingGoods extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
             // Update or Create detail row
-            $incoming_good->incoming_good_items()->create($row);
+            $detail = $incoming_good->incoming_good_items()->create($row);
+            if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
         }
 
         $this->DATABASE::commit();
@@ -222,6 +225,7 @@ class IncomingGoods extends ApiController
         $revise->status = 'REVISED';
         $revise->revise_id = $incoming_good->id;
         $revise->save();
+        $revise->delete();
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);

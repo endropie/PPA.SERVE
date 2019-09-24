@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Warehouse;
 
 use App\Http\Requests\Request;
+use Illuminate\Validation\Rule;
 
 class IncomingGood extends Request
 {
@@ -11,8 +12,13 @@ class IncomingGood extends Request
         return true;
     }
 
+    protected function preparing () {
+        if (request('transaction') == 'RETURN') $this->merge(['order_mode' => 'NONE']);
+    }
+
     public function rules()
     {
+        $this->preparing();
         // Check if store or update
         $method = $this->getMethod();
 
@@ -29,12 +35,17 @@ class IncomingGood extends Request
             'time' => 'required',
             'customer_id' => 'required',
 
-            'incoming_good_items.*.item_id' => 'required',
+            'transaction' => 'required|in:REGULER,RETURN',
+            // 'order_mode' => 'required|in:NONE'.(request('transaction') == 'RETURN' ? '' : ',PO,ACCUMULATE'),
 
+            'incoming_good_items.*.item_id' => [
+                'required',
+                Rule::in(\App\Models\Common\Item::where('customer_id', request('customer_id'))->get()->pluck('id')),
+            ],
             'incoming_good_items' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0) {
-                    $fail('Incoming-Items must be select min. 1 item production.');
+                    $fail('Part Item must be select min. 1 part item.');
                 }
             },
         ];
@@ -42,7 +53,7 @@ class IncomingGood extends Request
 
     public function messages()
     {
-        $msg = 'The field is required!';
+        $msg = 'The field is failed!';
 
         return [
             'incoming_good_items.*.item_id' => $msg,

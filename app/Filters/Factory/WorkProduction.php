@@ -5,7 +5,7 @@ use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class Production extends Filter
+class WorkProduction extends Filter
 {
     protected $request;
     public function __construct(Request $request)

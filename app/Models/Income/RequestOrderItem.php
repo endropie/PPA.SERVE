@@ -23,11 +23,6 @@ class RequestOrderItem extends Model
         return $this->belongsTo('App\Models\Income\RequestOrder');
     }
 
-    public function outgoing_good()
-    {
-        return $this->belongsTo('App\Models\Warehouse\OutgoingGood');
-    }
-
     public function item()
     {
         return $this->belongsTo('App\Models\Common\Item')->with('unit');
@@ -53,9 +48,7 @@ class RequestOrderItem extends Model
     }
 
     public function getUnitAmountAttribute() {
-        // return false when rate is not valid
         if($this->unit_rate <= 0) return false;
-
         return (double) $this->quantity * $this->unit_rate;
     }
 }

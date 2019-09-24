@@ -18,31 +18,33 @@ class CreatePreDeliveriesTables extends Migration
             $table->string('number');
             $table->enum('transaction', ['REGULER', 'RETURN']);
 
-            $table->integer('customer_id');
+            $table->unsignedInteger('customer_id');
 
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
-            $table->integer('request_order_id')->nullable();
+            $table->unsignedInteger('request_order_id')->nullable();
 
             $table->date('date');
             $table->tinyInteger('rit')->nullable();
-            // $table->date('plan_begin_date');
-            // $table->date('plan_until_date');
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
-            $table->integer('created_by')->nullable();
+            $table->integer('revise_id')->unsigned();
+            $table->string('revise_number');
+
+            $table->unsignedInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
         Schema::create('pre_delivery_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('pre_delivery_id');
-            $table->integer('item_id');
-            $table->integer('unit_id');
+            $table->unsignedInteger('pre_delivery_id');
+            $table->unsignedInteger('item_id');
+            $table->unsignedInteger('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
+            $table->float('amount_verification')->default(0);
 
             $table->timestamps();
             $table->softDeletes();

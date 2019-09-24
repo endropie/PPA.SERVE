@@ -11,7 +11,7 @@ class Packing extends Model
     use Filterable, SoftDeletes;
 
     protected $fillable = [
-        'number', 'customer_id', 'date', 'time', 'shift_id', 'description',
+        'number', 'customer_id', 'date', 'shift_id', 'description',
         'worktime', 'operator_id'
     ];
 

@@ -31,8 +31,8 @@ class WorkOrder extends Filter
         });
     }
 
-    public function line_id($value) {
-        return $this->builder->where('line_id', $value);
+    public function line_id($line) {
+        return $this->builder->where('line_id', $line);
     }
 
     public function begin_date($value) {
@@ -50,18 +50,36 @@ class WorkOrder extends Filter
     }
 
     public function has_amount_packing($value) {
+        $callback =  function ($q) {
+            if (request('customer_id')) {
+                return $q->whereRaw('amount_process > amount_packing')
+                         ->whereHas('item', function ($q) {
+                            $q->where('customer_id', request('customer_id'));
+                         });
+            }
+            return $q->whereRaw('amount_process > amount_packing');
+        };
+        return $this->builder
+            ->with(['work_order_items'])
+            ->whereHas('work_order_items', $callback);
+    }
 
-        if($value === 'true') {
-            return $this->builder->whereHas('work_order_items', function ($q) {
-                if (request('customer_id')) {
-                    return $q->whereRaw('amount_process > amount_packing')
-                             ->whereHas('item', function ($q) {
-                                $q->where('customer_id', request('customer_id'));
-                             });
-                }
-                return $q->whereRaw('amount_process > amount_packing');
-            });
+    public function has_amount_line($line) {
+        $keys = request('or_work_order_item_line_ids', '-1');
+        $callback = function ($q) use ($line, $keys) {
+            return $q->where('line_id', $line)
+                     ->select('work_order_item_lines.*',
+                     \DB::raw("(SELECT quantity*unit_rate as total
+                                FROM work_order_items WHERE work_order_items.id = work_order_item_lines.work_order_item_id) as amount"))
+                     ->havingRaw("amount > amount_line OR work_order_item_lines.id IN ($keys)");
+
+        };
+
+        if((int) $line) {
+            return $this->builder
+            ->with(['work_order_item_lines' => $callback])
+            ->whereHas('work_order_item_lines', $callback);
         }
-        else return $this->builder;
+        // else return $this->builder;
     }
 }

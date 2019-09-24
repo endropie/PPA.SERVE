@@ -64,7 +64,8 @@ class PreDeliveries extends ApiController
             'customer',
             'pre_delivery_items.item.item_units',
             'pre_delivery_items.item.unit',
-            'pre_delivery_items.unit'
+            'pre_delivery_items.unit',
+            'pre_delivery_items.outgoing_verifications'
         ])->withTrashed()->findOrFail($id);
 
         $pre_delivery->setAppends(['has_relationship']);
@@ -74,6 +75,8 @@ class PreDeliveries extends ApiController
 
     public function update(Request $request, $id)
     {
+        if (request('mode') == 'revision') return $this->revision($request, $id);
+
         $this->DATABASE::beginTransaction();
 
         $pre_delivery = PreDelivery::findOrFail($id);
@@ -108,6 +111,66 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
             if($detail->item->stock($TransPDO)->total < (0)) $this->error('Data is not allowed to be changed!');
         }
+
+        $this->DATABASE::commit();
+        return response()->json($pre_delivery);
+    }
+
+    public function revision($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $revise = PreDelivery::findOrFail($id);
+        foreach ($revise->pre_delivery_items as $detail) {
+            $detail->item->distransfer($detail);
+            $detail->outgoing_verifications->each(function($verification) {
+                $verification->item->distransfer($verification);
+                $verification->delete();
+            });
+            $detail->delete();
+        }
+
+        if($request->number) {
+            $max = (int) PreDelivery::where('number', $request->number)->max('revise_number');
+            $request->merge(['revise_number' => ($max + 1)]);
+        }
+
+        $pre_delivery = PreDelivery::create($request->all());
+        if($request->number) {
+            $max = (int) PreDelivery::where('number', $request->number)->max('revise_number');
+            $pre_delivery->revise_number = ($max + 1);
+            $pre_delivery->save();
+        }
+
+        $rows = $request->pre_delivery_items;
+        for ($i=0; $i < count($rows); $i++) {
+            // create detail item created!
+            $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
+
+            $TransRDO = $pre_delivery->transaction === 'RETURN' ? 'RDO.RET' : 'RDO.REG';
+            $TransPDO = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+
+            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
+
+            $verifications = $rows[$i]['outgoing_verifications'];
+            foreach ($verifications as $verification) {
+                $verification = array_merge($verification, [
+                    'item_id' => $detail->item_id,
+                    'unit_id' => $detail->unit_id,
+                    'unit_rate' => $detail->unit_rate,
+                ]);
+                $outgoing_verification = $detail->outgoing_verifications()->create($verification);
+                $outgoing_verification->item->transfer($outgoing_verification, $outgoing_verification->unit_amount, 'VDO');
+                $outgoing_verification->pre_delivery_item()->associate($detail);
+                $outgoing_verification->save();
+            }
+            $detail->calculate();
+        }
+
+        $revise->status = 'REVISED';
+        $revise->revise_id = $pre_delivery->id;
+        $revise->save();
+        $revise->delete();
 
         $this->DATABASE::commit();
         return response()->json($pre_delivery);

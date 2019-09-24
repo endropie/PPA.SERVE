@@ -12,18 +12,18 @@ class OutgoingGoodVerification extends Model
     protected $appends = ['unit_amount'];
 
     protected $fillable = [
-        'item_id', 'unit_id', 'unit_rate', 'quantity', 'pre_delivery_item_id'
+        'item_id', 'unit_id', 'unit_rate', 'quantity', 'date',// 'pre_delivery_item_id'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
-        'outgoing_good',
+        'validated',
+
     ];
 
-    public function outgoing_good()
-    {
-        return $this->belongsTo('App\Models\Warehouse\OutgoingGood');
+    public function validated() {
+        return $this->belongsTo('App\Models\Warehouse\OutgoingGoodVerification', 'id');
     }
 
     public function pre_delivery_item() {
@@ -45,23 +45,10 @@ class OutgoingGoodVerification extends Model
         return $this->belongsTo('App\Models\Reference\Unit');
     }
 
-
-    public function getPreDeliveryNumberAttribute() {
-        // return false when rate is not valid
-         if(!$this->pre_delivery_item) return null;
-         if(!$this->pre_delivery_item->pre_delivery) return null;
-
-        return $this->pre_delivery_item->pre_delivery->number;
-    }
-
     public function getUnitAmountAttribute() {
         // return false when rate is not valid
         if($this->unit_rate <= 0) return false;
 
         return (double) $this->quantity * $this->unit_rate;
-    }
-
-    public function scopeWait($query) {
-        return $query->whereNull('outgoing_good_id');
     }
 }

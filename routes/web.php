@@ -16,18 +16,24 @@ Route::middleware('auth')->get('/user', function () {
 });
 
 
+Route::get('/test-incoming-good', function() {
+    // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'
+});
+
 Route::get('migrate', function (Request $request) {
+    if (empty(request('key'))) dd('NOT FOUND KEY');
+
     $print = [];
 
     Artisan::call('migrate:fresh', ['--seed' => true]);
     $print[] = Artisan::output();
-    
+
     Artisan::call('migrate',['--path' => 'vendor/laravel/passport/database/migrations','--force' => true]);
     $print[] = Artisan::output();
-    
+
     Artisan::call('passport:install');
     $print[] = Artisan::output();
-    
+
     dd($print);
 });
 
@@ -36,14 +42,3 @@ Auth::routes();
 Route::get('/', function () { return view('welcome'); });
 
 Route::get('/home', 'HomeController@index')->name('home');
-
-
-Route::get('/call', function () { 
-    $data = \App\Models\Reference\Brand::first();
-
-    event(new \App\Events\NewMessageNotification($data));
-    
-    // event(new \App\Events\BrandCreated($data));
-
-    return response()->json($data);
-});

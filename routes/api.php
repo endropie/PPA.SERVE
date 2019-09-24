@@ -24,7 +24,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     });
 
     Route::middleware([
-        'auth:api'
+        'auth:api',
         ])->group( function(){
 
         Route::prefix('auth')->name('auth.')->group(function () {
@@ -42,19 +42,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('/{name}', 'Setting@set');
         });
 
-
-        Route::prefix('accounting')->name('accounting.')->group(function () {
-
-            Route::apiResource('accounts', 'Accounting\Accounts');
-            // Route::apiResource('account-type', 'Accounting\AccountTypes');
-            // Route::apiResource('journals', 'Accounting\Journals');
-            // Route::post('journals/import', 'Accounting\Journals@setImport');
-
-            // Route::get('journal-entries', 'Accounting\Journals@entries');
-            // Route::get('reports/ProfitLoss', 'Accounting\reports@viewProfitLoss');
-            // Route::get('reports/BalanceSheet', 'Accounting\reports@viewBalanceSheet');
-        });
-
         Route::prefix('common')->name('common.')->group(function () {
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
@@ -65,7 +52,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
-            Route::patch('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
+            // Route::patch('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
         });
 
@@ -77,9 +64,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         });
 
         Route::prefix('factories')->name('factories.')->group(function () {
-            Route::post('work-orders/newgroup', 'Factories\WorkOrders@storeGroup');
-
-            Route::apiResource('productions', 'Factories\Productions');
+            Route::apiResource('work-productions', 'Factories\WorkProductions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
             Route::apiResource('packings', 'Factories\Packings');
         });

@@ -20,7 +20,7 @@ class OutgoingGood extends Model
         'revise_delivery_orders' => 'delivery_orders.revise',
         'delivery_orders',
         'request_order_closed',             //=> GENERATE DO => request order CLOSED state.
-        'request_order_items_closed',        //=> ORDER "ACCUMULATE" => request order CLOSED state.
+        // 'request_order_items_closed',        //=> ORDER "ACCUMULATE" => request order CLOSED state.
     ];
 
     public function outgoing_good_items()
@@ -53,12 +53,12 @@ class OutgoingGood extends Model
         return $this->hasMany('App\Models\Income\RequestOrderItem');
     }
 
-    public function request_order_items_closed()
-    {
-        return $this->request_order_items()->whereHas('request_order', function($query) {
-            $query->where('status', 'CLOSED');
-        });
-    }
+    // public function request_order_items_closed()
+    // {
+    //     return $this->request_order_items()->whereHas('request_order', function($query) {
+    //         $query->where('status', 'CLOSED');
+    //     });
+    // }
 
     public function customer()
     {

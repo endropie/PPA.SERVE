@@ -23,7 +23,7 @@ class PreDelivery extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:pre_deliveries,NULL,' . $id,
+            'number' => ($id ? 'required|' : '') .'unique:pre_deliveries,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'customer_id' => 'required',
             'date' => 'required',
             // 'plan_begin_date' => 'required',

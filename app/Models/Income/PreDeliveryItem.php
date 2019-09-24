@@ -12,7 +12,7 @@ class PreDeliveryItem extends Model
         'item_id', 'unit_id', 'unit_rate', 'quantity'
     ];
 
-    protected $appends = ['unit_amount', 'total_verification'];
+    protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -53,5 +53,20 @@ class PreDeliveryItem extends Model
         if($this->unit_rate <= 0) return false;
         $total = $this->outgoing_verifications->sum('unit_amount');
         return (double) $total * $this->unit_rate;
+    }
+
+    public function calculate($param = null)
+    {
+        if(!$param || $param == 'verification') {
+            // UPDATE AMOUNT PACKING
+
+            $total = (double) $this->outgoing_verifications->sum('unit_amount');
+            $this->amount_verification = $total * $this->unit_rate;
+            $this->save();
+
+            if((round($this->amount_verification) > round($this->unit_amount))) {
+                abort(501, "AMOUNT Verify [#$this->id] INVALID");
+            }
+        }
     }
 }

@@ -20,31 +20,31 @@ class CreateOutgoingGoodsTables extends Migration
             $table->date('date')->nullable();
             $table->date('due_date')->nullable();
 
-            $table->integer('customer_id');
+            $table->unsignedInteger('customer_id');
             $table->string('customer_name')->nullable();
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
 
-            $table->integer('vehicle_id')->nullable();
-            $table->integer('transport_rate')->nullable();
-            $table->integer('operator_id')->nullable();
+            $table->unsignedInteger('vehicle_id')->nullable();
+            $table->tinyInteger('transport_rate')->nullable();
+            $table->unsignedInteger('operator_id')->nullable();
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
-            $table->integer('request_order_id')->nullable();
+            $table->unsignedInteger('request_order_id')->nullable();
 
-            $table->integer('created_by')->nullable();
+            $table->unsignedInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
         Schema::create('outgoing_good_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('outgoing_good_id')->nullable();
+            $table->unsignedInteger('outgoing_good_id')->nullable();
 
-            $table->integer('item_id');
-            $table->integer('unit_id');
+            $table->unsignedInteger('item_id');
+            $table->unsignedInteger('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
 
@@ -54,14 +54,17 @@ class CreateOutgoingGoodsTables extends Migration
 
         Schema::create('outgoing_good_verifications', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('outgoing_good_id')->nullable();
+            // $table->unsignedInteger('outgoing_good_id')->nullable();
+            $table->date('date');
 
-            $table->integer('item_id');
-            $table->integer('unit_id');
+            $table->unsignedInteger('item_id');
+            $table->unsignedInteger('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
 
-            $table->integer('pre_delivery_item_id');
+            $table->unsignedInteger('pre_delivery_item_id');
+
+            $table->dateTime('validated_at');
             $table->timestamps();
             $table->softDeletes();
         });

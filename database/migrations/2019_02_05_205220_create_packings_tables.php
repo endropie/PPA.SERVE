@@ -19,7 +19,6 @@ class CreatePackingsTables extends Migration
             $table->string('number');
             $table->integer('customer_id');
             $table->date('date');
-            $table->time('time')->nullable();
             $table->integer('shift_id');
             $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
             $table->integer('operator_id')->nullable();

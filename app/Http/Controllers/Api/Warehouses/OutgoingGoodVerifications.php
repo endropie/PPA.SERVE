@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Filters\Warehouse\OutgoingGoodVerification as Filters;
 use App\Http\Requests\Warehouse\OutgoingGoodVerification as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Income\PreDeliveryItem;
 use App\Models\Warehouse\OutgoingGoodVerification;
 use App\Traits\GenerateNumber;
 
@@ -29,12 +30,11 @@ class OutgoingGoodVerifications extends ApiController
                 break;
 
             default:
-                $outgoing_good_verifications = OutgoingGoodVerification::with(['outgoing_good','item','unit'])
+                $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit'])
                 ->filter($filters)
                 ->latest()->collect();
                 $outgoing_good_verifications->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
-                    $item->setAppends(['pre_delivery_number']);
                     return $item;
                 });
                 break;
@@ -48,12 +48,11 @@ class OutgoingGoodVerifications extends ApiController
         $this->DATABASE::beginTransaction();
         foreach ($request->outgoing_good_verifications as $row) {
             if($row['quantity'] > 0) {
-                $detail = OutgoingGoodVerification::create($row);
 
-                if(!$detail->pre_delivery_item) $this->error('Data is not allowed to be created!');
+                $pre_delivery_item = PreDeliveryItem::findOrFail($row['pre_delivery_item_id']);
+                $detail = $pre_delivery_item->outgoing_verifications()->create(array_merge($row, ['date' => $request->date]));
+                $pre_delivery_item->calculate();
 
-                $STOCKIST = $detail->pre_delivery_item->pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
-                if($detail->item->stock($STOCKIST)->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be created!');
                 $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
             }
         }
@@ -86,15 +85,10 @@ class OutgoingGoodVerifications extends ApiController
             $this->error('The data has relationships, is not allowed to be changed');
         }
 
-        // $this->error($request->input());
-
         $detail->item->distransfer($detail);
 
         $detail->update($request->input());
-
-        $STOCKIST = $detail->pre_delivery_item->pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
-
-        if($detail->item->stock($STOCKIST)->total < ($detail->unit_amount - 0.1)) $this->error('Data is not allowed to be created!');
+        $detail->pre_delivery_item->calculate();
         $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
 
         $this->DATABASE::commit();

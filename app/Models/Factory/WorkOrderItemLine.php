@@ -10,10 +10,10 @@ class WorkOrderItemLine extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'line_id', 'shift_id'
+        'line_id', 'shift_id', 'ismain'
     ];
 
-    protected $appends = [];
+    protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -21,7 +21,7 @@ class WorkOrderItemLine extends Model
 
     public function work_order_item()
     {
-        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
+        return $this->belongsTo('App\Models\Factory\WorkOrderItem')->withTrashed();
     }
 
     public function line()
@@ -29,22 +29,18 @@ class WorkOrderItemLine extends Model
         return $this->belongsTo('App\Models\Reference\Line');
     }
 
-    public function production_items()
+    public function work_production_items()
     {
-        $line = (int) $this->line_id;
-        return $this->hasMany('App\Models\Factory\ProductionItem', 'work_order_item_id', 'work_order_item_id')
-                ->whereHas('production', function($q) use($line) {
-                    $q->where('line_id', $line);
-                });
+        return $this->hasMany('App\Models\Factory\WorkProductionItem');
     }
 
-    public function getTotalProductionItemAttribute() {
-       // return false when rate is not valid
-       return (double) $this->production_items()->sum('quantity');
+    public function getUnitAmountAttribute() {
+        return  (double) $this->work_order_item->quantity * $this->work_order_item->unit_rate;
     }
 
-   public function getUnitAmountAttribute() {
-    return  (double) $this->quantity * $this->work_order_item->unit_rate;
-
- }
+    public function calculate () {
+        $total = $this->work_production_items->sum('unit_amount');
+        $this->amount_line = $total;
+        $this->save();
+    }
 }

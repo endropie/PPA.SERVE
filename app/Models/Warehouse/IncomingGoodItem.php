@@ -21,7 +21,7 @@ class IncomingGoodItem extends Model
 
     public function incoming_good()
     {
-        return $this->belongsTo('App\Models\Factory\IncomingGood');
+        return $this->belongsTo('App\Models\Warehouse\IncomingGood');
     }
 
     public function request_order_item() {

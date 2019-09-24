@@ -4,7 +4,7 @@ namespace App\Http\Requests\Factory;
 
 use App\Http\Requests\Request;
 
-class Production extends Request
+class WorkProduction extends Request
 {
     public function authorize()
     {
@@ -18,14 +18,14 @@ class Production extends Request
 
         if ($method == 'PATCH' || $method == 'PUT')
         {
-            $id = $this->production;
+            $id = $this->work_production;
 
             if($this->exists('nodata')) return [];
         }
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:productions,NULL,' . $id,
+            'number' => ($id ? 'required|' : '') .'max:191|unique:work_productions,NULL,' . $id,
             'line_id' => 'required',
         ];
     }

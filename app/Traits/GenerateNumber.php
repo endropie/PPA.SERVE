@@ -98,7 +98,7 @@ trait GenerateNumber
 
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Factory\Production::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Factory\WorkProduction::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 

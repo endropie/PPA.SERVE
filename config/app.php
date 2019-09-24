@@ -232,6 +232,8 @@ return [
         // Application aliases...
         // ======================
         'Carbon' => Carbon\Carbon::class,
+        'Arr' => Illuminate\Support\Arr::class,
+        'Str' => Illuminate\Support\Str::class,
         'Setting' => Akaunting\Setting\Facade::class,
 
     ],

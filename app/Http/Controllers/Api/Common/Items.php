@@ -50,6 +50,7 @@ class Items extends ApiController
         $preline_rows = $request->item_prelines;
         for ($i=0; $i < count($preline_rows); $i++) {
             // create pre production on the item updated!
+            if($i == 0) $preline_rows[$i]["ismain"] = 1;
             $item->item_prelines()->create($preline_rows[$i]);
         }
 
@@ -84,6 +85,7 @@ class Items extends ApiController
         $preline_rows = $request->item_prelines;
         for ($i=0; $i < count($preline_rows); $i++) {
             // create pre production on the item updated!
+            if($i == 0) $preline_rows[$i]["ismain"] = 1;
             $item->item_prelines()->create($preline_rows[$i]);
         }
 

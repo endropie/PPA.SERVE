@@ -10,7 +10,7 @@ class WorkOrderItem extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio', 'process'
+        'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'
     ];
 
     protected $appends = ['unit_amount'];
@@ -24,14 +24,14 @@ class WorkOrderItem extends Model
         return $this->hasMany('App\Models\Factory\WorkOrderItemLine')->withTrashed();
     }
 
+    public function work_order()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrder')->withTrashed();
+    }
+
     public function packing_items()
     {
         return $this->hasMany('App\Models\Factory\PackingItem');
-    }
-
-    public function work_order()
-    {
-        return $this->belongsTo('App\Models\Factory\WorkOrder');
     }
 
     public function item()
@@ -49,9 +49,9 @@ class WorkOrderItem extends Model
         return $this->belongsTo('App\Models\Reference\Unit');
     }
 
-    public function production_items()
+    public function work_production_items()
     {
-        return $this->hasMany('App\Models\Factory\ProductionItem');
+        return $this->hasMany('App\Models\Factory\WorkProductionItem');
     }
 
     public function getUnitAmountAttribute()
@@ -60,6 +60,14 @@ class WorkOrderItem extends Model
         if($this->unit_rate <= 0) return null;
 
         return (double) $this->quantity * $this->unit_rate;
+    }
+
+    public function getUnitProcessAttribute()
+    {
+        // return false when rate is not valid
+        if($this->unit_rate <= 0) return null;
+
+        return (double) $this->process * $this->unit_rate;
     }
 
     public function calculate($param = null)

@@ -18,13 +18,16 @@ class CreateRequestOrdersTables extends Migration
             $table->string('number');
             $table->date('date');
 
-            $table->integer('customer_id');
+            $table->integer('customer_id')->unsigned();
             $table->string('reference_number')->nullable();
 
             $table->enum('transaction', ['REGULER', 'RETURN'])->default('REGULER');
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
+
+            $table->integer('revise_id')->unsigned()->nullable();
+            $table->integer('revise_number')->nullable();
 
             $table->integer('created_by')->nullable();
             $table->timestamps();
@@ -33,16 +36,16 @@ class CreateRequestOrdersTables extends Migration
 
         Schema::create('request_order_items', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('request_order_id');
+            $table->integer('request_order_id')->unsigned();
 
-            $table->integer('item_id');
-            $table->integer('unit_id');
+            $table->integer('item_id')->unsigned();
+            $table->integer('unit_id')->unsigned();
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
             $table->float('price');
             $table->string('note')->nullable();
 
-            $table->integer('outgoing_good_id')->nullable();
+            // $table->integer('outgoing_good_id')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

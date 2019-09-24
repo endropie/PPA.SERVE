@@ -40,8 +40,6 @@ class CreateItemsTable extends Migration
 
             $table->text('description')->nullable();
             $table->boolean('enable')->default(1);
-            $table->integer('registered_by')->nullable();
-            $table->dateTime('registered_at')->nullable();
             $table->integer('created_by')->nullable();
             $table->timestamps();
         });
@@ -50,7 +48,9 @@ class CreateItemsTable extends Migration
             $table->increments('id');
             $table->integer('line_id');
             $table->string('note')->nullable();
-            $table->integer('item_id');  // =>> the field "belongsTo" relation with "Items" table.
+            $table->integer('item_id')->unsigned();
+            $table->boolean('ismain')->default(0);
+
             $table->timestamps();
         });
 

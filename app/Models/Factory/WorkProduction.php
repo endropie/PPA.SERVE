@@ -6,17 +6,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Filters\Filterable;
 
-class Production extends Model
+class WorkProduction extends Model
 {
    use Filterable, SoftDeletes;
 
-   protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'description'];
+   protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'oprator_id', 'description'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   public function production_items()
+   public function work_production_items()
    {
-      return $this->hasMany('App\Models\Factory\ProductionItem')->withTrashed();
+      return $this->hasMany('App\Models\Factory\WorkProductionItem')->withTrashed();
    }
 
    public function line()

@@ -23,6 +23,10 @@ class CreateWorkOrdersTables extends Migration
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
+
+            $table->integer('revise_id')->unsigned()->nullable();
+            $table->string('revise_number')->nullable();
+
             $table->integer('processed_by')->nullable();
             $table->dateTime('processed_at')->nullable();
 
@@ -53,11 +57,12 @@ class CreateWorkOrdersTables extends Migration
 
         Schema::create('work_order_item_lines', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('work_order_item_id');
+            $table->integer('work_order_item_id')->unsigned();
 
-            $table->integer('line_id');
-            $table->integer('shift_id')->nullable();
-
+            $table->integer('line_id')->unsigned();
+            $table->integer('shift_id')->unsigned()->nullable();
+            $table->boolean('ismain');
+            $table->float('amount_line')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

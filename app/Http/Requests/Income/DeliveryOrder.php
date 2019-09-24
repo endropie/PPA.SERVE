@@ -24,7 +24,7 @@ class DeliveryOrder extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,numrev,' . $id,
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,revise_number,' . $id,
             'date' => 'required',
             'due_date' => 'required',
             'customer_id' => 'required',

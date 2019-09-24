@@ -24,15 +24,16 @@ class OutgoingGoodVerification extends Request
         if ($method == 'POST' && Request::exists('outgoing_good_verifications')) {
             return [
                 'pre_delivery_id' => 'required',
+                'date' => 'required',
                 'outgoing_good_verifications.*.item_id' => 'required',
                 // 'outgoing_good_verifications.*.quantity' => 'required',
                 'outgoing_good_verifications.*.unit_rate' => 'required',
                 'outgoing_good_verifications.*.unit_id' => 'required',
+                'outgoing_good_verifications.*.pre_delivery_item_id' => 'required',
             ];
         }
 
         return [
-            // 'number' => ($id ? 'required|string|' : '') .'max:191|unique:outgoing_good_verifications,NULL,' . $id,
             'item_id' => 'required',
             'quantity' => 'required',
             'unit_rate' => 'required',

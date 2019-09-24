@@ -22,14 +22,14 @@ class PackingItem extends Model
         return $this->hasMany('App\Models\Factory\PackingItemFault')->withTrashed();
     }
 
-    public function work_order_item()
-    {
-        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
-    }
-
     public function packing()
     {
         return $this->belongsTo('App\Models\Factory\Packing');
+    }
+
+    public function work_order_item()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
     }
 
     public function item()

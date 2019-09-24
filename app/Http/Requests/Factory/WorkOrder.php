@@ -24,7 +24,7 @@ class WorkOrder extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:work_orders,NULL,' . $id,
+            'number' => ($id ? 'required|' : '') .'unique:work_orders,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'line_id' => 'required',
         ];
     }
