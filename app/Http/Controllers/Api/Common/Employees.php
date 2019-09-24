@@ -32,13 +32,6 @@ class Employees extends ApiController
     {
         $employee = Employee::create($request->all());
 
-        $employee_jobs = $request->employee_jobs;
-        for ($i=0; $i < count($employee_jobs); $i++) {
-            // create item units on the item updated!
-            $employee->jobs()->attach($employee_jobs[$i]['job']);
-            // $employee->item_units()->create($employee_jobs[$i]);
-        }
-
         return response()->json($employee);
     }
 
@@ -57,24 +50,17 @@ class Employees extends ApiController
 
         $employee->update($request->input());
 
-
-        // Delete item units on the item updated!
-        $employee->employee_jobs()->delete();
-        $unit_rows = $request->employee_jobs;
-        for ($i=0; $i < count($unit_rows); $i++) {
-            // create item units on the item updated!
-
-            // $employee->employee_jobs()->create($unit_rows[$i]);
-        }
-
         return response()->json($employee);
     }
 
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
+
+        if ($employee->is_relationship) $this->error("CODE:$employee->code has data relation, Delete not allowed!");
+
         $employee->delete();
 
-        return response()->json(['success' => true]);
+        return response()->json(array_merge($employee->toArray(), ['success' => true]));
     }
 }

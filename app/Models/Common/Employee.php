@@ -15,7 +15,11 @@ class Employee extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $relationships = [];
+    protected $relationships = [
+        'work_productions',
+        'packings',
+        'outgoing_goods'
+    ];
 
     public function department () {
         return $this->belongsTo('App\Models\Reference\Department');
@@ -27,6 +31,18 @@ class Employee extends Model
 
     public function line () {
         return $this->belongsTo('App\Models\Reference\line');
+    }
+
+    public function work_productions() {
+        return $this->hasMany('App\Models\Factory\WorkProduction', 'operator_id');
+    }
+
+    public function packings() {
+        return $this->hasMany('App\Models\Factory\Packing', 'operator_id');
+    }
+
+    public function outgoing_goods() {
+        return $this->hasMany('App\Models\Warehouse\OutGoingGood', 'operator_id');
     }
 
 }
