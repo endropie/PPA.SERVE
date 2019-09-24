@@ -19,11 +19,10 @@ class OutgoingGoodVerification extends Model
 
     protected $relationships = [
         'validated',
-
     ];
 
     public function validated() {
-        return $this->belongsTo('App\Models\Warehouse\OutgoingGoodVerification', 'id');
+        return $this->belongsTo('App\Models\Warehouse\OutgoingGoodVerification', 'id')->whereNotNull('validated_at');
     }
 
     public function pre_delivery_item() {
