@@ -29,8 +29,8 @@ class CreatePreDeliveriesTables extends Migration
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
-            $table->integer('revise_id')->unsigned();
-            $table->string('revise_number');
+            $table->integer('revise_id')->unsigned()->nullable();
+            $table->string('revise_number')->nullable();
 
             $table->unsignedInteger('created_by')->nullable();
             $table->timestamps();

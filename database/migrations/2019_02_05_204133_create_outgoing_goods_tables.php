@@ -54,17 +54,15 @@ class CreateOutgoingGoodsTables extends Migration
 
         Schema::create('outgoing_good_verifications', function (Blueprint $table) {
             $table->increments('id');
-            // $table->unsignedInteger('outgoing_good_id')->nullable();
             $table->date('date');
-
-            $table->unsignedInteger('item_id');
-            $table->unsignedInteger('unit_id');
+            $table->integer('item_id')->unsigned();
+            $table->integer('unit_id')->unsigned();
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
 
-            $table->unsignedInteger('pre_delivery_item_id');
+            $table->integer('pre_delivery_item_id')->unsigned();
 
-            $table->dateTime('validated_at');
+            $table->dateTime('validated_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
