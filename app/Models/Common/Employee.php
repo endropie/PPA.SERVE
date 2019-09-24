@@ -42,7 +42,7 @@ class Employee extends Model
     }
 
     public function outgoing_goods() {
-        return $this->hasMany('App\Models\Warehouse\OutGoingGood', 'operator_id');
+        return $this->hasMany('App\Models\Warehouse\OutgoingGood', 'operator_id');
     }
 
 }
