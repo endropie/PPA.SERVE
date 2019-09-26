@@ -41,6 +41,7 @@ class CreateWorkProductionsTables extends Migration
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('quantity');
+            $table->integer('groupkey');
 
             $table->integer('work_order_item_line_id')->nullable();
             $table->timestamps();

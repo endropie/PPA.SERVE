@@ -238,15 +238,21 @@ class Basic extends Seeder
 		];
 
 
+        $userRole = Role::create(['name' => 'user']);
+        $userRole->givePermissionTo(Permission::create(['name' => "profile"]));
+
+        $settingRole = Role::create(['name' => 'setting']);
+        $settingRole->givePermissionTo(Permission::create(['name' => "setting"]));
+
+        $viewRole = Role::create(['name' => 'view.all']);
+
 		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
         $viewer = User::create(['name' => 'viewer', 'password' => Hash::make('viewer'.'ppa'), 'email' => 'viewer@ppa.com']);
 
-        $userRole = $role = Role::create(['name' => 'user']);
-        $userRole->givePermissionTo(Permission::create(['name' => "profile-read"]));
-        $userRole->givePermissionTo(Permission::create(['name' => "profile-update"]));
-
         $admin->assignRole($userRole);
+        $admin->assignRole($settingRole);
         $viewer->assignRole($userRole);
+        $viewer->assignRole($viewRole);
 
         foreach ($roles as $key => $value) {
 			$name = ucfirst($key);
@@ -260,11 +266,6 @@ class Basic extends Seeder
             $role = Role::create(['name' => $label]);
 			$user->assignRole($label);
             $admin->assignRole($label);
-
-            $label = "view.$key";
-            $role = Role::create(['name' => $label]);
-			$user->assignRole($label);
-            $viewer->assignRole($label);
 		}
 
 		foreach ($data as $key => $actions) {
@@ -279,7 +280,7 @@ class Basic extends Seeder
                                 $admin->givePermissionTo($permission);
                             }
                         }
-                        if($label == "read" && $role = Role::where('name',"view.$rcode")->first()) {
+                        if($label == "read" && $role = Role::where('name',"view.all")->first()) {
                             $role->givePermissionTo($permission);
                         }
 					}

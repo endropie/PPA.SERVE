@@ -61,7 +61,7 @@ class CreateWorkOrdersTables extends Migration
 
             $table->integer('line_id')->unsigned();
             $table->integer('shift_id')->unsigned()->nullable();
-            $table->boolean('ismain');
+            $table->boolean('ismain')->nullable();
             $table->float('amount_line')->default(0);
             $table->timestamps();
             $table->softDeletes();
