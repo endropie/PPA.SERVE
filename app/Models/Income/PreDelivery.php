@@ -24,7 +24,7 @@ class PreDelivery extends Model
 
     public function pre_delivery_items()
     {
-        return $this->hasMany('App\Models\Income\preDeliveryItem')->withTrashed();
+        return $this->hasMany('App\Models\Income\PreDeliveryItem')->withTrashed();
     }
 
     public function incoming_good() {

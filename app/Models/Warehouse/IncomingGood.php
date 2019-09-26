@@ -12,7 +12,7 @@ class IncomingGood extends Model
 
     protected $fillable = [
         'number', 'registration', 'date', 'time', 'transaction', 'order_mode',
-        'customer_id', 'reference_number', 'reference_date', 'request_order_id',
+        'customer_id', 'reference_number', 'reference_date', 'rit',
         'vehicle_id', 'transport_rate', 'description',
         'revise_number'
     ];
