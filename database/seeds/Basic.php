@@ -238,8 +238,8 @@ class Basic extends Seeder
 		];
 
 
-        $userRole = Role::create(['name' => 'user']);
-        $userRole->givePermissionTo(Permission::create(['name' => "profile"]));
+        $profileRole = Role::create(['name' => 'profile']);
+        $profileRole->givePermissionTo(Permission::create(['name' => "profile"]));
 
         $settingRole = Role::create(['name' => 'setting']);
         $settingRole->givePermissionTo(Permission::create(['name' => "setting"]));
@@ -249,9 +249,9 @@ class Basic extends Seeder
 		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
         $viewer = User::create(['name' => 'viewer', 'password' => Hash::make('viewer'.'ppa'), 'email' => 'viewer@ppa.com']);
 
-        $admin->assignRole($userRole);
+        $admin->assignRole($profileRole);
         $admin->assignRole($settingRole);
-        $viewer->assignRole($userRole);
+        $viewer->assignRole($profileRole);
         $viewer->assignRole($viewRole);
 
         foreach ($roles as $key => $value) {
@@ -260,7 +260,7 @@ class Basic extends Seeder
 			// Ex: username: user.reference@ppa.com password: referenceppa
 
             $user = User::create(['name' => $name, 'password' => $pass, 'email' => $name .'@ppa.com']);
-            $user->assignRole($userRole->name);
+            $user->assignRole($profileRole->name);
 
             $label = "user.$key";
             $role = Role::create(['name' => $label]);
