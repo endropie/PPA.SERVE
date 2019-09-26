@@ -17,7 +17,7 @@ class Item extends Model
         'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable'
     ];
 
-    protected $appends = ['totals'];
+    protected $appends = ['customer_code', 'totals'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -107,6 +107,11 @@ class Item extends Model
             $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
         }
         return $stocks;
+    }
+
+    public function getCustomerCodeAttribute()
+    {
+        return $this->customer ? $this->customer->code : null;
     }
 
     public function stock($stockist)
