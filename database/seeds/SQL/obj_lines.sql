@@ -14,7 +14,7 @@ MySQL - 5.7.26-log : Database - ppa
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 /*Data for the table `lines` */
 
-insert  into `lines`(`id`,`name`,`ismain`,`description`,`created_at`,`updated_at`) values 
+insert  into `lines`(`id`,`name`,`ismain`,`description`,`created_at`,`updated_at`) values
 (1,'01 ED Coating-1 (Epoxy)',1,NULL,NULL,NULL),
 (2,'02 Removing 1',0,NULL,NULL,NULL),
 (3,'03 Dipping',0,NULL,NULL,NULL),
@@ -37,7 +37,8 @@ insert  into `lines`(`id`,`name`,`ismain`,`description`,`created_at`,`updated_at
 (20,'26 Repair',0,NULL,NULL,NULL),
 (21,'27 Removing 2',0,NULL,NULL,NULL),
 (22,'28 Touchup',0,NULL,NULL,NULL),
-(23,'Gudang',0,NULL,NULL,NULL);
+(23,'Buffing',0,NULL,NULL,NULL),
+(24,'Gudang',0,NULL,NULL,NULL);
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
