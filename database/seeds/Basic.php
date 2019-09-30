@@ -16,14 +16,10 @@ class Basic extends Seeder
 {
 	public function run()
     {
-		// Create generate Passport Client: personal
-		// \Artisan::call('passport:client --personal');
-		// \Artisan::call('passport:client --password');
-		if(app()->runningInConsole()) {
+
+        if(app()->runningInConsole()) {
 			\Artisan::call('passport:install');
 		}
-
-		// \Artisan::call('passport:install');
 
 		$this->auth();
 		$this->type_items();
