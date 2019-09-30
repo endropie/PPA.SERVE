@@ -16,14 +16,10 @@ class Authentication extends Controller
 
     public function login()
     {
-        // return response()->json(['email'=>request('email'),'password'=>request('password')], 501);
         if(!User::where('email',request('email'))->first()) return response()->json(['message'=>'Username or email not found!'], 422);
         $attempt = Auth::attempt([
             'email'     => request('email'),
             'password'  => request('password'),
-            // 'grant_type' => "passport",
-            // 'client_id ' => 1,
-            // 'client_secret' => "bBnnoTXzB8sxXPCAdcrwYPYJDEQte1Vs9vAiDnDA",
         ]);
 
         if($attempt) {
