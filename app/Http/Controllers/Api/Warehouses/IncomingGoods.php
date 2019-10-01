@@ -79,6 +79,8 @@ class IncomingGoods extends ApiController
 
     public function update(Request $request, $id)
     {
+        if(request('mode') === 'rejection') return $this->rejection($request, $id);
+        if(request('mode') === 'restoration') return $this->restoration($request, $id);
         if(request('mode') === 'validation') return $this->validation($request, $id);
         if(request('mode') === 'revision') return $this->revision($request, $id);
 
@@ -136,6 +138,58 @@ class IncomingGoods extends ApiController
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
+    }
+
+    public function rejection($request, $id)
+    {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
+        $incoming_good = IncomingGood::findOrFail($id);
+
+        if ($incoming_good->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
+
+        $incoming_good->status = 'REJECTED';
+        $incoming_good->save();
+
+        $this->DATABASE::commit();
+        return response()->json($incoming_good);
+    }
+
+    public function restoration($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $revise = IncomingGood::findOrFail($id);
+        $details = $revise->incoming_good_items;
+        foreach ($details as $detail) {
+            $detail->item->distransfer($detail);
+            $detail->delete();
+        }
+
+        if($request->number) {
+            $max = (int) IncomingGood::where('number', $request->number)->max('revise_number');
+            $request->merge(['revise_number' => ($max + 1)]);
+        }
+
+        if(!$request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
+
+        $incoming_good = IncomingGood::create($request->all());
+
+        $rows = $request->incoming_good_items;
+        for ($i=0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            $detail = $incoming_good->incoming_good_items()->create($row);
+        }
+
+        $revise->revise_id = $incoming_good->id;
+        $revise->save();
+        $revise->delete();
+
+        // $this->error('LOLOS');
+
+        $this->DATABASE::commit();
+        return response()->json($incoming_good);
     }
 
     public function validation($request, $id)
