@@ -6,6 +6,7 @@ use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
 
 use App\Models\Factory\Packing;
+use App\Models\Factory\WorkOrder;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -25,7 +26,7 @@ class Packings extends ApiController
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->filter($filter)->latest()->get();
+                ])->filter($filter)->latest()->orderBy('id', 'DESC')->get();
 
                 break;
 
@@ -35,7 +36,7 @@ class Packings extends ApiController
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'shift'
-                ])->filter($filter)->latest()->collect();
+                ])->filter($filter)->latest()->orderBy('id', 'DESC')->collect();
 
                 $packings->getCollection()->transform(function($row) {
                     $row->setAppends(['is_relationship']);
@@ -53,10 +54,109 @@ class Packings extends ApiController
         return response()->json($packings);
     }
 
-    public function store(Request $request)
+    public function multistore(Request $request)
     {
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
+
+        $totals = $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
+        $partials = collect([]);
+
+        $work_orders = WorkOrder::whereIn('status', ['OPEN', 'PROCESSED'])
+            ->whereHas('work_order_items', function($q) {
+              return $q
+                ->where('item_id', request()->input('packing_items.item_id'))
+                ->whereRaw('amount_process > amount_packing');
+            })
+            ->orderBy('date')
+            ->get();
+
+
+
+        foreach ($work_orders as $work_order)
+        {
+
+            foreach ($work_order->work_order_items as $detail)
+            {
+
+                $detail->available = $detail->amount_process - $detail->amount_packing;
+                if (
+                    $detail->item_id == request('packing_items.item_id')
+                    && $detail->available > 0
+                    && $totals > 0
+                ) {
+                    $amount = $detail->available > $totals ? $totals : $detail->available;
+                    $partials->push(['id' => $detail->id, 'amount' => $amount]);
+                    $totals -= $amount;
+                }
+            }
+        }
+
+        // $this->error([
+        //     'MULTISTORE',
+        //     $partials,
+        //     $totals,
+        // ]);
+
+        $packings = collect([]);
+        foreach ($partials as $key => $partial) {
+            // Create the Packing Goods.
+            $packing = Packing::create($request->all());
+
+            $row = $request->packing_items;
+            // Packing Items only 1 row detail (relation = $model->hasOne)
+            if($row) {
+                // Create the Packing item. Note: with "hasOne" Relation.
+                $row = array_merge($request->packing_items, [
+                    'quantity' => ($partial['amount'] / ($row['unit_rate'] ?? 1)),
+                    'work_order_item_id' => $partial['id'],
+                ]);
+
+                $detail = $packing->packing_items()->create($row);
+
+                // Calculate stock on after the Packing items Created!
+                $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
+
+                if ($partials->count()-1 == $key)
+                {
+                    $faults = $row['packing_item_faults'];
+                    for ($i=0; $i < count($faults); $i++) {
+                        $fault = $faults[$i];
+                        if($fault['fault_id'] || $fault['quantity'] ) {
+                            // create fault on the Packing Goods Created!
+                            $detail->packing_item_faults()->create($fault);
+                        }
+                    }
+                }
+
+                // Calculate "NG" stock on after the Item Faults Created!
+                $NG = (double) $detail->packing_item_faults()->sum('quantity');
+                if ($NG > 0) {
+                    $detail->item->transfer($detail, $NG, 'NG', 'WIP');
+                }
+                $detail->amount_faulty = $NG * $detail->unit_rate;
+                $detail->save();
+
+                $detail->work_order_item->calculate('packing');
+            }
+
+            $packings->push($packing);
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($packings);
+    }
+
+    public function store(Request $request)
+    {
+        if (strtoupper(request('mode')) ?? 'MULTICREATE') {
+            return $this->multistore($request);
+        }
+
+        $this->DATABASE::beginTransaction();
+        if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
+
+        $this->error($request->input('packing_items.quantity'));
 
         // Create the Packing Goods.
         $packing = Packing::create($request->all());
@@ -89,6 +189,8 @@ class Packings extends ApiController
 
             $detail->work_order_item->calculate('packing');
         }
+
+        $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($packing);
