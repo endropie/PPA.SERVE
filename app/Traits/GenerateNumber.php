@@ -1,11 +1,5 @@
 <?php
 namespace App\Traits;
-use App\Models\Purchase\PurchaseInvoice;
-use App\Models\Sales\SalesQuotation;
-use App\Models\Sales\SalesOrder;
-use App\Models\Sales\SalesDelivery;
-use App\Models\Sales\SalesInvoice;
-use App\Models\Accounting\Journal;
 
 trait GenerateNumber
 {
@@ -155,22 +149,6 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextJournalNumber($date = null)
-    {
-        $digit = 6;
-        $prefix = 'JE/{Y}/';
-
-        $prefix = $this->dateParser($prefix, $date);
-
-        $next = Journal::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
     protected function prefixParser($modul)
     {
         $prefix = '';
@@ -182,7 +160,7 @@ trait GenerateNumber
         return $prefix;
     }
 
-    public function dateParser($str, $date)
+    protected function dateParser($str, $date)
     {
         $matches = array();
         $regex = "/{(.*)}/";
@@ -196,5 +174,28 @@ trait GenerateNumber
         }
 
         return $str ?? '';
+    }
+
+    public function toAlpha($num, $code = '')
+    {
+        $alphabets = array('', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z');
+
+        $division = floor($num / 26);
+        $remainder = $num % 26;
+
+        if($remainder == 0)
+        {
+            $division = $division - 1;
+            $code .= 'z';
+        }
+        else
+            $code .= $alphabets[$remainder];
+
+        if($division > 26)
+            return number_to_alpha($division, $code);
+        else
+            $code .= $alphabets[$division];
+
+        return strrev($code);
     }
 }
