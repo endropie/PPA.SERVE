@@ -95,10 +95,10 @@ class DeliveryOrders extends ApiController
 
         $delivery_order = DeliveryOrder::findOrFail($id);
 
-        if ($delivery_order->status != "OPEN") $this->error("DOSJ[$delivery_order->number] has not OPEN state. Confirmation not allowed!");
+        if ($delivery_order->status != "OPEN") $this->error("SJDO[$delivery_order->number] has not OPEN state. Confirmation not allowed!");
 
         foreach ($delivery_order->delivery_order_items as $detail) {
-            if (!$detail->request_order_item) $this->error("DOSJ DETAIL[#$detail->id] '". $detail->item->part_name ."' not has SO Relation. Confirmation not allowed!");
+            if (!$detail->request_order_item) $this->error("SJDO DETAIL[#$detail->id] '". $detail->item->part_name ."' not has SO Relation. Confirmation not allowed!");
         }
 
         $delivery_order->status = 'CONFIRMED';
@@ -131,7 +131,7 @@ class DeliveryOrders extends ApiController
         $request_order = $revise->request_order;
 
         if($revise) {
-            if($revise->trashed()) $this->error("DOSJ [". $revise->number ."] is trashed. REVISION Not alowed!");
+            if($revise->trashed()) $this->error("SJDO [". $revise->number ."] is trashed. REVISION Not alowed!");
 
             $revise->delivery_order_items->each(function($detail) use($revise){
                 if($detail->trashed()) $this->error("Part [". $detail->item->part_name ."] is trashed. REVISION Not alowed!");

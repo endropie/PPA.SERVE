@@ -304,7 +304,7 @@ class IncomingGoods extends ApiController
             if (!in_array($detail->id, $exclude_details->toArray())) {
                 $delivery_order_items->map(function ($detail) {
                     if (strtoupper($detail->delivery_order->status) == 'CLOSED') {
-                        $this->error("DATA has Relation DOSJ#". $detail->delivery_order->number ."[CLOSED]. REVISION has not allowed!");
+                        $this->error("DATA has Relation SJDO#". $detail->delivery_order->number ."[CLOSED]. REVISION has not allowed!");
                     }
                     // Unset Relation detail for detail item removed
                     $detail->request_order_item()->associate(null);

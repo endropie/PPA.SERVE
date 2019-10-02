@@ -68,7 +68,7 @@ class Settings extends Seeder
             'pre_delivery.number_interval'   => '{Y}',
             'pre_delivery.number_digit'      => '5',
 
-            'sj_delivery.number_prefix'     => 'DOSJ',
+            'sj_delivery.number_prefix'     => 'SJDO',
             'sj_delivery.number_interval'   => '{Y}',
             'sj_delivery.number_digit'      => '5',
         ]);
