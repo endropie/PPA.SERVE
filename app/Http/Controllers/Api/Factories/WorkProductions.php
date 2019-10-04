@@ -27,6 +27,11 @@ class WorkProductions extends ApiController
             default:
                 $work_productions = WorkProduction::with(['line', 'shift'])
                     ->filter($filter)->latest()->collect();
+
+                $work_productions->getCollection()->transform(function($row) {
+                        $row->setAppends(['is_relationship']);
+                        return $row;
+                    });
                 break;
         }
 
@@ -47,12 +52,28 @@ class WorkProductions extends ApiController
             // create Part item on the WIP Created!
             $detail = $work_production->work_production_items()->create($row);
 
-            if($work_order_item_line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
-                $detail->work_order_item_line()->associate($work_order_item_line);
-                $detail->save();
-            }
+            if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
 
-            $work_order_item_line->calculate();
+                if($work_order = $line->work_order_item->work_order) {
+                    if ($work_order->status == 'CLOSED') {
+                        $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
+                    }
+
+                    if ($work_order->status !== 'ON-PROCESS') {
+                        $work_order->status = 'ON-PROCESS';
+                        $work_order->save();
+                    }
+                }
+
+                $detail->work_order_item_line()->associate($line);
+                $detail->save();
+
+                if ($line->ismain) {
+                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                    $line->calculate();
+                    $line->work_order_item->calculate();
+                }
+            }
         }
 
         $this->DATABASE::commit();
@@ -66,7 +87,10 @@ class WorkProductions extends ApiController
             'work_production_items.item.item_units',
             'work_production_items.unit'
         ])->withTrashed()->findOrFail($id);
-        $work_production->is_editable = (!$work_production->is_related);
+
+
+        $work_production->setAppends(['is_relationship', 'has_relationship']);
+
 
         return response()->json($work_production);
     }
@@ -77,14 +101,18 @@ class WorkProductions extends ApiController
 
         $work_production = WorkProduction::findOrFail($id);
 
+        if ($work_production->trashed()) $this->error("[$work_production->number] has trashed. Not Allowed to be UPDATED!");
+        if ($work_production->is_relationship) $this->error("[$work_production->number] has relationship. Not Allowed to be UPDATED!");
+
         $work_production->work_production_items->each( function ($detail) {
-            $work_order_item_line = $detail->work_order_item_line;
-            // $this->error($detail->item);
+
             $detail->item->distransfer($detail);
-            $work_order_item_line->calculate();
+
+            if($line = $detail->work_order_item_line) {
+                $line->work_order_item->calculate();
+            }
             $detail->forceDelete();
         });
-
 
         $work_production->update($request->input());
 
@@ -94,15 +122,17 @@ class WorkProductions extends ApiController
             // create Part item on the WIP Created!
             $detail = $work_production->work_production_items()->create($row);
 
-            if($work_order_item_line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
-                $detail->work_order_item_line()->associate($work_order_item_line);
+            if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+                $detail->work_order_item_line()->associate($line);
                 $detail->save();
+
+                if ($line->ismain) {
+                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                    $line->calculate();
+                    $line->work_order_item->calculate();
+                }
             }
-
-            $work_order_item_line->calculate();
         }
-
-        // $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($work_production);
@@ -112,8 +142,30 @@ class WorkProductions extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
+        $mode = strtoupper(request('mode', 'DELETED'));
         $work_production = WorkProduction::findOrFail($id);
-        $work_production->work_production_items()->delete();
+
+        if ($work_production->trashed()) $this->error("[$work_production->number] has trashed. Not Allowed to be $mode!");
+        if ($work_production->is_relationship) $this->error("[$work_production->number] has relationship. Not Allowed to be $mode!");
+
+        $work_production->status = $mode;
+        $work_production->save();
+
+        $work_production->work_production_items->each( function ($detail) {
+
+            $line = $detail->work_order_item_line;
+
+            $detail->item->distransfer($detail);
+            $detail->work_order_item_line()->associate(null);
+            $detail->save();
+            $detail->delete();
+
+            if ($line) {
+                $line->calculate();
+                $line->work_order_item->calculate();
+            }
+        });
+
         $work_production->delete();
 
         $this->DATABASE::commit();

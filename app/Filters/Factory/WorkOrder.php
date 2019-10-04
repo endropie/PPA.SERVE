@@ -57,10 +57,11 @@ class WorkOrder extends Filter
                             $q->where('customer_id', request('customer_id'));
                          });
             }
-            return $q->whereRaw('amount_process > amount_packing');
+            return $q;
+            // ->whereRaw('amount_process > amount_packing');
         };
         return $this->builder
-            ->with(['work_order_items'])
+            ->with(['work_order_items' => $callback])
             ->whereHas('work_order_items', $callback);
     }
 
@@ -78,6 +79,7 @@ class WorkOrder extends Filter
         if((int) $line) {
             return $this->builder
             ->with(['work_order_item_lines' => $callback])
+            ->whereIn('status', ['OPEN', 'ON-PROCESS'])
             ->whereHas('work_order_item_lines', $callback);
         }
         // else return $this->builder;

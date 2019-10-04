@@ -17,7 +17,7 @@ class WorkOrder extends Model
 
     protected $relationships = [
         'work_order_items.packing_items',
-        // 'delivery_orders'
+        'work_order_items.work_order_item_lines.work_production_items',
     ];
 
     protected $hidden = ['created_at', 'updated_at'];

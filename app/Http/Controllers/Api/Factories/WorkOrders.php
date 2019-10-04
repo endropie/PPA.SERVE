@@ -29,6 +29,11 @@ class WorkOrders extends ApiController
 
             default:
                 $work_orders = WorkOrder::with(['line', 'shift'])->filter($filter)->latest()->collect();
+                $work_orders->getCollection()->transform(function($row) {
+                    $row->setAppends(['is_relationship']);
+                    return $row;
+                });
+
                 break;
         }
 
@@ -100,13 +105,14 @@ class WorkOrders extends ApiController
     {
         if(request('mode') == 'processed') return $this->processed($request, $id);
         if(request('mode') == 'revision') return $this->revision($request, $id);
+        if(request('mode') == 'closed') return $this->closed($request, $id);
 
         $this->DATABASE::beginTransaction();
 
         $work_order = WorkOrder::findOrFail($id);
 
-        if($work_order->is_relationship) $this->error('The data has RELATIONSHIP, is not allowed to be Updated!');
-        if($work_order->status != "OPEN") $this->error("The data not OPEN state, is not allowed to be Updated!");
+        if($work_order->is_relationship) $this->error("[$work_order->number] has RELATIONSHIP, is not allowed to be Updated!");
+        if($work_order->status != "OPEN") $this->error("[$work_order->number] not OPEN state, is not allowed to be Updated!");
 
         $work_order->update($request->input());
 
@@ -150,7 +156,7 @@ class WorkOrders extends ApiController
         $work_order = WorkOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
-        if($work_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
+        if($work_order->is_relationship) $this->error("[$work_order->number] has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $work_order->status != "OPEN") $this->error("The data $work_order->status state, is not allowed to be $mode!");
 
         if ($mode == "VOID") {
@@ -171,6 +177,99 @@ class WorkOrders extends ApiController
     }
 
     public function revision(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $revise = WorkOrder::findOrFail($id);
+
+        if ($revise->trashed()) $this->error("[$revise->number] has trashed. Not Allowed to REVISION!");
+        if ($revise->is_relationship) $this->error("[$revise->number] has relationship. Not Allowed to REVISION!");
+
+        $revise = WorkOrder::findOrFail($id);
+        foreach ($revise->work_order_items as $detail) {
+            $detail->item->distransfer($detail);
+            $detail->work_order_item_lines()->delete();
+            $detail->delete();
+        }
+
+        if($request->number) {
+            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
+            $request->merge(['revise_number' => ($max + 1)]);
+        }
+
+        $work_order = WorkOrder::create($request->all());
+        if($request->number) {
+            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
+            $work_order->revise_number = ($max + 1);
+            $work_order->status = 'OPEN';
+            $work_order->save();
+        }
+
+        $rows = $request->work_order_items ?? [];
+
+        foreach ($work_order->work_order_items as $detail) {
+            $detail->item->distransfer($detail);
+
+            $detail->work_order_item_lines()->forceDelete();
+            $detail->forceDelete();
+        }
+
+        for ($i=0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            // $oldDetail = $work_order->work_order_items()->find($row['id']);
+
+            $detail = $work_order->work_order_items()->create($row);
+
+            // Calculate stock on after Detail item updated!
+            $FROM = $work_order->stockist_from;
+            $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
+
+            $row_lines = $row['work_order_item_lines'] ?? [];
+            for ($j=0; $j < count($row_lines); $j++) {
+                $row_line = $row_lines[$j];
+                $detail->work_order_item_lines()->create($row_line);
+            }
+        }
+
+        $revise->status = 'REVISED';
+        $revise->revise_id = $work_order->id;
+        $revise->save();
+        $revise->delete();
+
+        $this->error("LOLOS");
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function closed(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        if ($work_order->trashed()) $this->error("[$work_order->number] has trashed. Not Allowed to be CLOSED!");
+        if ($work_order->status == 'CLOSED') $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CLOSED!");
+
+        $work_order->status = 'CLOSED';
+        $work_order->save();
+
+        foreach ($work_order->work_order_items as  $detail) {
+            // Calculate Over Stock Quantity at item processed!
+            $amount_process = round($detail->amount_process);
+            $unit_amount = round($detail->unit_amount);
+            if ($amount_process < $unit_amount) {
+                $FROM = $work_order->stockist_from;
+                $OVER = ($unit_amount - $amount_process);
+                $detail->item->transfer($detail, $OVER, $FROM, 'WO');
+            }
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function revisionWithRelation(Request $request, $id)
     {
         $this->DATABASE::beginTransaction();
         $revise = WorkOrder::findOrFail($id);
@@ -286,6 +385,7 @@ class WorkOrders extends ApiController
 
     public function processed(Request $request, $id)
     {
+        $this->error('NO Action AVAILABLE');
         $this->DATABASE::beginTransaction();
 
         $work_order = WorkOrder::findOrFail($id);

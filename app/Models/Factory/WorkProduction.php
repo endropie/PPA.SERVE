@@ -14,6 +14,10 @@ class WorkProduction extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
+   protected $relationships = [
+       'work_production_items.work_order_item_line.work_order_item.work_order_closed',
+   ];
+
    public function work_production_items()
    {
       return $this->hasMany('App\Models\Factory\WorkProductionItem')->withTrashed();

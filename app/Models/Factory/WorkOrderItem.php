@@ -5,6 +5,8 @@ namespace App\Models\Factory;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use function Safe\json_encode;
+
 class WorkOrderItem extends Model
 {
     use SoftDeletes;
@@ -27,6 +29,11 @@ class WorkOrderItem extends Model
     public function work_order()
     {
         return $this->belongsTo('App\Models\Factory\WorkOrder')->withTrashed();
+    }
+
+    public function work_order_closed()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrder', 'work_order_id')->where('status', 'CLOSED');
     }
 
     public function packing_items()
@@ -74,11 +81,15 @@ class WorkOrderItem extends Model
     {
         if(!$param || $param == 'process') {
             // UPDATE AMOUNT PACKING
-            $this->amount_process = $this->process * $this->unit_rate;
+            $total = (double) collect($this->work_order_item_lines->map(function($line) {
+                return (double) $line->work_production_items->sum('unit_amount');
+            }))->sum();
+
+            $this->amount_process = $total * $this->unit_rate;
             $this->save();
 
-            if(($this->unit_amount - $this->amount_process) < (-0.1)) {
-                abort(501, "AMOUNT PROCESS [#$this->id] INVALID");
+            if(round($this->unit_amount) < round($this->amount_process)) {
+                abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");
             }
         }
         if(!$param || $param == 'packing') {
@@ -87,8 +98,8 @@ class WorkOrderItem extends Model
             // abort(501, 'PACKING: unit_amount->'. $this->packing_items->sum('unit_amount') .' amount_foulty->'.$this->packing_items->sum('amount_faulty'));
             $this->save();
 
-            if(($this->unit_amount - $this->amount_packing) < (-0.1)) {
-                abort(501, "AMOUNT PACKING [#$this->id] INVALID");
+            if(round($this->unit_amount) < round($this->amount_packing)) {
+                abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
             }
         }
     }

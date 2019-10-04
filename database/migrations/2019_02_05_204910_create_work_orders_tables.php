@@ -45,7 +45,6 @@ class CreateWorkOrdersTables extends Migration
             $table->integer('unit_id');
             $table->float('unit_rate')->default(1);
             $table->float('ngratio')->default(0);
-            $table->float('process')->default(0);
             $table->float('amount_process')->default(0);
             $table->float('amount_packing')->default(0);
 
