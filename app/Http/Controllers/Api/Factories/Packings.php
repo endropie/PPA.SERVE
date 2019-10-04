@@ -7,6 +7,7 @@ use App\Http\Controllers\ApiController;
 
 use App\Models\Factory\Packing;
 use App\Models\Factory\WorkOrder;
+use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -62,8 +63,7 @@ class Packings extends ApiController
         $totals = $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
         $partials = collect([]);
 
-        $work_orders = WorkOrder::whereIn('status', ['OPEN', 'PROCESSED'])
-            ->whereHas('work_order_items', function($q) {
+        $work_orders = WorkOrder::whereHas('work_order_items', function($q) {
               return $q
                 ->where('item_id', request()->input('packing_items.item_id'))
                 ->whereRaw('amount_process > amount_packing');
@@ -71,13 +71,9 @@ class Packings extends ApiController
             ->orderBy('date')
             ->get();
 
+        foreach ($work_orders as $work_order) {
 
-
-        foreach ($work_orders as $work_order)
-        {
-
-            foreach ($work_order->work_order_items as $detail)
-            {
+            foreach ($work_order->work_order_items as $detail) {
 
                 $detail->available = $detail->amount_process - $detail->amount_packing;
                 if (
@@ -92,11 +88,7 @@ class Packings extends ApiController
             }
         }
 
-        // $this->error([
-        //     'MULTISTORE',
-        //     $partials,
-        //     $totals,
-        // ]);
+        if ($partials->count() <= 0) $this->error("WORK ORDER Not Available. Not allowed to be Created!");
 
         $packings = collect([]);
         foreach ($partials as $key => $partial) {
@@ -137,11 +129,13 @@ class Packings extends ApiController
                 $detail->amount_faulty = $NG * $detail->unit_rate;
                 $detail->save();
 
-                $detail->work_order_item->calculate('packing');
+                $detail->work_order_item->calculate();
             }
 
             $packings->push($packing);
         }
+
+        // $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($packings);
@@ -155,8 +149,6 @@ class Packings extends ApiController
 
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
-
-        $this->error($request->input('packing_items.quantity'));
 
         // Create the Packing Goods.
         $packing = Packing::create($request->all());
@@ -187,10 +179,8 @@ class Packings extends ApiController
             $detail->amount_faulty = $NG * $detail->unit_rate;
             $detail->save();
 
-            $detail->work_order_item->calculate('packing');
+            $detail->work_order_item->calculate();
         }
-
-        $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($packing);
@@ -263,7 +253,7 @@ class Packings extends ApiController
             $newDetail->amount_faulty = $NG ;
             $newDetail->save();
 
-            $newDetail->work_order_item->calculate('packing');
+            $newDetail->work_order_item->calculate();
         }
 
         // $this->error('LOLOS!');
@@ -278,14 +268,12 @@ class Packings extends ApiController
         $packing = Packing::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
-        if($packing->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
-        if($mode == "DELETED" && $packing->status != "OPEN") $this->error("The data $packing->status state, is not allowed to be $mode!");
+        if($packing->is_relationship) $this->error("[$packing->number] has RELATIONSHIP, is not allowed to be $mode!");
+        if($mode == "DELETED" && $packing->status != "OPEN") $this->error("[$packing->number] $packing->status state, is not allowed to be $mode!");
 
 
-        if ($mode == 'VOID') {
-            $packing->status = "VOID";
-            $packing->save();
-        }
+        $packing->status = $mode;
+        $packing->save();
 
         $detail = $packing->packing_items;
 
@@ -294,8 +282,9 @@ class Packings extends ApiController
 
         // Delete Packing.
         $detail->packing_item_faults()->delete();
+        $detail->work_order_item->calculate();
+
         $detail->delete();
-        $detail->work_order_item->calculate('packing');
 
         $packing->delete();
 

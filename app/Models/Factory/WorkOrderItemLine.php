@@ -17,8 +17,6 @@ class WorkOrderItemLine extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $relationships = [];
-
     public function work_order_item()
     {
         return $this->belongsTo('App\Models\Factory\WorkOrderItem')->withTrashed();

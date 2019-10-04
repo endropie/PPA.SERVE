@@ -17,6 +17,10 @@ class Packing extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $relationships = [
+        'packing_items.work_order_item.work_order_closed'
+    ];
+
     public function packing_items()
     {
         return $this->hasOne('App\Models\Factory\PackingItem')->withTrashed();
