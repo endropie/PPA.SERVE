@@ -17,7 +17,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
     Route::post('login', 'Auth\Authentication@login');
     Route::post('register', 'Auth\Authentication@register');
-    // Route::post('auth', 'Auth\Authentication@user');
 
     Route::get('app', function() {
         return response()->json(setting()->all());
@@ -52,13 +51,13 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
-            // Route::patch('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
+            Route::apiResource('opname-stocks', 'Warehouses\OpnameStocks');
             Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
             Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
         });
