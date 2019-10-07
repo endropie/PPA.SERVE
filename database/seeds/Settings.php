@@ -40,6 +40,10 @@ class Settings extends Seeder
             'incoming_good.number_interval'   => '{Y}',
             'incoming_good.number_digit'      => '5',
 
+            'opname_stock.number_prefix'     => 'STO',
+            'opname_stock.number_interval'   => '{Y}',
+            'opname_stock.number_digit'      => '5',
+
             'outgoing_good.number_prefix'     => 'OMP',
             'outgoing_good.number_interval'   => '{Y}',
             'outgoing_good.number_digit'      => '5',
@@ -72,7 +76,6 @@ class Settings extends Seeder
             'sj_delivery.number_interval'   => '{Y}',
             'sj_delivery.number_digit'      => '5',
         ]);
-
 
         setting()->save();
     }

@@ -133,6 +133,22 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextOpnameStockNumber($date = null)
+    {
+        $modul = 'opname_stock';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul);
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Warehouse\IncomingGood::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextOutgoingGoodNumber($date = null)
     {
         $modul = 'outgoing_good';
