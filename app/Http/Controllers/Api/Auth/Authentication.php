@@ -5,11 +5,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\Passport;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Models\Auth\User;
+use Lcobucci\JWT\Parser;
 use Validator;
 
-class Authentication extends Controller
+class Authentication extends ApiController
 {
     public $successStatus = 200;
 
@@ -36,18 +37,17 @@ class Authentication extends Controller
         $user = Auth::user();
         $user->all_permission = $user->getAllPermissions()->pluck(['name']);
 
-        $newToken = $user->createToken('personal');
-        $access['token'] =  $newToken->accessToken;
-        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(now());
+        $valid = $user->createToken('PPA Personal Access Client');
 
         $setting = setting()->all();
 
         return response()->json(
             array_merge(
                 [
-                    'valid'=>true,
+                    'success'=>true,
                     'user'=> $user,
-                    'access' => $access,
+                    'token' => $valid->accessToken,
+                    'expires_in' => $valid->token->expires_at->diffInSeconds(now()),
                     'settings' => $setting
                 ],
             $data), $this->successStatus);
@@ -58,7 +58,7 @@ class Authentication extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users,NULL,NULL',
             'password' => 'required',
             'c_password' => 'required|same:password',
         ]);
@@ -70,12 +70,8 @@ class Authentication extends Controller
         $input = $request->all();
         $input['password'] =  Hash::make($input['password']);
         $user = User::create($input);
-        $newToken = $user->createToken('personal');
 
-        $access['token'] =  $newToken->accessToken;
-        $access['expires_in']  =  $newToken->token->expires_at->diffInSeconds(now());
-
-        return response()->json(['access'=>$access], $this->successStatus);
+        return $this->login($request);
     }
 
     public function user(Request $request)
@@ -112,5 +108,19 @@ class Authentication extends Controller
         ]);
 
         return response()->json(['success' => true, 'user' => $user], $this->successStatus);
+    }
+
+    public function logout () {
+        // $request = request();
+        // $value = $request->bearerToken();
+        // $id = (new Parser())->parse($value)->getHeader('jti');
+        // $token = $request->user()->tokens->find($id);
+
+        $token = request()->user()->token();
+        $token->revoke();
+
+        return response()->json([
+            'message' => 'You have been succesfully logged out!'
+        ]);
     }
 }

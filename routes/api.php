@@ -29,8 +29,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::middleware(['auth:api'])->group( function(){
                 Route::name('user')->post('/', 'Auth\Authentication@user');
-                Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken')->middleware(['auth:api']);
+                Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken');
                 Route::name('change-password')->post('/change-password', 'Auth\Authentication@setChangePassword');
+                Route::name('logout')->post('logout', 'Auth\Authentication@logout');
             });
             Route::apiResource('users', 'Auth\Users');
             Route::apiResource('roles', 'Auth\Roles');
