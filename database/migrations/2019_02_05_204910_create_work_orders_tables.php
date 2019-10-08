@@ -76,5 +76,6 @@ class CreateWorkOrdersTables extends Migration
     {
         Schema::dropIfExists('work_orders');
         Schema::dropIfExists('work_order_items');
+        Schema::dropIfExists('work_order_item_lines');
     }
 }
