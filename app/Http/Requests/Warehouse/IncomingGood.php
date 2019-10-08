@@ -12,13 +12,8 @@ class IncomingGood extends Request
         return true;
     }
 
-    protected function preparing () {
-        if (request('transaction') == 'RETURN') $this->merge(['order_mode' => 'NONE']);
-    }
-
     public function rules()
     {
-        $this->preparing();
         // Check if store or update
         $method = $this->getMethod();
 
@@ -29,25 +24,30 @@ class IncomingGood extends Request
         }
         else $id = null;
 
+        // For "RETURN" Transations, ORDER MODE must be "NONE"
+        if ($this->input('transaction') == 'RETURN') $this->merge(['order_mode' => 'NONE']);
+
+        $in_customer = Rule::in(\App\Models\Income\Customer::where('id', request('customer_id'))->get()->pluck('id'));
+        $in_customer_item = Rule::in(\App\Models\Common\Item::where('customer_id', request('customer_id'))->get()->pluck('id'));
+
         return [
             'number' => ($id ? 'required|' : '') .'unique:incoming_goods,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
+            'indexed_number' => ($id ? 'required|' : '') .'unique:incoming_goods,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
+            'customer_id' => ['required', $in_customer],
             'date' => 'required',
             'time' => 'required',
-            'customer_id' => 'required',
-
             'transaction' => 'required|in:REGULER,RETURN',
-            // 'order_mode' => 'required|in:NONE'.(request('transaction') == 'RETURN' ? '' : ',PO,ACCUMULATE'),
 
-            'incoming_good_items.*.item_id' => [
-                'required',
-                Rule::in(\App\Models\Common\Item::where('customer_id', request('customer_id'))->get()->pluck('id')),
-            ],
+            'incoming_good_items.*.quantity' => 'required',
+            'incoming_good_items.*.unit_id' => 'required',
+            'incoming_good_items.*.unit_rate' => 'required',
+            'incoming_good_items.*.item_id' => ['required', $in_customer_item],
             'incoming_good_items' =>
-            function ($attribute, $value, $fail) {
-                if (sizeof($value) == 0) {
-                    $fail('Part Item must be select min. 1 part item.');
+                function ($attribute, $value, $fail) {
+                    if (sizeof($value) == 0) {
+                        $fail('Part Detail must be select min. 1 part item.');
+                    }
                 }
-            },
         ];
     }
 

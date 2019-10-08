@@ -14,7 +14,7 @@ class IncomingGood extends Model
         'number', 'registration', 'date', 'time', 'transaction', 'order_mode',
         'customer_id', 'reference_number', 'reference_date', 'rit',
         'vehicle_id', 'transport_rate', 'description',
-        'revise_number'
+        'revise_number', 'indexed_number'
     ];
 
     protected $relationships = [

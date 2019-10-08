@@ -16,6 +16,13 @@ class AddIndexedNumberIncomingGoodsTable extends Migration
         Schema::table('incoming_goods', function (Blueprint $table) {
             $table->string('indexed_number')->nullable()->after('number');
         });
+
+        setting()->set([
+            'incoming_good.indexed_number_interval'   => '{Y-m}',
+            'incoming_good.indexed_number_digit'      => '3',
+        ]);
+
+        setting()->save();
     }
 
     /**

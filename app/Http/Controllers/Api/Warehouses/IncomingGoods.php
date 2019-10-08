@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Http\Requests\Warehouse\IncomingGood as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Warehouse\IncomingGood as Filters;
+use App\Models\Income\Customer;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\PreDelivery;
@@ -43,8 +44,16 @@ class IncomingGoods extends ApiController
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
-        if(!$request->number) $request->merge(['number'=> $this->getNextIncomingGoodNumber()]);
-        // if($request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
+        if (!$request->number) $request->merge([
+            'number'=> $this->getNextIncomingGoodNumber($request->input('date'))
+        ]);
+
+        $prefix = Customer::find($request->input('customer_id'));
+        if (!$request->indexed_number && $prefix) {
+            $request->merge([
+                'indexed_number' => $this->getNextIncomingGoodIndexedNumber($request->input('date'), $prefix->code)
+            ]);
+        }
 
         $incoming_good = IncomingGood::create($request->all());
 

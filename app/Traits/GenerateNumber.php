@@ -133,6 +133,29 @@ trait GenerateNumber
         return $number;
     }
 
+
+
+    public function getNextIncomingGoodIndexedNumber($date = null, $prefix)
+    {
+        $modul = 'incoming_good';
+        $digit = (int) setting()->get("$modul.indexed_number_digit", 3);
+        $interval = setting()->get("$modul.indexed_number_interval", '{Y-m}');
+        $separator = setting()->get("general.prefix_separator", '/');
+
+        if (strlen($interval)) $prefix = $prefix . $separator . $interval;
+        $prefix.= $separator;
+
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Warehouse\IncomingGood::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextOpnameStockNumber($date = null)
     {
         $modul = 'opname_stock';
@@ -165,13 +188,13 @@ trait GenerateNumber
         return $number;
     }
 
-    protected function prefixParser($modul)
+    protected function prefixParser($modul, $prefix = '')
     {
-        $prefix = '';
-        if (setting()->get("$modul.number_prefix"))
-            $prefix .= setting()->get("$modul.number_prefix") . setting()->get("general.prefix_separator");
-        if (setting()->get("$modul.number_interval"))
-            $prefix .= setting()->get("$modul.number_interval") . setting()->get("general.prefix_separator");
+        if (setting()->get("$modul.number_prefix")) $prefix .= setting()->get("$modul.number_prefix");
+        if (strlen($prefix) > 0) $prefix .= setting()->get("general.prefix_separator",'/');
+
+        if (setting()->get("$modul.number_interval")) $prefix .= setting()->get("$modul.number_interval");
+        if (strlen($prefix) > 0) $prefix .= setting()->get("general.prefix_separator",'/');
 
         return $prefix;
     }
