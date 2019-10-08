@@ -186,6 +186,7 @@ class Basic extends Seeder
 			'request-orders' => ['c','r','u','d','close','revision','void'],
 			// Warehouses
             'incoming-goods' => ['c','r','u','d','validation','revision','void'],
+            'opname-stocks' => ['c','r','u','d','validation','revision','void'],
             // Deliveries
 			'outgoing-verifications' => ['c','r','u','d'],
 			'outgoing-goods' => ['c','r','d','void'],
@@ -223,7 +224,7 @@ class Basic extends Seeder
             'sj.delivery' => ['sj-delivery-orders'],
             'pre.delivery' => ['pre-deliveries'],
 
-            'incoming.good' => ['incoming-goods'],
+            'incoming.good' => ['incoming-goods', 'opname-stocks'],
 
 			'reference' => [
 				'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes',
@@ -240,15 +241,11 @@ class Basic extends Seeder
         $settingRole = Role::create(['name' => 'setting']);
         $settingRole->givePermissionTo(Permission::create(['name' => "setting"]));
 
-        $viewRole = Role::create(['name' => 'view.all']);
 
 		$admin = User::create(['name' => 'admin', 'password' => Hash::make('admin'.'ppa'), 'email' => 'admin@ppa.com']);
-        $viewer = User::create(['name' => 'viewer', 'password' => Hash::make('viewer'.'ppa'), 'email' => 'viewer@ppa.com']);
 
         $admin->assignRole($profileRole);
         $admin->assignRole($settingRole);
-        $viewer->assignRole($profileRole);
-        $viewer->assignRole($viewRole);
 
         foreach ($roles as $key => $value) {
 			$name = ucfirst($key);
@@ -275,9 +272,6 @@ class Basic extends Seeder
                             else {
                                 $admin->givePermissionTo($permission);
                             }
-                        }
-                        if($label == "read" && $role = Role::where('name',"view.all")->first()) {
-                            $role->givePermissionTo($permission);
                         }
 					}
 				}
