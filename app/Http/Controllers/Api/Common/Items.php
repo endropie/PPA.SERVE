@@ -6,6 +6,7 @@ use App\Filters\Common\Item as Filters;
 use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
+use App\Models\Common\ItemStockable;
 
 class Items extends ApiController
 {
@@ -23,6 +24,13 @@ class Items extends ApiController
 
           case 'itemstock':
             $items = Item::filter($filters)->get(['id'])->map->append('totals');
+
+          break;
+
+          case 'stockables':
+          $items = ItemStockable::whereHas('item', function ($q) use ($filters) {
+            return $q->filter($filters);
+          })->get();
 
           break;
 
@@ -69,8 +77,11 @@ class Items extends ApiController
     public function show($id)
     {
         $this->DATABASE::beginTransaction();
-
-        $item = Item::with(['item_prelines', 'item_units'])->findOrFail($id);
+        $with = [
+            'customer','brand','category_item', 'type_item', 'size', 'unit',
+            'item_stockables'
+        ];
+        $item = Item::with(array_merge($with, ['item_prelines', 'item_units']))->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         $this->DATABASE::commit();

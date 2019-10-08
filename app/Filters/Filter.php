@@ -14,6 +14,8 @@ class Filter
 
         if(request('--with')) $request->merge(['__with' => request('--with')]);
         if(request('--select')) $request->merge(['__select' => request('--select')]);
+        if(request('--limit')) $request->merge(['__limit' => request('--limit')]);
+        if(request('--offset')) $request->merge(['__offset' => request('--offset')]);
     }
 
     public function apply(Builder $builder)
@@ -71,6 +73,11 @@ class Filter
         }
     }
 
+    public function __limit($value = 50) {
+        $value = (int) $value;
+        return $this->builder->limit($value);
+    }
+
     public function enable($value = 'true') {
         if($value == 'true') $value = 1;
         if($value == 'false') $value = 0;
@@ -105,7 +112,8 @@ class Filter
 
         $tableName = $this->builder->getQuery()->from;
         $fields = \Schema::getColumnListing($tableName);
-        $keywords = explode('|', $value);
+        $separator = substr_count($value, '|') > 0 ? '|' : ' ';
+        $keywords = explode($separator, $value);
 
         return $this->builder->where(function ($query) use ($fields, $keywords) {
             foreach ($keywords as $keyword) {

@@ -100,6 +100,22 @@ class Item extends Model
         return $this->belongsTo('App\Models\Reference\Specification');
     }
 
+    public function category_item()
+    {
+        return $this->belongsTo(\App\Models\Reference\CategoryItem::class);
+    }
+
+    public function type_item()
+    {
+        return $this->belongsTo(\App\Models\Reference\TypeItem::class);
+    }
+
+    public function size()
+    {
+        return $this->belongsTo(\App\Models\Reference\Size::class);
+    }
+
+
     public function getTotalsAttribute()
     {
         $stocks = [];
