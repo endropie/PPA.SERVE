@@ -56,8 +56,6 @@ class OpnameStocks extends ApiController
 
         }
 
-        $this->error('LOLOS');
-
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($opname_stock);

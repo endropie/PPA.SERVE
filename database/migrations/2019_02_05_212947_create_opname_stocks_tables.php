@@ -17,7 +17,7 @@ class CreateOpnameStocksTables extends Migration
             $table->bigIncrements('id');
             $table->string('number');
             $table->date('date');
-            $table->string('label')->nullable();
+            $table->string('reference')->nullable();
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
