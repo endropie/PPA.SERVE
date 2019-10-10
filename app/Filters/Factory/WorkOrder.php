@@ -51,16 +51,16 @@ class WorkOrder extends Filter
 
     public function has_amount_packing($value) {
         $callback =  function ($q) {
-            if (request('customer_id')) {
-                return $q->whereRaw('amount_process > amount_packing')
-                         ->whereHas('item', function ($q) {
-                            $q->where('customer_id', request('customer_id'));
-                         });
-            }
-            return $q->whereRaw('amount_process > amount_packing');
+          $or_details = explode(',', request('or_detail_ids', ''));
+          $q->whereRaw('amount_process > amount_packing')
+            ->orWhereIn('item_id', $or_details)
+            ->whereHas('item', function ($q) {
+                if (request('customer_id')) $q->where('customer_id', request('customer_id'));
+            });
+
         };
         return $this->builder
-            ->with(['work_order_items' => $callback])
+            ->with(['work_order_items'])
             ->whereHas('work_order_items', $callback);
     }
 
