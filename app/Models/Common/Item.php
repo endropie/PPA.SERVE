@@ -13,7 +13,7 @@ class Item extends Model
 
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
-        'load_type', 'load_capacity', 'packing_duration', 'sa_area', 'weight', 'number_hanger', 'price',
+        'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'number_hanger', 'price',
         'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable'
     ];
 
