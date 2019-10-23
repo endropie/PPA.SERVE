@@ -158,6 +158,17 @@ class IncomingGoods extends ApiController
 
         if ($incoming_good->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
 
+        $rows = $request->incoming_good_items;
+        for ($i=0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+
+            // create item row on the incoming Goods updated!
+            $detail = $incoming_good->incoming_good_items()->find($row["id"]);
+            $detail->update($row);
+        }
+
+
+        $incoming_good->description = $request->input('description', null);
         $incoming_good->status = 'REJECTED';
         $incoming_good->save();
 
