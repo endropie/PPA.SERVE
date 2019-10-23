@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\Passport;
 use App\Http\Controllers\ApiController;
 use App\Models\Auth\User;
-use Lcobucci\JWT\Parser;
 use Validator;
 
 class Authentication extends ApiController
@@ -111,10 +110,6 @@ class Authentication extends ApiController
     }
 
     public function logout () {
-        // $request = request();
-        // $value = $request->bearerToken();
-        // $id = (new Parser())->parse($value)->getHeader('jti');
-        // $token = $request->user()->tokens->find($id);
 
         $token = request()->user()->token();
         $token->revoke();
