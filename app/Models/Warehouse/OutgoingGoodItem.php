@@ -18,6 +18,11 @@ class OutgoingGoodItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     protected $relationships = [
         'outgoing_good' => 'outgoing_good',
     ];

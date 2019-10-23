@@ -19,6 +19,11 @@ class WorkOrderItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     protected $relationships = [];
 
     public function work_order_item_lines()

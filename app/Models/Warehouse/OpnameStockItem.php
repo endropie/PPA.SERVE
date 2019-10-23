@@ -17,7 +17,11 @@ class OpnameStockItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $relationships = [];
+    protected $casts = [
+        'unit_rate' => 'double',
+        'init_amount' => 'double',
+        'final_amount' => 'double',
+    ];
 
     public function opname_stock()
     {

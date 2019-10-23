@@ -16,6 +16,11 @@ class PreDeliveryItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     public function pre_delivery()
     {
         return $this->belongsTo('App\Models\Income\PreDelivery');

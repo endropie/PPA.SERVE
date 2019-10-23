@@ -13,6 +13,10 @@ class ItemStockable extends Model
 
     // protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_amount' => 'double'
+    ];
+
     public function item()
     {
         return $this->belongsTo('App\Models\Common\Item');

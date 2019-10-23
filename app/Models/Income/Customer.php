@@ -18,6 +18,12 @@ class Customer extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'tax' => 'double',
+        'pph_material' => 'double',
+        'pph_service' => 'double',
+    ];
+
     protected $relationships = ['items'];
 
     public function customer_contacts()

@@ -10,7 +10,9 @@ class ItemUnit extends Model
 
    protected $hidden = ['created_at', 'updated_at'];
 
-   protected $relationships = [];
+   protected $casts = [
+       'rate' => 'double',
+   ];
 
    public function item()
    {
@@ -22,4 +24,3 @@ class ItemUnit extends Model
       return $this->belongsTo('App\Models\Reference\Unit');
    }
 }
- 

@@ -15,6 +15,11 @@ class DeliveryOrderItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     public function delivery_order()
     {
         return $this->belongsTo('App\Models\Income\DeliveryOrder');

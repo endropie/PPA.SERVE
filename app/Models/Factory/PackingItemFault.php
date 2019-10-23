@@ -15,6 +15,10 @@ class PackingItemFault extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'quantity' => 'double'
+    ];
+
     protected $relationships = [];
 
     public function packing_item()

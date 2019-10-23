@@ -17,6 +17,11 @@ class PackingItem extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     public function packing_item_faults()
     {
         return $this->hasMany('App\Models\Factory\PackingItemFault')->withTrashed();

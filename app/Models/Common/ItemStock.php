@@ -13,8 +13,6 @@ class ItemStock extends Model
       'FG' => 'Finish Good',
       'NG' => 'Not Good',
       'RET' => 'Not Good Return',
-      // 'RDO' => 'Request-DO amounable',
-      // 'PDO' => 'Pre-DO amounable',
       'VDO' => 'Verification-DO amounable',
       'PDO.REG' => 'REGULER-PDO amounable', // REGDO
       'PDO.RET' => 'RETURN-PDO amounable', // RETDO
@@ -24,11 +22,11 @@ class ItemStock extends Model
 
    protected $fillable = ['item_id', 'stockist', 'total'];
 
-   protected $appends = [
-      // 'stockist_name'
-   ];
-
    protected $hidden = ['created_at', 'updated_at'];
+
+   protected $casts = [
+       'total' => 'double'
+   ];
 
    public function item()
    {

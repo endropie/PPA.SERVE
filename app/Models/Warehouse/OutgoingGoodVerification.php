@@ -17,6 +17,11 @@ class OutgoingGoodVerification extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'unit_rate' => 'double',
+        'quantity' => 'double'
+    ];
+
     protected $relationships = [
         'validated',
     ];
