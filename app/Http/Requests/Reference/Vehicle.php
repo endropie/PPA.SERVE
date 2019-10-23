@@ -28,7 +28,7 @@ class Vehicle extends Request
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:vehicles,NULL,' . $id,
             'owner' => 'required',
             'type' => 'required',
-            'department_id' => 'required',
+            // 'department_id' => 'required',
         ];
     }
 }

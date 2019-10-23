@@ -22,6 +22,10 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         return response()->json(setting()->all());
     });
 
+    Route::prefix('views')->name('views.')->group(function () {
+        Route::name('schedule-boards')->get('schedule-boards', 'Transports\ScheduleBoards@views');
+    });
+
     Route::middleware([
         'auth:api',
         ])->group( function(){
@@ -67,6 +71,10 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('work-productions', 'Factories\WorkProductions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
             Route::apiResource('packings', 'Factories\Packings');
+        });
+
+        Route::prefix('transports')->name('transports.')->group(function () {
+            Route::apiResource('schedule-boards', 'Transports\ScheduleBoards');
         });
 
         Route::prefix('references')->name('references.')->group(function () {

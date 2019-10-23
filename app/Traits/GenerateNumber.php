@@ -133,8 +133,6 @@ trait GenerateNumber
         return $number;
     }
 
-
-
     public function getNextIncomingGoodIndexedNumber($date = null, $prefix)
     {
         $modul = 'incoming_good';
@@ -180,6 +178,22 @@ trait GenerateNumber
         $prefix = $this->dateParser($prefix, $date);
 
         $next = \App\Models\Warehouse\OutgoingGood::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextScheduleBoardNumber($date = null)
+    {
+        $modul = 'schedule_board';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul);
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Transport\ScheduleBoard::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
