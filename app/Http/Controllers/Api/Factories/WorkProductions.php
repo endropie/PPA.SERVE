@@ -42,39 +42,51 @@ class WorkProductions extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        if(!$request->number) $request->merge(['number'=> $this->getNextWorkProductionNumber()]);
+        $multiple = $request->input('isMultiple', false) ? $request->input('multiple', 1) : 1;
+        $works = collect();
 
-        $work_production = WorkProduction::create($request->all());
+        while ($multiple > 0) {
 
-        $rows = $request->work_production_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // create Part item on the WIP Created!
-            $detail = $work_production->work_production_items()->create($row);
+            $number =  $this->getNextWorkProductionNumber();
+            $request->merge(['number'=> $number]);
 
-            if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+            $work_production = WorkProduction::create($request->all());
 
-                if($work_order = $line->work_order_item->work_order) {
-                    if ($work_order->status == 'CLOSED') {
-                        $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
+            $rows = $request->work_production_items;
+            for ($i=0; $i < count($rows); $i++) {
+                $row = $rows[$i];
+                // create Part item on the WIP Created!
+                $detail = $work_production->work_production_items()->create($row);
+
+                if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+
+                    if($work_order = $line->work_order_item->work_order) {
+                        if ($work_order->status == 'CLOSED') {
+                            $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
+                        }
+
+                        if ($work_order->status !== 'ON-PROCESS') {
+                            $work_order->status = 'ON-PROCESS';
+                            $work_order->save();
+                        }
                     }
 
-                    if ($work_order->status !== 'ON-PROCESS') {
-                        $work_order->status = 'ON-PROCESS';
-                        $work_order->save();
+                    $detail->work_order_item_line()->associate($line);
+                    $detail->save();
+
+                    if ($line->ismain) {
+                        $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                        $line->calculate();
+                        $line->work_order_item->calculate();
                     }
-                }
-
-                $detail->work_order_item_line()->associate($line);
-                $detail->save();
-
-                if ($line->ismain) {
-                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
-                    $line->calculate();
-                    $line->work_order_item->calculate();
                 }
             }
+
+            $works->push($work_production);
+            $multiple--;
         }
+
+        // $this->error(["multiple" => $multiple, "works" => $works]);
 
         $this->DATABASE::commit();
         return response()->json($work_production);
