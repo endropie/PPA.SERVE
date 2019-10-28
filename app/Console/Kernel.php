@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        Commands\RecurringCheck::class,
     ];
 
     /**
@@ -24,8 +24,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        $schedule_time = env('APP_SCHEDULE_TIME', '03:00');
+        // $schedule->command('inspire')->daily()->at($schedule_time);
+        $schedule->command('recurring:check')
+            ->dailyAt($schedule_time);
+            // ->appendOutputTo('/storage/logs/laravel_output.log');
     }
 
     /**

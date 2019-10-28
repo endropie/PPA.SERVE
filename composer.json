@@ -12,12 +12,14 @@
         "akaunting/setting": "^1.0",
         "barryvdh/laravel-cors": "^0.11.2",
         "beyondcode/laravel-websockets": "^1.1",
+        "bkwld/cloner": "^3.5",
         "doctrine/dbal": "^2.9",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/passport": "^7.3",
         "laravel/tinker": "^1.0",
         "pusher/pusher-php-server": "~3.0",
+        "simshaun/recurr": "^4.0",
         "spatie/laravel-permission": "^2.36"
     },
     "require-dev": {

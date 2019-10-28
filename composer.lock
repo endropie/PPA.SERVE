@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c751bb0bb8c1eab80ac048834b005f6d",
+    "content-hash": "a40d339b1666d0297965db17b3a7e53d",
     "packages": [
         {
             "name": "akaunting/setting",
@@ -258,6 +258,61 @@
                 "laravel-websockets"
             ],
             "time": "2019-02-27T14:44:42+00:00"
+        },
+        {
+            "name": "bkwld/cloner",
+            "version": "3.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/BKWLD/cloner.git",
+                "reference": "4a0765517a018b99db0aa5ff8dfe1e8c95bc53c2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/BKWLD/cloner/zipball/4a0765517a018b99db0aa5ff8dfe1e8c95bc53c2",
+                "reference": "4a0765517a018b99db0aa5ff8dfe1e8c95bc53c2",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^5.5|^6.0",
+                "php": ">=7.0"
+            },
+            "require-dev": {
+                "bkwld/upchuck": "^2.6@dev",
+                "illuminate/database": "^5.5|^6.0",
+                "league/flysystem-vfs": "^1.0",
+                "mockery/mockery": "^1.2.3",
+                "phpunit/phpunit": "~6.0|~8.0",
+                "satooshi/php-coveralls": "^1.0"
+            },
+            "suggest": {
+                "bkwld/upchuck": "Required for replicating of files."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Bkwld\\Cloner\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bkwld\\Cloner\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Robert Reinhard",
+                    "email": "info@bkwld.com"
+                }
+            ],
+            "description": "A trait for Laravel Eloquent models that lets you clone of a model and it's relationships, including files.",
+            "time": "2019-09-21T23:09:42+00:00"
         },
         {
             "name": "cboden/ratchet",
@@ -543,6 +598,76 @@
                 "caching"
             ],
             "time": "2018-08-21T18:01:43+00:00"
+        },
+        {
+            "name": "doctrine/collections",
+            "version": "v1.6.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/collections.git",
+                "reference": "c5e0bc17b1620e97c968ac409acbff28b8b850be"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/collections/zipball/c5e0bc17b1620e97c968ac409acbff28b8b850be",
+                "reference": "c5e0bc17b1620e97c968ac409acbff28b8b850be",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1.3"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "^6.0",
+                "phpstan/phpstan-shim": "^0.9.2",
+                "phpunit/phpunit": "^7.0",
+                "vimeo/psalm": "^3.2.2"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.6.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\Common\\Collections\\": "lib/Doctrine/Common/Collections"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roman Borschel",
+                    "email": "roman@code-factory.org"
+                },
+                {
+                    "name": "Benjamin Eberlei",
+                    "email": "kontakt@beberlei.de"
+                },
+                {
+                    "name": "Guilherme Blanco",
+                    "email": "guilhermeblanco@gmail.com"
+                },
+                {
+                    "name": "Jonathan Wage",
+                    "email": "jonwage@gmail.com"
+                },
+                {
+                    "name": "Johannes Schmitt",
+                    "email": "schmittjoh@gmail.com"
+                }
+            ],
+            "description": "PHP Doctrine Collections library that adds additional functionality on top of PHP arrays.",
+            "homepage": "https://www.doctrine-project.org/projects/collections.html",
+            "keywords": [
+                "array",
+                "collections",
+                "iterators",
+                "php"
+            ],
+            "time": "2019-06-09T13:48:14+00:00"
         },
         {
             "name": "doctrine/dbal",
@@ -3476,6 +3601,60 @@
                 "uri"
             ],
             "time": "2018-01-15T21:00:49+00:00"
+        },
+        {
+            "name": "simshaun/recurr",
+            "version": "v4.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/simshaun/recurr.git",
+                "reference": "053c35aaba20a179aa62ead344bea4a9af2c0092"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/simshaun/recurr/zipball/053c35aaba20a179aa62ead344bea4a9af2c0092",
+                "reference": "053c35aaba20a179aa62ead344bea4a9af2c0092",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/collections": "~1.3",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.5"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Recurr\\": "src/Recurr/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Shaun Simmons",
+                    "email": "shaun@shaun.pub",
+                    "homepage": "https://shaun.pub"
+                }
+            ],
+            "description": "PHP library for working with recurrence rules",
+            "homepage": "https://github.com/simshaun/recurr",
+            "keywords": [
+                "dates",
+                "events",
+                "recurrence",
+                "recurring",
+                "rrule"
+            ],
+            "time": "2019-08-06T22:18:04+00:00"
         },
         {
             "name": "spatie/laravel-permission",
