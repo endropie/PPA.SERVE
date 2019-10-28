@@ -13,7 +13,9 @@ trait WithUserBy
 	{
 		static::creating(function ($model)
         {
-            $model->created_by = \Auth::user()->id ?? null;
+            if ($user =  \Auth::user()) {
+                $model->created_by = $user->id;
+            }
             return $model;
         });
 	}
