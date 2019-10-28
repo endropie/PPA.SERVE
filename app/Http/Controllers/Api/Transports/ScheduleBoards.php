@@ -21,18 +21,18 @@ class ScheduleBoards extends ApiController
                 break;
 
             case 'datagrid':
-                $schedule_boards = ScheduleBoard::with(['vehicle', 'operator'])->filter($filters)->latest()->get();
+                $schedule_boards = ScheduleBoard::with(['customers', 'vehicle', 'operator'])->filter($filters)->latest()->get();
                 break;
 
             default:
-                $schedule_boards = ScheduleBoard::with(['vehicle', 'operator'])->filter($filters)->latest()->collect();
+                $schedule_boards = ScheduleBoard::with(['customers', 'vehicle', 'operator'])->filter($filters)->latest()->collect();
                 break;
         }
 
         return response()->json($schedule_boards);
     }
 
-    public function views(Filters $filters)
+    public function launcher(Filters $filters)
     {
         $schedules = Vehicle::where('is_scheduled', 1)
                         ->whereHas('schedule_boards', function($q) {
@@ -57,6 +57,11 @@ class ScheduleBoards extends ApiController
 
         $schedule_board = ScheduleBoard::create($request->all());
 
+        $customers = collect($request->input('customers', []))->pluck('id');
+        $schedule_board->customers()->sync($customers);
+
+        $schedule_board->createRecurring(['started_at'=> $request->input('date')]);
+
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
@@ -64,7 +69,12 @@ class ScheduleBoards extends ApiController
 
     public function show($id)
     {
-        $schedule_board = ScheduleBoard::with(['vehicle', 'operator'])->withTrashed()->findOrFail($id);
+        $schedule_board = ScheduleBoard::with([
+            'recurring',
+            'customers',
+            'vehicle',
+            'operator'
+        ])->withTrashed()->findOrFail($id);
 
         $schedule_board->setAppends(['has_relationship']);
 
@@ -86,6 +96,11 @@ class ScheduleBoards extends ApiController
 
         $schedule_board->update($request->input());
 
+        $customers = collect($request->input('customers', []))->pluck('id');
+        $schedule_board->customers()->sync($customers);
+
+        $schedule_board->updateRecurring(['started_at'=> $request->input('date')]);
+
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
@@ -105,6 +120,10 @@ class ScheduleBoards extends ApiController
 
         $schedule_board->status = $mode;
         $schedule_board->save();
+
+        if ($schedule_board->recurring) {
+            $schedule_board->recurring()->delete();
+        }
 
         $schedule_board->delete();
 
