@@ -169,6 +169,7 @@ return [
         Spatie\Permission\PermissionServiceProvider::class,
         Laravel\Passport\PassportServiceProvider::class,
         Akaunting\Setting\Provider::class,
+        Bkwld\Cloner\ServiceProvider::class,
 
         /*
          * Application Service Providers...
