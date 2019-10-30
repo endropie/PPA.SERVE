@@ -30,7 +30,7 @@ class WorkOrders extends ApiController
             default:
                 $work_orders = WorkOrder::with(['line', 'shift'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
-                    $row->setAppends(['is_relationship']);
+                    $row->append(['is_relationship', 'status_production', 'status_packing']);
                     return $row;
                 });
 
@@ -96,7 +96,7 @@ class WorkOrders extends ApiController
           ], $with)
         )->withTrashed()->findOrFail($id);
 
-        $work_order->setAppends(['is_relationship', 'has_relationship']);
+        $work_order->append(['is_relationship', 'has_relationship']);
 
         return response()->json($work_order);
     }

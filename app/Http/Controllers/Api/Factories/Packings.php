@@ -276,15 +276,16 @@ class Packings extends ApiController
         $packing->save();
 
         $detail = $packing->packing_items;
+        $work_order_item = $detail->work_order_item;
 
         // Calculate Stok Before deleting
         $detail->item->distransfer($detail);
 
         // Delete Packing.
         $detail->packing_item_faults()->delete();
-        $detail->work_order_item->calculate();
 
         $detail->delete();
+        $work_order_item->calculate();
 
         $packing->delete();
 
