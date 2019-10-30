@@ -12,20 +12,24 @@ class Faults extends ApiController
     {
         switch (request('mode')) {
             case 'all':
-                $faulties = Fault::filter($filter)->get();
+                $faults = Fault::filter($filter)->latest()->get();
                 break;
 
             case 'datagrid':
-                $faulties = Fault::filter($filter)->get();
-
+                $faults = Fault::with('type_fault')->filter($filter)->latest()->get();
+                $faults->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $faulties = Fault::filter($filter)->collect();
+                $faults = Fault::with('type_fault')->filter($filter)->latest()->collect();
+                $faults->getCollection()->transform(function($item) {
+                    $item->setAppends(['is_relationship']);
+                    return $item;
+                });
                 break;
         }
 
-        return response()->json($faulties);
+        return response()->json($faults);
     }
 
     public function store(Request $request)
@@ -37,7 +41,7 @@ class Faults extends ApiController
 
     public function show($id)
     {
-        $faulty = Fault::findOrFail($id);
+        $faulty = Fault::with('type_fault')->findOrFail($id);
         $faulty->setAppends(['has_relationship']);
 
         return response()->json($faulty);
@@ -55,8 +59,10 @@ class Faults extends ApiController
     public function destroy($id)
     {
         $faulty = Fault::findOrFail($id);
-        $faulty->delete();
 
+        if ($faulty->is_relationship) $this->error( strtoupper($faulty->name). " has relationships. DELETED not allowed!");
+
+        $faulty->delete();
         return response()->json(['success' => true]);
     }
 }

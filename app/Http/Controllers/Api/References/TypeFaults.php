@@ -12,16 +12,16 @@ class TypeFaults extends ApiController
     {
         switch (request('mode')) {
             case 'all':
-                $typeFaults = TypeFault::filter($filter)->get();
+                $typeFaults = TypeFault::filter($filter)->latest()->get();
                 break;
 
             case 'datagrid':
-                $typeFaults = TypeFault::filter($filter)->get();
+                $typeFaults = TypeFault::filter($filter)->latest()->get();
 
                 break;
 
             default:
-                $typeFaults = TypeFault::filter($filter)->collect();
+                $typeFaults = TypeFault::filter($filter)->latest()->collect();
                 break;
         }
 

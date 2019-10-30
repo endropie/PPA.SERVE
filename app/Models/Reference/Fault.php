@@ -12,8 +12,15 @@ class Fault extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $relationships = ['packing_item_faults'];
+
     public function type_fault()
     {
         return $this->belongsTo('App\Models\Reference\TypeFault');
+    }
+
+    public function packing_item_faults()
+    {
+        return $this->hasMany('App\Models\Factory\PackingItemFault', 'fault_id');
     }
 }

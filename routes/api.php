@@ -82,7 +82,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('positions', 'References\Positions');
             Route::apiResource('vehicles', 'References\Vehicles');
             Route::apiResource('faults', 'References\Faults');
-            Route::apiResource('type_faults', 'References\TypeFaults');
+            Route::apiResource('type-faults', 'References\TypeFaults');
             Route::apiResource('lines', 'References\Lines');
             Route::apiResource('shifts', 'References\Shifts');
             Route::apiResource('provinces', 'References\Provinces');
@@ -90,8 +90,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('sizes', 'References\Sizes');
             Route::apiResource('brands', 'References\Brands');
             Route::apiResource('colors', 'References\Colors');
-            Route::apiResource('type_items', 'References\TypeItems');
-            Route::apiResource('category_items', 'References\CategoryItems');
+            Route::apiResource('type-items', 'References\TypeItems');
+            Route::apiResource('category-items', 'References\CategoryItems');
             Route::apiResource('specifications', 'References\Specifications');
         });
 
