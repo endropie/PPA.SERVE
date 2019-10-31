@@ -32,7 +32,7 @@ class ScheduleBoards extends ApiController
         return response()->json($schedule_boards);
     }
 
-    public function launcher(Filters $filters)
+    public function landing(Filters $filters)
     {
         $schedules = Vehicle::where('is_scheduled', 1)
                         ->whereHas('schedule_boards', function($q) {
