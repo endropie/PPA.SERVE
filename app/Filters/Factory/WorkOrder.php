@@ -13,6 +13,49 @@ class WorkOrder extends Filter
         parent::__construct($request);
     }
 
+    public function status ($value) {
+        switch (strtoupper($value)) {
+            case 'OPEN':
+                return $this->builder->where('status', 'OPEN')
+                    ->whereHas('work_order_items', function($q) {
+                        $q->where('amount_process', 0)
+                          ->where('amount_packing', 0);
+                    });
+                break;
+            case 'PRODUCTION':
+                return $this->builder->where('status', 'OPEN')
+                    ->whereHas('work_order_items', function($q) {
+                        $q->where(function ($q) {
+                            $q->orWhere('amount_process', '>', 0)->orWhere('amount_packing', '>', 0);
+                        })->havingRaw('ROUND(quantity * unit_rate, 0) <> ROUND(amount_process, 0)');
+                    });
+                break;
+            case 'PACKING':
+                return $this->builder->where('status', 'OPEN')
+                    ->whereHas('work_order_items', function($q) {
+                        $q->where(function ($q) {
+                            $q->orWhere('amount_process', '>', 0)->orWhere('amount_packing', '>', 0);
+                        })->havingRaw('ROUND(quantity * unit_rate, 0) <> ROUND(amount_packing, 0)');
+                    });
+                break;
+            case 'CLOSED:PRODUCTION':
+                return $this->builder->where('status', 'OPEN')
+                    ->whereHas('work_order_items', function($q) {
+                        $q->havingRaw('ROUND(quantity * unit_rate, 0) = ROUND(amount_process, 0)');
+                    });
+                break;
+            case 'CLOSED:PACKING':
+                return $this->builder->where('status', 'OPEN')
+                    ->whereHas('work_order_items', function($q) {
+                        $q->havingRaw('ROUND(quantity * unit_rate, 0) = ROUND(amount_packing, 0)');
+                    });
+                break;
+            default:
+                return $this->builder->where('status', $value);
+                break;
+        }
+    }
+
     public function or_ids($value = '') {
         if (!strlen($value)) return $this->builder;
 

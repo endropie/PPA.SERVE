@@ -64,11 +64,6 @@ class WorkProductions extends ApiController
                         if ($work_order->status == 'CLOSED') {
                             $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
                         }
-
-                        if ($work_order->status !== 'ON-PROCESS') {
-                            $work_order->status = 'ON-PROCESS';
-                            $work_order->save();
-                        }
                     }
 
                     $detail->work_order_item_line()->associate($line);

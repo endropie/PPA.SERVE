@@ -21,7 +21,9 @@ class WorkOrderItem extends Model
 
     protected $casts = [
         'unit_rate' => 'double',
-        'quantity' => 'double'
+        'quantity' => 'double',
+        'target' => 'double',
+        'ngratio' => 'double',
     ];
 
     protected $relationships = [];
