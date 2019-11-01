@@ -44,19 +44,4 @@ class ItemStock extends Model
       }
       return $code;
     }
-
-   public static function XXgetValidStockist($code) {
-      $enum = static::getStockists();
-
-         if(!is_integer($code)) {
-            if(!$enum->has($code)) return false;
-            $code = $enum->get($code);
-         }
-         else {
-            $find = $enum->search(function ($item) use($code) { return $item == $code; });
-            if(!$find) return false;
-         }
-         return $code;
-    }
-
 }

@@ -126,7 +126,7 @@ class Item extends Model
     {
         $stocks = [];
         foreach (ItemStock::getStockists() as $key => $value) {
-            $stocks[$key] = $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
+            $stocks[$key] = (double) $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
         }
         return $stocks;
     }
