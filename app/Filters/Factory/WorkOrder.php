@@ -17,24 +17,16 @@ class WorkOrder extends Filter
         switch (strtoupper($value)) {
             case 'OPEN':
                 return $this->builder->where('status', 'OPEN')
-                    ->whereDoesntHave('work_order_item_lines.work_production_items')
-                    ->whereDoesntHave('work_order_items.packing_items');
-                break;
-            case 'PRODUCTION':
-                return $this->builder->where('status', 'OPEN')
-                    ->whereHas('work_order_item_lines.work_production_items')
                     ->whereHas('work_order_items', function($q) {
-                        $q->havingRaw('ROUND(quantity*unit_rate, 0) <> ROUND(amount_process, 0)');
+                        $q->where('amount_process', 0)
+                          ->where('amount_packing', 0);
                     });
                 break;
-            case 'PACKING':
+            case 'ON:PROCESS':
                 return $this->builder->where('status', 'OPEN')
-                    ->where(function($q) {
-                        $q->orWhereHas('work_order_item_lines.work_production_items')
-                          ->orWhereHas('work_order_items.packing_items');
-                    })
                     ->whereHas('work_order_items', function($q) {
-                        $q->havingRaw('ROUND(quantity * unit_rate, 0) <> ROUND(amount_packing, 0)');
+                        $q->where('amount_process', '>', 0)
+                          ->orWhere('amount_packing', '>', 0);
                     });
                 break;
             case 'CLOSED:PRODUCTION':
