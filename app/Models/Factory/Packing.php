@@ -18,7 +18,8 @@ class Packing extends Model
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
-        'packing_items.work_order_item.work_order_closed'
+        'packing_items.work_order_item.work_order_closed',
+        'packing_items.work_order_item.work_order_packed'
     ];
 
     public function packing_items()

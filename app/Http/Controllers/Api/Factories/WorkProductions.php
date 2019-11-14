@@ -64,6 +64,9 @@ class WorkProductions extends ApiController
                         if ($work_order->status == 'CLOSED') {
                             $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
                         }
+                        if ($work_order->has_producted) {
+                            $this->error("[$work_order->number] has PRODUCTED state. Not Allowed to be CREATED!");
+                        }
                     }
 
                     $detail->work_order_item_line()->associate($line);
@@ -80,8 +83,6 @@ class WorkProductions extends ApiController
             $works->push($work_production);
             $multiple--;
         }
-
-        // $this->error(["multiple" => $multiple, "works" => $works]);
 
         $this->DATABASE::commit();
         return response()->json($work_production);

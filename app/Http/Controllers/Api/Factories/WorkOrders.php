@@ -30,7 +30,7 @@ class WorkOrders extends ApiController
             default:
                 $work_orders = WorkOrder::with(['line', 'shift'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
-                    $row->append(['is_relationship', 'status_production', 'status_packing']);
+                    $row->append(['is_relationship', 'total_production', 'total_packing', 'total_amount', 'has_producted', 'has_packed']);
                     return $row;
                 });
 
@@ -96,7 +96,7 @@ class WorkOrders extends ApiController
           ], $with)
         )->withTrashed()->findOrFail($id);
 
-        $work_order->append(['is_relationship', 'has_relationship']);
+        $work_order->append(['is_relationship', 'has_relationship', 'total_production', 'total_packing', 'has_producted', 'has_packed']);
 
         return response()->json($work_order);
     }
@@ -105,6 +105,8 @@ class WorkOrders extends ApiController
     {
         if(request('mode') == 'processed') return $this->processed($request, $id);
         if(request('mode') == 'revision') return $this->revision($request, $id);
+        if(request('mode') == 'producted') return $this->producted($request, $id);
+        if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
 
         $this->DATABASE::beginTransaction();
@@ -159,10 +161,7 @@ class WorkOrders extends ApiController
         if($work_order->is_relationship) $this->error("[$work_order->number] has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $work_order->status != "OPEN") $this->error("The data $work_order->status state, is not allowed to be $mode!");
 
-        if ($mode == "VOID") {
-            $work_order->status = 'VOID';
-            $work_order->save();
-        }
+        if ($mode == "VOID") $work_order->moveState('VOID');
 
         foreach ($work_order->work_order_items as $detail) {
             $detail->item->distransfer($detail);
@@ -201,8 +200,9 @@ class WorkOrders extends ApiController
         if($request->number) {
             $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
             $work_order->revise_number = ($max + 1);
-            $work_order->status = 'OPEN';
             $work_order->save();
+
+            $work_order->moveState('OPEN');
         }
 
         $rows = $request->work_order_items ?? [];
@@ -231,12 +231,44 @@ class WorkOrders extends ApiController
             }
         }
 
-        $revise->status = 'REVISED';
+        $revise->moveState('REVISED');
         $revise->revise_id = $work_order->id;
         $revise->save();
         $revise->delete();
 
-        $this->error("LOLOS");
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function producted(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
+        if($work_order->status !== 'OPEN') $this->error("WO [#$work_order->number] has state $work_order->status. Not allowed to be PRODUCTED!");
+        if($work_order->total_production <= 0) $this->error("WO [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
+
+        $this->stockRestore($work_order);
+
+        $work_order->moveState('PRODUCTED');
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function Packed(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PACKED!");
+        if($work_order->status !== 'PRODUCTED') $this->error("WO [#$work_order->number] has state $work_order->status. Not allowed to be PACKED!");
+        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be PACKED!");
+
+        $work_order->moveState('PACKED');
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -250,20 +282,20 @@ class WorkOrders extends ApiController
 
         if ($work_order->trashed()) $this->error("[$work_order->number] has trashed. Not Allowed to be CLOSED!");
         if ($work_order->status == 'CLOSED') $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CLOSED!");
+        if($work_order->total_production <= 0) $this->error("WO [#$work_order->number] has not Production. Not allowed to be CLOSED!");
+        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
 
-        $work_order->status = 'CLOSED';
-        $work_order->save();
+        if ($work_order->status == 'OPEN') $this->stockRestore($work_order);
 
-        foreach ($work_order->work_order_items as  $detail) {
-            // Calculate Over Stock Quantity at item processed!
-            $amount_process = round($detail->amount_process);
-            $unit_amount = round($detail->unit_amount);
-            if ($amount_process < $unit_amount) {
-                $FROM = $work_order->stockist_from;
-                $OVER = ($unit_amount - $amount_process);
-                $detail->item->transfer($detail, $OVER, $FROM, 'WO');
-            }
+        if (!$work_order->has_producted) {
+            $work_order->moveState('PRODUCTED');
         }
+
+        if (!$work_order->has_packed) {
+            $work_order->moveState('PACKED');
+        }
+
+        $work_order->moveState('CLOSED');
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -289,8 +321,9 @@ class WorkOrders extends ApiController
         if($request->number) {
             $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
             $work_order->revise_number = ($max + 1);
-            $work_order->status = $revise->status;
             $work_order->save();
+
+            $work_order->moveState($revise->status);
         }
 
         $rows = $request->work_order_items ?? [];
@@ -374,7 +407,7 @@ class WorkOrders extends ApiController
             $detail->calculate();
         });
 
-        $revise->status = 'REVISED';
+        $revise->moveState('REVISED');
         $revise->revise_id = $work_order->id;
         $revise->save();
         $revise->delete();
@@ -383,48 +416,16 @@ class WorkOrders extends ApiController
         return response()->json($work_order);
     }
 
-    public function processed(Request $request, $id)
-    {
-        $this->error('NO Action AVAILABLE');
-        $this->DATABASE::beginTransaction();
-
-        $work_order = WorkOrder::findOrFail($id);
-
-        if(in_array($work_order->status, ["PROCESSED", "VOID"])) $this->error("WO [#$work_order->number] Cannot to Confirmed!");
-
-        $rows = $request->work_order_items;
-
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // $oldDetail = $work_order->work_order_items()->find($row['id']);
-
-            $detail = $work_order->work_order_items()->findOrFail($row["id"]);
-
-
-            if( $row["process"] > $detail->quantity) $this->error("Detail [$detail->id] Quantity Process Invalid!");
-
-            $detail->process = $row["process"];
-
-            $detail->save();
-            $detail->calculate('process');
-
+    protected function stockRestore($work_order) {
+        foreach ($work_order->work_order_items as  $detail) {
             // Calculate Over Stock Quantity at item processed!
-            if ($detail->amount_process < $detail->unit_amount) {
+            $amount_process = round($detail->amount_process);
+            $unit_amount = round($detail->unit_amount);
+            if ($amount_process < $unit_amount) {
                 $FROM = $work_order->stockist_from;
-                $OVER = ($detail->unit_amount - $detail->amount_process);
+                $OVER = ($unit_amount - $amount_process);
                 $detail->item->transfer($detail, $OVER, $FROM, 'WO');
             }
-
-            // Calculate stock on Detail item processed!
-            $detail->item->transfer($detail, $detail->amount_process,  'WIP', 'WO');
         }
-
-        $work_order->processed_by = \Auth::user()->id ?? null;
-        $work_order->processed_at = now();
-        $work_order->status = 'PROCESSED';
-        $work_order->save();
-
-        $this->DATABASE::commit();
-        return response()->json($work_order);
     }
 }

@@ -16,6 +16,7 @@ class WorkProduction extends Model
 
    protected $relationships = [
        'work_production_items.work_order_item_line.work_order_item.work_order_closed',
+       'work_production_items.work_order_item_line.work_order_item.work_order_producted',
    ];
 
    public function work_production_items()

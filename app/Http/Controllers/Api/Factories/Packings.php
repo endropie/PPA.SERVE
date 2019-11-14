@@ -63,7 +63,8 @@ class Packings extends ApiController
         $totals = $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
         $partials = collect([]);
 
-        $work_orders = WorkOrder::whereHas('work_order_items', function($q) {
+        $work_orders = WorkOrder::stateHasNot('PACKED')
+            ->whereHas('work_order_items', function($q) {
               return $q
                 ->where('item_id', request()->input('packing_items.item_id'))
                 ->whereRaw('amount_process > amount_packing');
@@ -134,8 +135,6 @@ class Packings extends ApiController
 
             $packings->push($packing);
         }
-
-        // $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($packings);

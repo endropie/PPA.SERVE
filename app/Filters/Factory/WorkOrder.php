@@ -15,31 +15,18 @@ class WorkOrder extends Filter
 
     public function status ($value) {
         switch (strtoupper($value)) {
-            case 'OPEN':
-                return $this->builder->where('status', 'OPEN')
-                    ->whereHas('work_order_items', function($q) {
-                        $q->where('amount_process', 0)
-                          ->where('amount_packing', 0);
-                    });
-                break;
             case 'ON:PROCESS':
-                return $this->builder->where('status', 'OPEN')
+                return $this->builder->whereIn('status', ['OPEN', 'PRODUCTED', 'PACKED'])
                     ->whereHas('work_order_items', function($q) {
-                        $q->where('amount_process', '>', 0)
-                          ->orWhere('amount_packing', '>', 0);
+                        $q->where('amount_process', '>', 0);
                     });
                 break;
-            case 'CLOSED:PRODUCTION':
-                return $this->builder->where('status', 'OPEN')
-                    ->whereDoesntHave('work_order_items', function($q) {
-                        $q->havingRaw('ROUND(quantity * unit_rate, 0) <> ROUND(amount_process, 0)');
-                    });
+            case 'HAS:PRODUCTED':
+                return $this->builder->stateHas('PRODUCTED');
                 break;
-            case 'CLOSED:PACKING':
-                return $this->builder->where('status', 'OPEN')
-                    ->whereDoesntHave('work_order_items', function($q) {
-                        $q->havingRaw('ROUND(quantity * unit_rate, 0) <> ROUND(amount_packing, 0)');
-                    });
+
+            case 'HAS:PACKED':
+                return $this->builder->stateHas('PACKED');
                 break;
             default:
                 return $this->builder->where('status', $value);
@@ -95,6 +82,7 @@ class WorkOrder extends Filter
         };
         return $this->builder
             ->with(['work_order_items'])
+            ->stateHasNot('PACKED')
             ->whereHas('work_order_items', $callback);
     }
 
@@ -112,6 +100,7 @@ class WorkOrder extends Filter
         if((int) $line) {
             return $this->builder
             ->where('status', '<>', 'CLOSED')
+            ->stateHasNot('PRODUCTED')
             ->with(['work_order_item_lines' => $callback])
             ->whereHas('work_order_item_lines', $callback);
         }

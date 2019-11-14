@@ -5,11 +5,12 @@ namespace App\Models\Factory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Models\withStateable;
 use App\Filters\Filterable;
 
 class WorkOrder extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, withStateable;
 
     protected $fillable = [
         'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'description',
@@ -39,25 +40,25 @@ class WorkOrder extends Model
         return $this->belongsTo('App\Models\Reference\Shift');
     }
 
-    public function getStatusProductionAttribute() {
-        $get = $this->hasMany('App\Models\Factory\WorkOrderItem')->get();
-        $total = $get->sum(function ($detail) {
-            return $detail['quantity'] * $detail['unit_rate'];
-        });
-        $amount  = $get->sum('amount_process');
-        return round($total) != round($amount)
-            ? (int) ($amount/$total * 100)
-            : (bool) ($amount != 0) ;
+    public function getTotalAmountAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('unit_amount');
     }
 
-    public function getStatusPackingAttribute() {
-        $get = $this->hasMany('App\Models\Factory\WorkOrderItem')->get();
-        $total = $get->sum(function ($detail) {
-            return $detail['quantity'] * $detail['unit_rate'];
-        });
-        $amount  = $get->sum('amount_packing');
-        return round($total) != round($amount)
-            ? (int) ($amount/$total * 100)
-            : (bool) ($amount != 0);
+    public function getTotalProductionAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_process');
+    }
+
+    public function getTotalPackingAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_packing');
+    }
+
+    public function getHasProductedAttribute() {
+        $row = $this->stateable->where('state', 'PRODUCTED')->last();
+        return $row ?? null;
+    }
+
+    public function getHasPackedAttribute() {
+        $row = $this->stateable->where('state', 'PACKED')->last();
+        return $row ?? null;
     }
 }

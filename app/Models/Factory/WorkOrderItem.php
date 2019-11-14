@@ -24,6 +24,8 @@ class WorkOrderItem extends Model
         'quantity' => 'double',
         'target' => 'double',
         'ngratio' => 'double',
+        'amount_process' => 'double',
+        'amount_packing' => 'double',
     ];
 
     protected $relationships = [];
@@ -36,6 +38,20 @@ class WorkOrderItem extends Model
     public function work_order()
     {
         return $this->belongsTo('App\Models\Factory\WorkOrder')->withTrashed();
+    }
+
+    public function work_order_producted()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrder', 'work_order_id')->whereHas('stateable', function($query) {
+            $query->where('state', 'PRODUCTED');
+        });
+    }
+
+    public function work_order_packed()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrder', 'work_order_id')->whereHas('stateable', function($query) {
+            $query->where('state', 'PACKED');
+        });
     }
 
     public function work_order_closed()
