@@ -5,12 +5,12 @@ namespace App\Models\Factory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Models\WithUserBy;
-use App\Models\withStateable;
+use App\Models\WithStateable;
 use App\Filters\Filterable;
 
 class WorkOrder extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy, withStateable;
+    use Filterable, SoftDeletes, WithUserBy, WithStateable;
 
     protected $fillable = [
         'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'description',
