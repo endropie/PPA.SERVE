@@ -29,7 +29,7 @@ class Packing extends Request
             'date' => 'required',
             'shift_id' => 'required',
             'packing_items.item_id' => 'required',
-            'packing_items.quantity' => 'required|numeric|gt:0',
+            'packing_items.quantity' => 'required|numeric|min:0',
             'packing_items.unit_id' => 'required',
             'packing_items.packing_item_faults.*.quantity' => 'required_if:packing_items.packing_item_faults.*.fault_id,!=,null',
         ];

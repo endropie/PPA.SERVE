@@ -46,7 +46,6 @@ class Packings extends ApiController
                       $row->packing_items->work_order_item
                         ?  $row->packing_items->work_order_item->work_order->number : null
                     );
-                    // $row->work_order_number
                     return $row;
                 });
                 break;
@@ -60,7 +59,12 @@ class Packings extends ApiController
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
 
-        $totals = $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
+        $totals = (double) $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
+
+        $faults =  $request->packing_items
+            ? collect($request->packing_items["packing_item_faults"])
+            : collect([]);
+
         $partials = collect([]);
 
         $work_orders = WorkOrder::stateHasNot('PACKED')
@@ -75,21 +79,44 @@ class Packings extends ApiController
         foreach ($work_orders as $work_order) {
 
             foreach ($work_order->work_order_items as $detail) {
+                if ($detail->item_id !== $request->input('packing_items.item_id')) continue;
 
+                $new = ['id' => $detail->id, 'quantity' => 0];
                 $detail->available = $detail->amount_process - $detail->amount_packing;
-                if (
-                    $detail->item_id == request('packing_items.item_id')
-                    && $detail->available > 0
-                    && $totals > 0
-                ) {
+                if ( $totals > 0 && $detail->available > 0 && $detail->item_id == request('packing_items.item_id'))
+                {
                     $amount = $detail->available > $totals ? $totals : $detail->available;
-                    $partials->push(['id' => $detail->id, 'amount' => $amount]);
+                    $new = array_merge($new, ['quantity' => $amount]);
                     $totals -= $amount;
+                    $detail->available -= $amount;
+                }
+                if ( $totals <= 0 && $detail->available > 0 && $faults->sum('quantity') > 0)
+                {
+                    $new = array_merge($new, ['faults' => array()]);
+                    foreach ($faults as $key => $fault) {
+                        if($detail->available <= 0) break;
+                        if ( $detail->available > 0) {
+                            $amount = $detail->available > $fault['quantity'] ? $fault['quantity'] : $detail->available;
+                            $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
+                        }
+
+                        $faults->transform(function($item) use($fault, $amount) {
+                            if ($fault['__index'] == $item['__index']) $item['quantity'] -= $amount;
+                            return $item;
+                        });
+
+                        $detail->available -= $amount;
+                    }
+                }
+                if (!empty($new)) {
+                    $partials->push($new);
                 }
             }
         }
 
         if ($partials->count() <= 0) $this->error("WORK ORDER Not Available. Not allowed to be Created!");
+
+        // $this->error(['PARTIAL', $partials]);
 
         $packings = collect([]);
         foreach ($partials as $key => $partial) {
@@ -101,7 +128,7 @@ class Packings extends ApiController
             if($row) {
                 // Create the Packing item. Note: with "hasOne" Relation.
                 $row = array_merge($request->packing_items, [
-                    'quantity' => ($partial['amount'] / ($row['unit_rate'] ?? 1)),
+                    'quantity' => ($partial['quantity'] / ($row['unit_rate'] ?? 1)),
                     'work_order_item_id' => $partial['id'],
                 ]);
 
@@ -110,9 +137,9 @@ class Packings extends ApiController
                 // Calculate stock on after the Packing items Created!
                 $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
 
-                if ($partials->count()-1 == $key)
+                if ($faults = $partial['faults'] && count($partial['faults']) > 0)
                 {
-                    $faults = $row['packing_item_faults'];
+                    $faults = $partial['faults'];
                     for ($i=0; $i < count($faults); $i++) {
                         $fault = $faults[$i];
                         if($fault['fault_id'] || $fault['quantity'] ) {
