@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\Factories;
 
 use App\Filters\Factory\WorkOrder as Filters;
+use App\Filters\Factory\WorkOrderItem as FilterItems;
 use App\Http\Requests\Factory\WorkOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Factory\PackingItem;
 use App\Models\Factory\WorkOrder;
+use App\Models\Factory\WorkOrderItem;
 use App\Models\Factory\WorkProductionItem;
 use App\Traits\GenerateNumber;
 class WorkOrders extends ApiController
@@ -28,7 +30,7 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_orders = WorkOrder::with(['line', 'shift'])->filter($filter)->latest()->collect();
+                $work_orders = WorkOrder::with(['line', 'shift', 'work_order_items.item.unit'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
                     $row->append(['is_relationship', 'total_production', 'total_packing', 'total_amount', 'has_producted', 'has_packed']);
                     return $row;
@@ -38,6 +40,31 @@ class WorkOrders extends ApiController
         }
 
         return response()->json($work_orders);
+    }
+
+    public function items(Filters $filter, FilterItems $filter_items)
+    {
+        switch (request('mode')) {
+            case 'all':
+            $work_order_items = WorkOrderItem::filter($filter)->latest()->get();
+            break;
+
+            default:
+                $work_order_items = WorkOrderItem::with(['work_order.line', 'work_order.shift', 'item', 'unit'])
+                  ->filter($filter_items)
+                  ->whereHas('work_order', function($q) use($filter) {
+                    return $q->filter($filter);
+                  })->latest()->collect();
+
+                $work_order_items->getCollection()->transform(function($row) {
+                    // $row->append(['unit']);
+                    return $row;
+                });
+
+                break;
+        }
+
+        return response()->json($work_order_items);
     }
 
     public function store(Request $request)

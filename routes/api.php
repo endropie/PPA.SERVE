@@ -68,6 +68,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         });
 
         Route::prefix('factories')->name('factories.')->group(function () {
+            Route::get('work-orders/items', 'Factories\WorkOrders@items');
+
             Route::apiResource('work-productions', 'Factories\WorkProductions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
             Route::apiResource('packings', 'Factories\Packings');

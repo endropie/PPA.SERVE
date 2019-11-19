@@ -2,14 +2,13 @@
 
 namespace App\Models\Factory;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use function Safe\json_encode;
-
 class WorkOrderItem extends Model
 {
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $fillable = [
         'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'
