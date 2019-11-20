@@ -137,7 +137,7 @@ class Packings extends ApiController
                 // Calculate stock on after the Packing items Created!
                 $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
 
-                if ($faults = $partial['faults'] && count($partial['faults']) > 0)
+                if (count($partial['faults'] ?? []) > 0)
                 {
                     $faults = $partial['faults'];
                     for ($i=0; $i < count($faults); $i++) {
