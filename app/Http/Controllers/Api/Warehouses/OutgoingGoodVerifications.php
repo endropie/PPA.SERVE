@@ -30,11 +30,11 @@ class OutgoingGoodVerifications extends ApiController
                 break;
 
             default:
-                $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit'])
+                $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit','pre_delivery_item.pre_delivery'])
                 ->filter($filters)
                 ->latest()->collect();
                 $outgoing_good_verifications->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->setAppends(['is_relationship', 'pre_delivery_number']);
                     return $item;
                 });
                 break;

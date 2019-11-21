@@ -49,6 +49,12 @@ class OutgoingGoodVerification extends Model
         return $this->belongsTo('App\Models\Reference\Unit');
     }
 
+    public function getPreDeliveryNumberAttribute() {
+        // return false when rate is not valid
+        $pre_delivery = $this->pre_delivery_item->pre_delivery;
+        return $pre_delivery->number ?? null;
+    }
+
     public function getUnitAmountAttribute() {
         // return false when rate is not valid
         if($this->unit_rate <= 0) return false;

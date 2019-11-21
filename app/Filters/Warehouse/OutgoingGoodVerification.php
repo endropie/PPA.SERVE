@@ -22,7 +22,7 @@ class OutgoingGoodVerification extends Filter
 
     public function sort_part_name($order = 'asc') {
         // return $this->builder->leftJoin('items', 'items.id' , '=', 'outgoing_good_items.item_id')->orderBy('part_name', $order);
-        $table = 'outgoing_good_items';
+        $table = 'outgoing_good_verifications';
         $field = 'part_name';
         $join = 'items';
         $foreign = 'item_id';
