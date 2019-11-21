@@ -61,8 +61,8 @@ class Packings extends ApiController
 
         $totals = (double) $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
 
-        $faults =  $request->packing_items
-            ? collect($request->packing_items["packing_item_faults"])
+        $faults = $request->input('packing_items.type_fault_id', false)
+            ? collect($request->input('packing_items.packing_item_faults', []))
             : collect([]);
 
         $partials = collect([]);
@@ -100,8 +100,8 @@ class Packings extends ApiController
                             $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
                         }
 
-                        $faults->transform(function($item) use($fault, $amount) {
-                            if ($fault['__index'] == $item['__index']) $item['quantity'] -= $amount;
+                        $faults->transform(function($item, $itemkey) use($key, $amount) {
+                            if ($key == $itemkey) $item['quantity'] -= $amount;
                             return $item;
                         });
 
