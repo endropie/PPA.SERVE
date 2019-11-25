@@ -20,7 +20,7 @@ class CreatePreDeliveriesTables extends Migration
 
             $table->unsignedInteger('customer_id');
 
-            $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
+            $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE'])->nullable();
             $table->unsignedInteger('request_order_id')->nullable();
 
             $table->date('date');

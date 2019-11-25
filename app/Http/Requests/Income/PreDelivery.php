@@ -26,9 +26,6 @@ class PreDelivery extends Request
             'number' => ($id ? 'required|' : '') .'unique:pre_deliveries,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'customer_id' => 'required',
             'date' => 'required',
-            // 'plan_begin_date' => 'required',
-            // 'plan_until_date' => 'required',
-
             'delivery_items.*.item_id' => 'required',
 
             'delivery_items' =>
