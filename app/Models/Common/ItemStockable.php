@@ -27,19 +27,37 @@ class ItemStockable extends Model
         return $this->morphTo();
     }
 
-    public function getBaseLabelAttribute() {
+    public function getBaseDataAttribute() {
         switch ($this->base_type) {
             case 'App\Models\Warehouse\IncomingGoodItem':
-            return $this->base->incoming_good->number;
+            return $this->base->incoming_good;
+
+            case 'App\Models\Warehouse\OutgoingGoodItem':
+            return $this->base->outgoing_good;
+
+            case 'App\Models\Warehouse\OutgoingGoodVerification':
+            return $this->base;
+
+            case 'App\Models\Factory\WorkOrderItem':
+            return $this->base->work_order;
+
+            case 'App\Models\Factory\WorkProductionItem':
+            return $this->base->work_production;
+
+            case 'App\Models\Factory\PackingItem':
+            return $this->base->packing;
 
             case 'App\Models\Income\RequestOrderItem':
-            return $this->base->request_order->number;
+            return $this->base->request_order;
+
+            case 'App\Models\Income\PreDeliveryItem':
+            return $this->base->pre_delivery;
 
             case 'App\Models\Income\DeliveryOrder':
-            return $this->base->delivery_order->number;
+            return $this->base->delivery_order;
 
             case 'App\Models\Income\PreDelivery':
-            return $this->base->pre_delivery->number;
+            return $this->base->pre_delivery;
 
             return null;
         }

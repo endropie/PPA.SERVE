@@ -3,6 +3,12 @@ namespace App\Models;
 
 trait WithUserBy
 {
+
+    public function user_by()
+	{
+        return $this->belongsTo('App\Models\Auth\User', 'created_by');
+    }
+
     public static function bootWithUserBy()
 	{
 		static::creating(function ($model)

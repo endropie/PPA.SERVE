@@ -43,6 +43,31 @@ class Items extends ApiController
         return response()->json($items);
     }
 
+    public function stockables(Filters $filters)
+    {
+        switch (request('mode')) {
+          case 'all':
+            $items = ItemStockable::whereHas('item', function ($q) use ($filters) {
+                return $q->filter($filters);
+            })->get();
+          break;
+
+          default:
+            $items = ItemStockable::with('item.unit')->whereHas('item', function ($q) use ($filters) {
+                return $q->filter($filters);
+            })->latest()->collect();
+
+            $items->getCollection()->transform(function($item) {
+                $item->append(['base_data']);
+                return $item;
+            });
+
+          break;
+        }
+
+        return response()->json($items);
+    }
+
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
