@@ -34,4 +34,10 @@ class IncomingGood extends Filter
 
 
     }
+
+    public function item_id($value) {
+        return $this->builder->whereHas('incoming_good_items', function($q) use($value) {
+            return $q->where('item_id', $value);
+        });
+    }
 }
