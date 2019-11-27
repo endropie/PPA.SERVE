@@ -10,7 +10,7 @@ class WorkProduction extends Model
 {
    use Filterable, SoftDeletes;
 
-   protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'oprator_id', 'description'];
+   protected $fillable = ['number', 'line_id', 'date', 'stockist', 'shift_id', 'worktime', 'oprator_id', 'description'];
 
    protected $hidden = ['created_at', 'updated_at'];
 
