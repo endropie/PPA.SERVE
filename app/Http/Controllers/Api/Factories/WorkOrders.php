@@ -130,11 +130,11 @@ class WorkOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') == 'processed') return $this->processed($request, $id);
         if(request('mode') == 'revision') return $this->revision($request, $id);
         if(request('mode') == 'producted') return $this->producted($request, $id);
         if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
+        if(request('mode') == 'reopen') return $this->reopen($request, $id);
 
         $this->DATABASE::beginTransaction();
 
@@ -262,6 +262,28 @@ class WorkOrders extends ApiController
         $revise->revise_id = $work_order->id;
         $revise->save();
         $revise->delete();
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function reopen(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
+        if($work_order->status == 'OPEN') $this->error("WO [#$work_order->number] has state 'OPEN'. Not allowed to be PRODUCTED!");
+
+        $FROM = $work_order->stockist_from;
+        $work_order->work_order_items->each(function($detail) use ($FROM) {
+            $detail->item->distransfer($detail);
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+        });
+
+        $work_order->stateable()->delete();
+        $work_order->moveState('OPEN');
 
         $this->DATABASE::commit();
         return response()->json($work_order);
