@@ -9,7 +9,7 @@ class PreDeliveryItem extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'unit_id', 'unit_rate', 'quantity'
+        'item_id', 'unit_id', 'unit_rate', 'quantity', 'wrap'
     ];
 
     protected $appends = ['unit_amount'];
