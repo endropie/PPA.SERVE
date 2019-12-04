@@ -22,6 +22,6 @@ class Vehicle extends Model
 
     public function getScheduledAttribute()
     {
-        return $this->hasMany('App\Models\Transport\ScheduleBoard')->where('status', '<>', 'CLOSED')->first();
+        return $this->hasMany('App\Models\Transport\ScheduleBoard')->with('customers')->where('status', '<>', 'CLOSED')->first();
     }
 }
