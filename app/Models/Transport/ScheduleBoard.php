@@ -21,7 +21,7 @@ class ScheduleBoard extends Model
 
     protected $cloneable_relations = ['customers'];
 
-    protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
+    protected $hidden = ['created_at', 'updated_at'];
 
     public function customers()
     {
