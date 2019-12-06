@@ -10,7 +10,7 @@ class WorkProductionItem extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'quantity', 'unit_id', 'unit_rate'
+        'item_id', 'quantity', 'unit_id', 'unit_rate', 'stockist'
     ];
 
     protected $appends = ['unit_amount'];
