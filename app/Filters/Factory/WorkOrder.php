@@ -52,6 +52,17 @@ class WorkOrder extends Filter
         });
     }
 
+    public function or_work_order_item_line_ids($value = '') {
+        if (!strlen($value)) return $this->builder;
+
+        $value = explode(',',$value);
+        return $this->builder->orWhere(function($query) use($value){
+            $query->whereHas('work_order_items.work_order_item_lines', function ($q) use($value) {
+                return $q->whereIn('id',  $value);
+            });
+        });
+    }
+
     public function line_id($line) {
         return $this->builder->where('line_id', $line);
     }
