@@ -28,7 +28,6 @@ class WorkProduction extends Request
             'number' => ($id ? 'required|' : '') .'max:191|unique:work_productions,NULL,' . $id,
             'line_id' => 'required',
             'date' => 'required',
-            'stockist' => 'required',
             'shift_id' => 'required'
         ];
     }
