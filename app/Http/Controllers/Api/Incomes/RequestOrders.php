@@ -57,12 +57,10 @@ class RequestOrders extends ApiController
         $item = $request->request_order_items;
         for ($i=0; $i < count($item); $i++) {
 
-            // create item production on the request orders updated!
             $detail = $request_order->request_order_items()->create($item[$i]);
             $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
         }
 
-        // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -82,17 +80,20 @@ class RequestOrders extends ApiController
 
     public function update(Request $request, $id)
     {
+        if(request('mode') === 'estimate_updated') return $this->estimate_updated($request, $id);
+        if(request('mode') === 'estimate_finished') return $this->estimate_finished($request, $id);
+
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $request_order = RequestOrder::findOrFail($id);
 
         if ($request_order->is_relationship == true) {
-            $this->error('The data has relationships, is not allowed to be changed');
+            $this->error('The data has relationships, Not allowed to be changed');
         }
 
         if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, is not allowed to be changed');
+            $this->error('The data has not OPEN state, Not allowed to be changed');
         }
 
         $request_order->update($request->input());
@@ -158,5 +159,64 @@ class RequestOrders extends ApiController
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
+    }
+
+    public function estimate_updated($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+
+        if (!$request_order->is_estimate) {
+            $this->error('The data has not ESTIMATE, Not allowed to be changed');
+        }
+
+        if ($request_order->status !== 'OPEN') {
+            $this->error('The data has not OPEN state, Not allowed to be changed');
+        }
+
+        $request_order = $this->saveEstimate($request, $request_order);
+
+        $this->DATABASE::commit();
+        return response()->json($request_order);
+    }
+
+    public function estimate_finished($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+
+        if (!$request_order->is_estimate) {
+            $this->error('The data has not ESTIMATE, Not allowed to be changed');
+        }
+
+        if ($request_order->status !== 'OPEN') {
+            $this->error('The data has not OPEN state, Not allowed to be changed');
+        }
+
+        $request_order = $this->saveEstimate($request, $request_order);
+
+        $request_order->update(['is_estimate' => 0]);
+
+        $this->DATABASE::commit();
+        return response()->json($request_order);
+    }
+
+    protected function saveEstimate($request, $request_order) {
+        $request_order->update($request->input());
+
+        $rows = $request->request_order_items;
+        for ($i=0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            if ($row['id'] && $check = $request_order->request_order_items()->find($row['id'])) {
+                if ($check->quantity > $row['quantity']) $this->error('Quantity Invalid!');
+            }
+            $detail = $request_order->request_order_items()->updateOrCreate(['id'=> $row['id']], $row);
+            $detail->item->distransfer($detail);
+            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
+        }
+
+        return $request_order->fresh();
     }
 }

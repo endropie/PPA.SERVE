@@ -25,8 +25,6 @@ class RequestOrder extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:request_orders,NULL,' . $id,
-            'begin_date' => 'required',
-            'until_date' => 'required',
             'customer_id' => 'required',
 
             'request_order_items.*.item_id' => 'required',

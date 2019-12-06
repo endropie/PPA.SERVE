@@ -10,13 +10,12 @@ class RequestOrder extends Model
     use Filterable, SoftDeletes;
 
     protected $fillable = [
-        'number', 'date', 'customer_id', 'reference_number', 'description', 'transaction', 'order_mode'
+        'number', 'date', 'customer_id', 'reference_number', 'description', 'transaction', 'order_mode', 'is_estimate', 'estimate_number'
     ];
 
     protected $relationships = [
-        // 'incoming_good',
         'delivery_orders',
-        'request_order_items.delivery_order_items',
+        // 'request_order_items.delivery_order_items',
     ];
 
     public function request_order_items()
