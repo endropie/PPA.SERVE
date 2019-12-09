@@ -3,12 +3,13 @@
 namespace App\Models\Income;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 
 class DeliveryOrder extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'revise_number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description',

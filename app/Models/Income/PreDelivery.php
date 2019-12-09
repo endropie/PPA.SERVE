@@ -2,13 +2,14 @@
 
 namespace App\Models\Income;
 
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PreDelivery extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'customer_id', 'description',
@@ -18,7 +19,6 @@ class PreDelivery extends Model
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
-        // 'incoming_good'
         'pre_delivery_items.outgoing_verifications'
     ];
 

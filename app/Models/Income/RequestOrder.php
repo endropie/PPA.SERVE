@@ -1,13 +1,14 @@
 <?php
 namespace App\Models\Income;
 
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RequestOrder extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'date', 'customer_id', 'reference_number', 'description', 'transaction', 'order_mode', 'is_estimate', 'estimate_number'

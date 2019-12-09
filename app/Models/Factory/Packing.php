@@ -3,12 +3,13 @@
 namespace App\Models\Factory;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 
 class Packing extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'customer_id', 'date', 'shift_id', 'description',

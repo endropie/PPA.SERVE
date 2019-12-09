@@ -2,12 +2,13 @@
 namespace App\Models\Warehouse;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 
 class OutgoingGood extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description',

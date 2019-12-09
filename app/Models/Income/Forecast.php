@@ -3,12 +3,13 @@
 namespace App\Models\Income;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\Model;
+use App\Models\WithUserBy;
 
 class Forecast extends Model
 {
-   use Filterable, SoftDeletes;
+   use Filterable, SoftDeletes, WithUserBy;
 
    protected $fillable = [
       'number', 'begin_date', 'until_date', 'customer_id', 'description',
