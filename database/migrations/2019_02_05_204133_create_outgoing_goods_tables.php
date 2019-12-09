@@ -27,7 +27,6 @@ class CreateOutgoingGoodsTables extends Migration
 
             $table->unsignedInteger('vehicle_id')->nullable();
             $table->tinyInteger('transport_rate')->nullable();
-            $table->unsignedInteger('operator_id')->nullable();
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');

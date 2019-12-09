@@ -21,7 +21,6 @@ class CreatePackingsTables extends Migration
             $table->date('date');
             $table->integer('shift_id');
             $table->enum('worktime', ['REGULER', 'OVERTIME'])->default('REGULER');
-            $table->integer('operator_id')->nullable();
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
