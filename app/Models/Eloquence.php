@@ -40,64 +40,14 @@ trait Eloquence
         return $query;
     }
 
-    // public function scopeFilterable($query, $className = null)
-    // {
-    //     if($className) $this->filterableClass = 'App\\Filters\\'. $className ;
-
-    //     if(!$this->filterableClass)  $this->setClassByRoute();
-
-    //     $query->where(function ($query){
-    //         if($this->filterableClass){
-    //             $class = new $this->filterableClass();
-    //             $class_methods = get_class_methods($class);
-    //             foreach($class_methods as $filter){
-    //                 if (Input::get($filter) && trim(Input::get($filter) !== '') )
-    //                 {
-    //                     $query = $class->$filter($query, Input::get($filter));
-    //                 }
-    //             }
-    //         }
-    //     });
-
-    //     return $query;
-    // }
-
-    // public function scopeSortable($query)
-    // {
-    //     $request = request();
-    //     $sort  = $request->get('sort');
-    //     $order = $request->get('order', 'asc');
-
-    //     if($sort) $query = $query->orderBy($sort, $order);
-    //     else      $query = $query->latest()->orderBy('id','desc');
-
-    //     return $query;
-    // }
-
-    // protected function setClassByRoute()
-    // {
-    //     $arr = explode('/', Route::current()->uri());
-
-    //     // dd('Filterable-Class',$arr);
-
-    //     if(strtolower($arr[0]) == 'api'){
-    //         $arr[0] = 'admin';
-
-    //         if(strtolower($arr[1]) == 'v1') unset($arr[1]);
-    //     }
-
-    //     foreach ($arr as $key => $sub)
-    //     {
-    //         $arr[$key] =  implode('', array_map("ucfirst", explode('-', $sub)));
-    //     }
-
-    //     $class = '\App\Filters\\'. str_replace(' ', '\\', implode(' ', $arr));
-
-    //     if(class_exists($class))
-    //     {
-    //         $this->filterableClass = $class;
-    //     }
-    // }
-
+    public function scopeAll($query, $map = false)
+    {
+        $request = request();
+        $limit = (int) $request->get('limit', null);
+        if($limit) {
+            $query = $query->limit($limit);
+        }
+        return $query->get();
+    }
 
 }

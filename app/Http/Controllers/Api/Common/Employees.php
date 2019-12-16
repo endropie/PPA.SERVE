@@ -13,7 +13,7 @@ class Employees extends ApiController
     {
         switch (request('mode')) {
           case 'all':
-            $employees = Employee::with(['department', 'position'])->filter($filters)->get();
+            $employees = Employee::filter($filters)->all();
           break;
 
           case 'datagrid':

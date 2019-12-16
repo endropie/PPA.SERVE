@@ -103,9 +103,13 @@ class WorkOrderItem extends Model
     {
         if(!$param || $param == 'process') {
             // UPDATE AMOUNT PACKING
-            $total = (double) collect($this->work_order_item_lines->map(function($line) {
-                return (double) $line->work_production_items->sum('unit_amount');
-            }))->sum();
+            $total = (double) collect(
+                $this->work_order_item_lines
+                  ->filter(function($line) { return (boolean) $line->ismain; })
+                  ->map(function($line) {
+                    return (double) $line->work_production_items->sum('unit_amount');
+                  })
+            )->sum();
 
             $this->amount_process = $total * $this->unit_rate;
             $this->save();

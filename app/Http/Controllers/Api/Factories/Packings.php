@@ -81,12 +81,12 @@ class Packings extends ApiController
             foreach ($work_order->work_order_items as $detail) {
                 if ($detail->item_id !== $request->input('packing_items.item_id')) continue;
 
-                $new = ['id' => $detail->id, 'quantity' => 0];
+                $new = ['id' => $detail->id, 'quantity' => 0, 'total' => 0];
                 $detail->available = $detail->amount_process - $detail->amount_packing;
                 if ( $totals > 0 && $detail->available > 0 && $detail->item_id == request('packing_items.item_id'))
                 {
                     $amount = $detail->available > $totals ? $totals : $detail->available;
-                    $new = array_merge($new, ['quantity' => $amount]);
+                    $new = array_merge($new, ['quantity' => $amount, 'total' => $amount]);
                     $totals -= $amount;
                     $detail->available -= $amount;
                 }
@@ -98,6 +98,7 @@ class Packings extends ApiController
                         if ( $detail->available > 0) {
                             $amount = $detail->available > $fault['quantity'] ? $fault['quantity'] : $detail->available;
                             $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
+                            $new['total'] = (double) $new['total'] + $amount;
                         }
 
                         $faults->transform(function($item, $itemkey) use($key, $amount) {
@@ -120,6 +121,9 @@ class Packings extends ApiController
 
         $packings = collect([]);
         foreach ($partials as $key => $partial) {
+
+            if ($partial['total'] <= 0) continue;
+
             // Create the Packing Goods.
             $packing = Packing::create($request->all());
 
@@ -217,7 +221,6 @@ class Packings extends ApiController
         if(request('mode') == 'view') {
             $addWith = [
                 'shift',
-                'operator',
                 'packing_items.work_order_item.work_order'
             ];
         }
@@ -225,6 +228,7 @@ class Packings extends ApiController
 
         $packing = Packing::with(array_merge([
             'customer',
+            'operator',
             'packing_items.item.item_units',
             'packing_items.unit',
             'packing_items.packing_item_faults.fault'
