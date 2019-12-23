@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\Factories;
 
-use App\Filters\Factory\WorkOrder as Filters;
-use App\Filters\Factory\WorkOrderItem as FilterItems;
+use App\Filters\Factory\WorkOrder as Filter;
+use App\Filters\Factory\WorkOrderItem as FilterItem;
 use App\Http\Requests\Factory\WorkOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Factory\PackingItem;
@@ -15,7 +15,7 @@ class WorkOrders extends ApiController
 {
     use GenerateNumber;
 
-    public function index(Filters $filter)
+    public function index(Filter $filter, FilterItem $filterItem)
     {
         switch (request('mode')) {
             case 'all':
@@ -27,6 +27,10 @@ class WorkOrders extends ApiController
               'work_order_items.item',
               'work_order_items.work_order_item_lines'
             ])->filter($filter)->get();
+            break;
+
+            case 'items':
+            $work_orders = WorkOrderItem::with(['item','work_order','work_order_item_lines'])->filter($filterItem)->get();
             break;
 
             default:
