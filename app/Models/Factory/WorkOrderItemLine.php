@@ -2,12 +2,13 @@
 
 namespace App\Models\Factory;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkOrderItemLine extends Model
 {
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $fillable = [
         'line_id', 'shift_id', 'ismain'
@@ -37,8 +38,12 @@ class WorkOrderItemLine extends Model
     }
 
     public function calculate () {
-        $total = $this->work_production_items->sum('unit_amount');
-        $this->amount_line = $total;
+
+        $this->amount_line = (double) $this->work_production_items->sum('unit_amount');
+
+        if($this->amount_line > $this->unit_amount) {
+            abort(501, "AMOUNT TOTAL [#". $this->id ."] INVALID");
+        }
         $this->save();
     }
 }

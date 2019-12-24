@@ -72,9 +72,9 @@ class WorkProductions extends ApiController
                     $detail->work_order_item_line()->associate($line);
                     $detail->save();
 
+                    $line->calculate();
                     if ($line->ismain) {
                         $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
-                        $line->calculate();
                         $line->work_order_item->calculate();
                     }
                 }
@@ -134,9 +134,9 @@ class WorkProductions extends ApiController
                 $detail->work_order_item_line()->associate($line);
                 $detail->save();
 
+                $line->calculate();
                 if ($line->ismain) {
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
-                    $line->calculate();
                     $line->work_order_item->calculate();
                 }
             }

@@ -19,14 +19,6 @@ class WorkOrderItem extends Filter
         });
     }
 
-    public function has_amount_line($value) {
-        return $this->builder
-            ->whereRaw('amount_process > amount_packing')
-            ->whereHas('work_order', function($q) {
-                return $q->where('status', '<>', 'CLOSED')->stateHasNot('PRODUCTED');
-            });
-    }
-
     public function has_amount_packing($value) {
         return $this->builder
             ->whereRaw('amount_process > amount_packing')
@@ -41,16 +33,6 @@ class WorkOrderItem extends Filter
         $value = explode(',',$value);
         return $this->builder->orWhere(function($q) use($value){
             return $q->whereIn('id',  $value);
-        });
-    }
-
-    public function or_detail_line_ids($value = '') {
-        if (!strlen($value)) return $this->builder;
-        $value = explode(',',$value);
-        return $this->builder->orWhere(function($q) use($value){
-            $q->whereHas('work_order_item_lines', function ($q) use($value) {
-                return $q->whereIn('id',  $value);
-            });
         });
     }
 }
