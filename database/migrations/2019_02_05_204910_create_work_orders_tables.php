@@ -59,7 +59,6 @@ class CreateWorkOrdersTables extends Migration
             $table->integer('work_order_item_id')->unsigned();
 
             $table->integer('line_id')->unsigned();
-            $table->integer('shift_id')->unsigned()->nullable();
             $table->boolean('ismain')->nullable();
             $table->float('amount_line')->default(0);
             $table->timestamps();
