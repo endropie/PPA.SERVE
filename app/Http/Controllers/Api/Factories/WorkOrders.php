@@ -52,7 +52,7 @@ class WorkOrders extends ApiController
         return response()->json($work_orders);
     }
 
-    public function items(Filter $filter, FilterItem $filter_item)
+    public function items(Filter $filter, FilterItemLine $filter_item_line)
     {
         switch (request('mode')) {
             case 'all':
@@ -60,11 +60,12 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_order_items = WorkOrderItem::with(['work_order.line', 'work_order.shift', 'item', 'unit'])
-                  ->filter($filter_item)
-                  ->whereHas('work_order', function($q) use($filter) {
-                    return $q->filter($filter);
-                  })->latest()->collect();
+                $work_order_items = WorkOrderItemLine::with(['line', 'work_order_item.work_order.shift', 'work_order_item.item', 'work_order_item.unit'])
+                  ->filter($filter_item_line)
+                //   ->whereHas('work_order', function($q) use($filter) {
+                //     return $q->filter($filter);
+                //   })
+                  ->latest()->collect();
 
                 $work_order_items->getCollection()->transform(function($row) {
                     // $row->append(['unit']);

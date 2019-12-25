@@ -15,7 +15,6 @@ class WorkOrderItemLine extends Filter
 
     public function date($value) {
         if(request()->has('has_amount_line')) return $this->builder;
-        abort(501, 'DATE FILTERED!');
         return $this->builder
             ->whereHas('work_order_item', function($q) use($value) {
                 return $q->whereHas('work_order', function($q) use($value) {
@@ -26,12 +25,36 @@ class WorkOrderItemLine extends Filter
 
     public function shift_id($value) {
         if(request()->has('has_amount_line')) return $this->builder;
-        abort(501, 'SHIFT FILTERED!');
         return $this->builder
             ->whereHas('work_order_item', function($q) use($value) {
                 return $q->whereHas('work_order', function($q) use($value) {
-                    return $q->where('shift', $value);
+                    return $q->where('shift_id', $value);
                 });
+            });
+    }
+
+    public function stockist_from($value) {
+        return $this->builder
+            ->whereHas('work_order_item', function($q) use($value) {
+                return $q->whereHas('work_order', function($q) use($value) {
+                    return $q->where('stockist_from', $value);
+                });
+            });
+    }
+
+    public function customer_id($value) {
+        return $this->builder
+            ->whereHas('work_order_item', function($q) use($value) {
+                return $q->whereHas('item', function($q) use($value) {
+                    return $q->where('customer_id', $value);
+                });
+            });
+    }
+
+    public function item_id($value) {
+        return $this->builder
+            ->whereHas('work_order_item', function($q) use($value) {
+                return $q->where('item_id', $value);
             });
     }
 
