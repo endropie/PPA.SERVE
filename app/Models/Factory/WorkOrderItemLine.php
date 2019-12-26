@@ -11,7 +11,7 @@ class WorkOrderItemLine extends Model
     use Filterable, SoftDeletes;
 
     protected $fillable = [
-        'line_id', 'shift_id', 'ismain'
+        'line_id', 'ismain'
     ];
 
     protected $appends = ['unit_amount'];
