@@ -130,9 +130,6 @@ class OutgoingGoods extends ApiController
                 $request_order->number = $this->getNextRequestOrderNumber($outgoing_good->date);
             }
             $request_order->save();
-
-            // $outgoing_good->request_order_id = $request_order->id;
-            // $outgoing_good->save();
         }
 
         $delivery_order = $outgoing_good->delivery_orders()->create([
@@ -165,6 +162,11 @@ class OutgoingGoods extends ApiController
         foreach ($rows as $row) {
             $detail = $request_order->request_order_items()->create($row);
             $delivery_order_item = $delivery_order->delivery_order_items()->create($row);
+
+            $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
+            $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+
             $delivery_order_item->request_order_item()->associate($detail);
             $delivery_order_item->save();
         }
