@@ -14,17 +14,17 @@ class Customer extends Request
     public function rules()
     {
         $method = $this->getMethod();
-        
+
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->customer;
-        } 
+        }
         else $id = null;
 
         return [
             'code' => 'required|string|max:5|unique:customers,NULL,' . $id,
             'name' => 'required|string|max:191',
-            'phone' => 'string|max:25'
-            
+            'phone' => 'nullable|string|max:25'
+
         ];
     }
 
