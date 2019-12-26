@@ -41,7 +41,7 @@ class OpnameStocks extends ApiController
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
-        if(!$request->number) $request->merge(['number'=> $this->getNextOpnameStockNumber()]);
+        if(!$request->number) $request->merge(['number'=> $this->getNextOpnameStockNumber($request->date)]);
 
         $opname_stock = OpnameStock::create($request->all());
 

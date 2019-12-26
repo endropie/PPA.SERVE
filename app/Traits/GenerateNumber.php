@@ -161,7 +161,7 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Warehouse\IncomingGood::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Warehouse\OpnameStock::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
