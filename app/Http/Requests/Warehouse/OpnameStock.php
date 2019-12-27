@@ -26,13 +26,14 @@ class OpnameStock extends Request
         return [
             'number' => ($id ? 'required|' : '') .'unique:opname_stocks,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'date' => 'required',
+            'item_id' => 'required',
+            'stockist' => 'required',
+            'init_amount' => 'required',
 
-            'opname_stock_items.*.item_id' => 'required',
+            'opname_stock_items.*.reference' => 'required',
+            'opname_stock_items.*.quantity' => 'required',
             'opname_stock_items.*.unit_id' => 'required',
             'opname_stock_items.*.unit_rate' => 'required',
-            'opname_stock_items.*.stockist' => 'required',
-            'opname_stock_items.*.init_amount' => 'required',
-            'opname_stock_items.*.final_amount' => 'required',
             'opname_stock_items' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0)  $fail('List Part must be select min. 1 Part item.');

@@ -25,7 +25,7 @@ class OpnameStocks extends ApiController
                 break;
 
             default:
-                $opname_stocks = OpnameStock::filter($filters)->latest()->collect();
+                $opname_stocks = OpnameStock::with('item')->filter($filters)->latest()->collect();
                 $opname_stocks->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
                     return $item;
@@ -45,15 +45,14 @@ class OpnameStocks extends ApiController
 
         $opname_stock = OpnameStock::create($request->all());
 
+        $label = $opname_stock->item->part_name ?? $opname_stock->item->part_number ?? $opname_stock->item->id;
+        if (!$opname_stock->item->enable) $this->error("PART [". $label . "] DISABLED");
+
         $rows = $request->opname_stock_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-
             // create item row on the incoming Goods updated!
             $detail = $opname_stock->opname_stock_items()->create($row);
-            $label = $detail->item->part_name ?? $detail->item->part_number ?? $detail->item->id;
-            if (!$detail->item->enable) $this->error("PART [". $label . "] DISABLED");
-
         }
 
         // DB::Commit => Before return function!
@@ -64,11 +63,12 @@ class OpnameStocks extends ApiController
     public function show($id)
     {
         $opname_stock = OpnameStock::withTrashed()->with([
-            'opname_stock_items.item.item_units',
+            'item.unit',
+            'item.item_units',
             'opname_stock_items.unit'
         ])->findOrFail($id);
 
-        $opname_stock->setAppends(['is_relationship','has_relationship']);
+        $opname_stock->append(['final_amount','total_amount','is_relationship','has_relationship']);
 
         return response()->json($opname_stock);
     }
@@ -88,6 +88,10 @@ class OpnameStocks extends ApiController
 
         $opname_stock->update($request->input());
 
+        $label = $opname_stock->item->part_name ?? $opname_stock->item->part_number ?? $opname_stock->item->id;
+        if (!$opname_stock->item->enable) $this->error("PART [". $label . "] DISABLED");
+
+
         // Before Update Force delete opname stocks items
         $opname_stock->opname_stock_items()->forceDelete();
 
@@ -97,8 +101,6 @@ class OpnameStocks extends ApiController
             $row = $rows[$i];
             // Update or Create detail row
             $detail = $opname_stock->opname_stock_items()->create($row);
-            $label = $detail->item->part_name ?? $detail->item->part_number ?? $detail->item->id;
-            if (!$detail->item->enable) $this->error("PART [". $label . "] DISABLED");
         }
 
         $this->DATABASE::commit();
@@ -123,11 +125,11 @@ class OpnameStocks extends ApiController
 
         if($details = $opname_stock->opname_stock_items) {
             foreach ($details as $detail) {
-                $detail->item->distransfer($detail);
                 $detail->delete();
             }
         }
 
+        $opname_stock->item->distransfer($opname_stock);
         $opname_stock->delete();
 
         // DB::Commit => Before return function!
@@ -144,10 +146,7 @@ class OpnameStocks extends ApiController
 
         if ($opname_stock->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
 
-        foreach ($opname_stock->opname_stock_items as $detail) {
-            // Calculate stock on "validation" Opname Stock!
-            $detail->item->transfer($detail, $detail->unit_amount, $detail->stockist);
-        }
+        $opname_stock->item->transfer($opname_stock, $opname_stock->total_amount, $opname_stock->stockist);
 
         $opname_stock->status = 'VALIDATED';
         $opname_stock->save();
@@ -163,9 +162,10 @@ class OpnameStocks extends ApiController
         $revise = OpnameStock::findOrFail($id);
         $details = $revise->opname_stock_items;
         foreach ($details as $detail) {
-            $detail->item->distransfer($detail);
             $detail->delete();
         }
+
+        $revise->item->distransfer($revise);
 
         if($request->number) {
             $max = (int) OpnameStock::where('number', $request->number)->max('revise_number');
@@ -178,11 +178,9 @@ class OpnameStocks extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
             $detail = $opname_stock->opname_stock_items()->create($row);
-
-            $detail->item->transfer($detail, $detail->unit_amount, $detail->stockist);
         }
 
-
+        $opname_stock->item->transfer($opname_stock, $opname_stock->total_amount, $opname_stock->stockist);
         $opname_stock->status = 'VALIDATED';
         $opname_stock->save();
 
