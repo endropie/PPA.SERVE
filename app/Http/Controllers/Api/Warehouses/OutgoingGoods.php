@@ -142,6 +142,7 @@ class OutgoingGoods extends ApiController
             'customer_name' => $outgoing_good->customer_name,
             'customer_phone' => $outgoing_good->customer_phone,
             'customer_address' => $outgoing_good->customer_address,
+            'customer_note' => $outgoing_good->customer_note,
             'date' => $outgoing_good->date,
             'due_date' => $outgoing_good->due_date,
 
@@ -238,6 +239,7 @@ class OutgoingGoods extends ApiController
                 'customer_name' => $outgoing_good->customer_name,
                 'customer_phone' => $outgoing_good->customer_phone,
                 'customer_address' => $outgoing_good->customer_address,
+                'customer_note' => $outgoing_good->customer_note,
                 'date' => $outgoing_good->date,
                 'due_date' => $outgoing_good->due_date,
 

@@ -11,7 +11,7 @@ class OutgoingGood extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'description',
+        'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'customer_note', 'description',
         'transaction', 'date', 'due_date', 'operator_id', 'vehicle_id', 'transport_rate'
     ];
 

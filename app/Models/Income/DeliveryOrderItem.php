@@ -10,7 +10,7 @@ class DeliveryOrderItem extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'unit_id', 'unit_rate', 'quantity'
+        'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];

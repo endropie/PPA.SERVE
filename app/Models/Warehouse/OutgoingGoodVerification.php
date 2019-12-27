@@ -12,7 +12,7 @@ class OutgoingGoodVerification extends Model
     protected $appends = ['unit_amount'];
 
     protected $fillable = [
-        'item_id', 'unit_id', 'unit_rate', 'quantity', 'date',// 'pre_delivery_item_id'
+        'item_id', 'unit_id', 'unit_rate', 'quantity', 'date', 'encasement' // 'pre_delivery_item_id'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
