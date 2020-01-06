@@ -188,8 +188,7 @@ class Item extends Model
 
         if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
 
-        foreach ($collect->stockable as $key => $log) {
-            // abort(501, json_encode($log));
+        foreach ($collect->stockable as $log) {
             $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
             $stock->total -= $log->unit_amount;
             $stock->save();
