@@ -6,6 +6,7 @@ use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Factory\Packing;
 use App\Models\Factory\WorkOrder;
+use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -65,57 +66,51 @@ class Packings extends ApiController
 
         $partials = collect([]);
 
-        $work_orders = WorkOrder::stateHasNot('PACKED')
-            ->whereHas('work_order_items', function($q) {
-              return $q
-                ->where('item_id', request()->input('packing_items.item_id'))
-                ->whereRaw('amount_process > amount_packing');
+        $work_order_items = WorkOrderItem::where('item_id', $request->input('packing_items.item_id'))
+            ->whereRaw('amount_process > amount_packing')
+            ->whereHas('work_order', function($q) {
+              return $q->stateHasNot('PACKED');
             })
-            ->orderBy('date')
+            ->orderBy('id')
             ->get();
 
-        foreach ($work_orders as $work_order) {
+        foreach ($work_order_items as $detail) {
+            if ($detail->item_id !== $request->input('packing_items.item_id')) continue;
 
-            foreach ($work_order->work_order_items as $detail) {
-                if ($detail->item_id !== $request->input('packing_items.item_id')) continue;
+            $new = ['id' => $detail->id, 'quantity' => 0, 'total' => 0];
+            $detail->available = $detail->amount_process - $detail->amount_packing;
+            if ( $totals > 0 && $detail->available > 0 && $detail->item_id == request('packing_items.item_id'))
+            {
+                $amount = $detail->available > $totals ? $totals : $detail->available;
+                $new = array_merge($new, ['quantity' => $amount, 'total' => $amount]);
+                $totals -= $amount;
+                $detail->available -= $amount;
+            }
+            if ( $totals <= 0 && $detail->available > 0 && $faults->sum('quantity') > 0)
+            {
+                $new = array_merge($new, ['faults' => array()]);
+                foreach ($faults as $key => $fault) {
+                    if($detail->available <= 0) break;
+                    if ( $detail->available > 0) {
+                        $amount = $detail->available > $fault['quantity'] ? $fault['quantity'] : $detail->available;
+                        $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
+                        $new['total'] = (double) $new['total'] + $amount;
+                    }
 
-                $new = ['id' => $detail->id, 'quantity' => 0, 'total' => 0];
-                $detail->available = $detail->amount_process - $detail->amount_packing;
-                if ( $totals > 0 && $detail->available > 0 && $detail->item_id == request('packing_items.item_id'))
-                {
-                    $amount = $detail->available > $totals ? $totals : $detail->available;
-                    $new = array_merge($new, ['quantity' => $amount, 'total' => $amount]);
-                    $totals -= $amount;
+                    $faults->transform(function($item, $itemkey) use($key, $amount) {
+                        if ($key == $itemkey) $item['quantity'] -= $amount;
+                        return $item;
+                    });
+
                     $detail->available -= $amount;
                 }
-                if ( $totals <= 0 && $detail->available > 0 && $faults->sum('quantity') > 0)
-                {
-                    $new = array_merge($new, ['faults' => array()]);
-                    foreach ($faults as $key => $fault) {
-                        if($detail->available <= 0) break;
-                        if ( $detail->available > 0) {
-                            $amount = $detail->available > $fault['quantity'] ? $fault['quantity'] : $detail->available;
-                            $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
-                            $new['total'] = (double) $new['total'] + $amount;
-                        }
-
-                        $faults->transform(function($item, $itemkey) use($key, $amount) {
-                            if ($key == $itemkey) $item['quantity'] -= $amount;
-                            return $item;
-                        });
-
-                        $detail->available -= $amount;
-                    }
-                }
-                if (!empty($new) && (double) $new['total'] > 0) {
-                    $partials->push($new);
-                }
+            }
+            if (!empty($new) && (double) $new['total'] > 0) {
+                $partials->push($new);
             }
         }
 
         if ($partials->count() <= 0) $this->error("WORK ORDER Not Available. Not allowed to be Created!");
-
-        // $this->error(['PARTIAL', $partials]);
 
         $packings = collect([]);
         foreach ($partials as $key => $partial) {
