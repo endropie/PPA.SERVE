@@ -33,6 +33,8 @@ class Employees extends ApiController
     {
         $employee = Employee::create($request->all());
 
+        $this->setUser($employee, $request);
+
         return response()->json($employee);
     }
 
