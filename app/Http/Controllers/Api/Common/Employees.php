@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Common;
 use App\Filters\Common\Employee as Filters;
 use App\Http\Requests\Common\Employee as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Auth\User;
 use App\Models\Common\Employee;
 
 class Employees extends ApiController
@@ -37,7 +38,7 @@ class Employees extends ApiController
 
     public function show($id)
     {
-        $employee = Employee::with(['department','position'])->findOrFail($id);
+        $employee = Employee::with(['department','position','user'])->findOrFail($id);
 
         $employee->setAppends(['has_relationship']);
 
@@ -49,6 +50,8 @@ class Employees extends ApiController
         $employee = Employee::findOrFail($id);
 
         $employee->update($request->input());
+
+        $this->setUser($employee, $request);
 
         return response()->json($employee);
     }
@@ -62,5 +65,25 @@ class Employees extends ApiController
         $employee->delete();
 
         return response()->json(array_merge($employee->toArray(), ['success' => true]));
+    }
+
+    protected function setUser ($employee, $request) {
+        if($setup = $request->setup_user) {
+            if ($user = $employee->user) {
+                $user->update([
+                    'password' => bcrypt($setup['password']),
+                ]);
+                $user->save();
+            }
+            else {
+                $user = User::create([
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'password' => bcrypt($setup['password']),
+                ]);
+                $employee->user()->associate($user);
+                $employee->save();
+            }
+        }
     }
 }

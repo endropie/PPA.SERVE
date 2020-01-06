@@ -23,7 +23,7 @@ class Employee extends Request
         else $id = null;
 
         return [
-            // 'name' => ($id ? 'required|string|' : '') .'max:191|unique:employees,NULL,' . $id,
+            // 'user_id' => 'nullable|integer|unique:employees,NULL,' . $id,
         ];
     }
 }

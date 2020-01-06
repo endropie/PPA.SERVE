@@ -21,6 +21,10 @@ class Employee extends Model
         'outgoing_goods'
     ];
 
+    public function user () {
+        return $this->belongsTo('App\Models\Auth\User');
+    }
+
     public function department () {
         return $this->belongsTo('App\Models\Reference\Department');
     }
