@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Api\Factories;
 use App\Filters\Factory\Packing as Filters;
 use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
-
 use App\Models\Factory\Packing;
 use App\Models\Factory\WorkOrder;
-use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -109,7 +107,7 @@ class Packings extends ApiController
                         $detail->available -= $amount;
                     }
                 }
-                if (!empty($new)) {
+                if (!empty($new) && (double) $new['total'] > 0) {
                     $partials->push($new);
                 }
             }
