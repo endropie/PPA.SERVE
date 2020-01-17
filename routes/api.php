@@ -14,11 +14,7 @@ use Illuminate\Http\Request;
 */
 
 Route::prefix('v1')->namespace('Api')->group(function() {
-
-    Route::post('login', 'Auth\Authentication@login');
-    Route::post('register', 'Auth\Authentication@register');
-
-    Route::get('app', function() {
+    Route::name('app')->get('app', function() {
         return response()->json(setting()->all());
     });
 
@@ -26,8 +22,11 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::name('schedule-boards')->get('schedule-boards', 'Transports\ScheduleBoards@landing');
     });
 
+    Route::name('login')->post('login', 'Auth\Authentication@login');
+    Route::name('register')->post('register', 'Auth\Authentication@register');
+
     Route::middleware([
-        'auth:api',
+        // 'auth:api',
         ])->group( function(){
 
         Route::prefix('auth')->name('auth.')->group(function () {
@@ -63,7 +62,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
+            Route::apiResource('opnames', 'Warehouses\Opnames');
             Route::apiResource('opname-stocks', 'Warehouses\OpnameStocks');
+            Route::apiResource('opname-vouchers', 'Warehouses\OpnameVouchers');
             Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
             Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
         });

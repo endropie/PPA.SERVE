@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Http\Requests\Warehouse\OpnameStock as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Warehouse\OpnameStock as Filters;
+use App\Models\Common\Item;
+use App\Models\Warehouse\Opname;
 use App\Models\Warehouse\OpnameStock;
+use App\Models\Warehouse\OpnameVoucher;
 use App\Traits\GenerateNumber;
 
 class OpnameStocks extends ApiController
@@ -25,9 +28,9 @@ class OpnameStocks extends ApiController
                 break;
 
             default:
-                $opname_stocks = OpnameStock::with('item')->filter($filters)->latest()->collect();
+                $opname_stocks = OpnameStock::with('opname','item.unit')->filter($filters)->latest()->collect();
                 $opname_stocks->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->setAppends(['opname_number','final_amount','is_relationship']);
                     return $item;
                 });
                 break;
@@ -38,37 +41,68 @@ class OpnameStocks extends ApiController
 
     public function store(Request $request)
     {
-        // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
-        if(!$request->number) $request->merge(['number'=> $this->getNextOpnameStockNumber($request->date)]);
-
-        $opname_stock = OpnameStock::create($request->all());
-
-        $label = $opname_stock->item->part_name ?? $opname_stock->item->part_number ?? $opname_stock->item->id;
-        if (!$opname_stock->item->enable) $this->error("PART [". $label . "] DISABLED");
-
-        $rows = $request->opname_stock_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // create item row on the incoming Goods updated!
-            $detail = $opname_stock->opname_stock_items()->create($row);
+        if (!$opname = Opname::find($request->opname_id)) {
+            $opname = Opname::create(['number' => $this->getNextOpnameNumber()]);
         }
 
-        // DB::Commit => Before return function!
+
+        $all = OpnameVoucher::where('status', 'VALIDATED')
+            ->whereNull('opname_stock_id')
+            ->get();
+
+        if ($all->count() <= 0) $this->error('The VALIDATED voucher not found!');
+
+        $group = $all->groupBy(function($item, $key) {
+            return $item['item_id']."--".$item['stockist'];
+        });
+
+        foreach ($group as $key => $vouchers) {
+
+            $code = explode('--', $key);
+            $item = Item::find($code[0]);
+            $stockist = $code[1];
+            $opname_stock = $opname->opname_stocks()->firstOrCreate([
+                'opname_id' => $opname->id,
+                'item_id' => $item->id,
+                'stockist' => $stockist,
+            ], [
+                'item_id' => $item->id,
+                'stockist' => $stockist,
+                'init_amount' => $item->totals[$stockist],
+            ]);
+
+            foreach ($vouchers as $voucher) {
+                $voucher->opname_stock()->associate($opname_stock);
+                $voucher->save();
+            }
+
+            $init_amount = $opname_stock->init_amount;
+            $final_amount = $opname_stock->opname_vouchers->sum('unit_amount');
+
+            // $this->error($opname_stock->item->part_name ."-". $opname_stock->stockist ." => ". $final_amount ."<=>". $init_amount);
+            $opname_stock->opname()->associate($opname);
+            $opname_stock->move_amount = (double) ($final_amount - $init_amount);
+            $opname_stock->save();
+
+            // $opname_stock->item->distransfer($opname_stock);
+            // $opname_stock->item->transfer($opname_stock, $opname_stock->move_amount, $stockist);
+        }
+
         $this->DATABASE::commit();
-        return response()->json($opname_stock);
+
+        return response(['message' => 'OK', 'voucher_count' => $all->count()]);
     }
 
     public function show($id)
     {
         $opname_stock = OpnameStock::withTrashed()->with([
             'item.unit',
-            'item.item_units',
-            'opname_stock_items.unit'
+            'opname_vouchers'
         ])->findOrFail($id);
 
-        $opname_stock->append(['final_amount','total_amount','is_relationship','has_relationship']);
+        $opname_stock->append(['opname_number', 'final_amount','is_relationship','has_relationship']);
 
         return response()->json($opname_stock);
     }
@@ -86,23 +120,6 @@ class OpnameStocks extends ApiController
         if ($opname_stock->status != "OPEN") $this->error("$opname_stock->number is not OPEN state, is not allowed to be changed");
         if ($opname_stock->is_relationship) $this->error("$opname_stock->number has relationships, is not allowed to be changed");
 
-        $opname_stock->update($request->input());
-
-        $label = $opname_stock->item->part_name ?? $opname_stock->item->part_number ?? $opname_stock->item->id;
-        if (!$opname_stock->item->enable) $this->error("PART [". $label . "] DISABLED");
-
-
-        // Before Update Force delete opname stocks items
-        $opname_stock->opname_stock_items()->forceDelete();
-
-        // Update opname stocks items
-        $rows = $request->opname_stock_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // Update or Create detail row
-            $detail = $opname_stock->opname_stock_items()->create($row);
-        }
-
         $this->DATABASE::commit();
         return response()->json($opname_stock);
     }
@@ -116,18 +133,12 @@ class OpnameStocks extends ApiController
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
         if($opname_stock->is_relationship) $this->error("$opname_stock->number has relationship, is not allowed to be $mode");
-        if($mode == "DELETED" && $opname_stock->status != 'OPEN') $this->error("The data $opname_stock->status state, is not allowed to be $mode");
 
-        if($mode == 'VOID') {
-            $opname_stock->status = "VOID";
-            $opname_stock->save();
-        }
 
-        if($details = $opname_stock->opname_stock_items) {
-            foreach ($details as $detail) {
-                $detail->delete();
-            }
-        }
+        $opname_stock->opname_vouchers->each(function($v) {
+            $v->opname_stock()->dissociate();
+            $v->save();
+        });
 
         $opname_stock->item->distransfer($opname_stock);
         $opname_stock->delete();
@@ -146,7 +157,11 @@ class OpnameStocks extends ApiController
 
         if ($opname_stock->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
 
-        $opname_stock->item->transfer($opname_stock, $opname_stock->total_amount, $opname_stock->stockist);
+        foreach ($opname_stock->opname_vouchers as $detail) {
+            $detail->init_amount = (double) $detail->item->totals[$detail->stockist];
+            $detail->save();
+            $detail->item->transfer($detail, $detail->move_amount, $detail->stockist);
+        }
 
         $opname_stock->status = 'VALIDATED';
         $opname_stock->save();
@@ -160,7 +175,7 @@ class OpnameStocks extends ApiController
         $this->DATABASE::beginTransaction();
 
         $revise = OpnameStock::findOrFail($id);
-        $details = $revise->opname_stock_items;
+        $details = $revise->opname_vouchers;
         foreach ($details as $detail) {
             $detail->delete();
         }
@@ -174,13 +189,13 @@ class OpnameStocks extends ApiController
 
         $opname_stock = OpnameStock::create($request->all());
 
-        $rows = $request->opname_stock_items;
+        $rows = $request->opname_vouchers;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            $detail = $opname_stock->opname_stock_items()->create($row);
+            $detail = $opname_stock->opname_vouchers()->create($row);
         }
 
-        $opname_stock->item->transfer($opname_stock, $opname_stock->total_amount, $opname_stock->stockist);
+        $opname_stock->item->transfer($opname_stock, $opname_stock->move_amount, $opname_stock->stockist);
         $opname_stock->status = 'VALIDATED';
         $opname_stock->save();
 

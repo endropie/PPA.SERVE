@@ -11,24 +11,29 @@ class OpnameStock extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'date', 'item_id', 'stockist', 'init_amount', 'description'
+        'item_id', 'stockist', 'init_amount'
     ];
 
     protected $appends = [];
 
     protected $casts = [
-        'init_amount' => 'double',
         'final_amount' => 'double',
-        'total_amount' => 'double',
+        'init_amount' => 'double',
+        'move_amount' => 'double',
     ];
 
     protected $relationships = [];
 
     protected $hidden = [];
 
-    public function opname_stock_items()
+    public function opname_vouchers()
     {
-        return $this->hasMany('App\Models\Warehouse\OpnameStockItem')->withTrashed();
+        return $this->hasMany('App\Models\Warehouse\OpnameVoucher');
+    }
+
+    public function opname()
+    {
+        return $this->belongsTo('App\Models\Warehouse\Opname')->withTrashed();
     }
 
     public function item()
@@ -41,11 +46,14 @@ class OpnameStock extends Model
         return $this->morphMany('App\Models\Common\ItemStockable', 'base');
     }
 
-    public function getTotalAmountAttribute() {
-        return (double) ($this->opname_stock_items->sum('unit_amount') - $this->init_amount);
-    }
 
     public function getFinalAmountAttribute() {
-        return (double) $this->init_amount + $this->total_amount;
+        return (double) ($this->init_amount + $this->move_amount);
     }
+
+    public function getOpnameNumberAttribute() {
+        $opname = $this->opname;
+        return (string) ($opname->full_number ?? $opname->number);
+    }
+
 }

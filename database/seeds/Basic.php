@@ -187,6 +187,7 @@ class Basic extends Seeder
 			// Warehouses
             'incoming-goods' => ['c','r','u','d','validation','revision','void'],
             'opname-stocks' => ['c','r','u','d','validation','revision','void'],
+            'opname-vouchers' => ['c','r','u','d','validation','revision','void'],
             // Deliveries
 			'outgoing-verifications' => ['c','r','u','d'],
 			'outgoing-goods' => ['c','r','d','void'],

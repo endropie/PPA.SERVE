@@ -21,22 +21,21 @@ class OpnameStock extends Request
 
             if($this->exists('nodata')) return [];
         }
-        else $id = null;
+        else {
+            $id = null;
+            return [];
+        }
 
         return [
             'number' => ($id ? 'required|' : '') .'unique:opname_stocks,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
-            'date' => 'required',
             'item_id' => 'required',
             'stockist' => 'required',
             'init_amount' => 'required',
-
-            'opname_stock_items.*.reference' => 'required',
-            'opname_stock_items.*.quantity' => 'required',
-            'opname_stock_items.*.unit_id' => 'required',
-            'opname_stock_items.*.unit_rate' => 'required',
-            'opname_stock_items' =>
+            'opname_vouchers.*.item_id' => 'required',
+            'opname_vouchers.*.stockist' => 'required',
+            'opname_vouchers' =>
             function ($attribute, $value, $fail) {
-                if (sizeof($value) == 0)  $fail('List Part must be select min. 1 Part item.');
+                if (sizeof($value) == 0)  $fail('List Detail must be min. 1 part item.');
             },
         ];
     }
