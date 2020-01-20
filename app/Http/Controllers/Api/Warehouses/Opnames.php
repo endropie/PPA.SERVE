@@ -129,8 +129,6 @@ class Opnames extends ApiController
         $opname->status = 'VALIDATED';
         $opname->save();
 
-        // $this->error('LOLOS');
-
         $this->DATABASE::commit();
         return response()->json($opname);
     }
@@ -167,11 +165,10 @@ class Opnames extends ApiController
                 $voucher->save();
             }
 
-            $init_amount = $opname_stock->init_amount;
-            $final_amount = $opname_stock->opname_vouchers->sum('unit_amount');
+            $final_amount = (double) $opname_stock->opname_vouchers->sum('unit_amount');
 
             $opname_stock->opname()->associate($opname);
-            $opname_stock->move_amount = (double) ($final_amount - $init_amount);
+            $opname_stock->final_amount = $final_amount;
             $opname_stock->save();
         }
 

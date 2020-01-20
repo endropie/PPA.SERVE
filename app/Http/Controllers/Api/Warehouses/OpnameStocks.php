@@ -30,7 +30,7 @@ class OpnameStocks extends ApiController
             default:
                 $opname_stocks = OpnameStock::with('opname','item.unit')->filter($filters)->latest()->collect();
                 $opname_stocks->getCollection()->transform(function($item) {
-                    $item->setAppends(['opname_number','final_amount','is_relationship']);
+                    $item->setAppends(['opname_number','is_relationship']);
                     return $item;
                 });
                 break;
@@ -41,6 +41,7 @@ class OpnameStocks extends ApiController
 
     public function store(Request $request)
     {
+        $this->error('NOT PROCESED');
         $this->DATABASE::beginTransaction();
 
         if (!$opname = Opname::find($request->opname_id)) {
@@ -109,6 +110,7 @@ class OpnameStocks extends ApiController
 
     public function update(Request $request, $id)
     {
+        $this->error('NOT PROCESSED!');
         if(request('mode') === 'validation') return $this->validation($request, $id);
         if(request('mode') === 'revision') return $this->revision($request, $id);
 
@@ -126,6 +128,7 @@ class OpnameStocks extends ApiController
 
     public function destroy($id)
     {
+        $this->error('NOT PROCESSED!');
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
@@ -146,65 +149,5 @@ class OpnameStocks extends ApiController
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
-    }
-
-    public function validation($request, $id)
-    {
-        // DB::beginTransaction => Before the function process!
-        $this->DATABASE::beginTransaction();
-
-        $opname_stock = OpnameStock::findOrFail($id);
-
-        if ($opname_stock->status != "OPEN") $this->error('The data not "OPEN" state, is not allowed to be changed');
-
-        foreach ($opname_stock->opname_vouchers as $detail) {
-            $detail->init_amount = (double) $detail->item->totals[$detail->stockist];
-            $detail->save();
-            $detail->item->transfer($detail, $detail->move_amount, $detail->stockist);
-        }
-
-        $opname_stock->status = 'VALIDATED';
-        $opname_stock->save();
-
-        $this->DATABASE::commit();
-        return response()->json($opname_stock);
-    }
-
-    public function revision($request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $revise = OpnameStock::findOrFail($id);
-        $details = $revise->opname_vouchers;
-        foreach ($details as $detail) {
-            $detail->delete();
-        }
-
-        $revise->item->distransfer($revise);
-
-        if($request->number) {
-            $max = (int) OpnameStock::where('number', $request->number)->max('revise_number');
-            $request->merge(['revise_number' => ($max + 1)]);
-        }
-
-        $opname_stock = OpnameStock::create($request->all());
-
-        $rows = $request->opname_vouchers;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            $detail = $opname_stock->opname_vouchers()->create($row);
-        }
-
-        $opname_stock->item->transfer($opname_stock, $opname_stock->move_amount, $opname_stock->stockist);
-        $opname_stock->status = 'VALIDATED';
-        $opname_stock->save();
-
-        $revise->status = 'REVISED';
-        $revise->revise_id = $opname_stock->id;
-        $revise->save();
-        $revise->delete();
-
-        $this->DATABASE::commit();
-        return response()->json($opname_stock);
     }
 }

@@ -47,8 +47,8 @@ class OpnameStock extends Model
     }
 
 
-    public function getFinalAmountAttribute() {
-        return (double) ($this->init_amount + $this->move_amount);
+    public function getMoveAmountAttribute() {
+        return (double) ($this->final_amount - $this->init_amount);
     }
 
     public function getOpnameNumberAttribute() {

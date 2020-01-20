@@ -38,7 +38,7 @@ class RecreateOpnameStocksTables extends Migration
             $table->integer('item_id');
             $table->string('stockist');
             $table->float('init_amount');
-            $table->float('move_amount')->nullable();
+            $table->float('final_amount')->nullable();
 
             $table->integer('created_by')->nullable();
             $table->bigInteger('opname_id')->unsigned();

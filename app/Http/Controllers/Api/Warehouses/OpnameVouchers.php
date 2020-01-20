@@ -104,7 +104,6 @@ class OpnameVouchers extends ApiController
             $opname_voucher->save();
         }
 
-        $opname_voucher->item->distransfer($opname_voucher);
         $opname_voucher->delete();
 
         // DB::Commit => Before return function!

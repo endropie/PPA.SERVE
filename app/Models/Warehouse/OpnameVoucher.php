@@ -16,6 +16,8 @@ class OpnameVoucher extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $relationships = ['opname_stock'];
+
     protected $casts = [
         'quantity' => 'double',
         'unit_amount' => 'double',
