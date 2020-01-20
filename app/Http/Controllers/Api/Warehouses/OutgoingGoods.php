@@ -109,9 +109,10 @@ class OutgoingGoods extends ApiController
 
         $request_order = RequestOrder::where('customer_id', $outgoing_good->customer_id)
             ->where('order_mode', $outgoing_good->customer->order_mode)
-            ->whereMonth('date', substr($outgoing_good->date, 3, 2))
+            ->where('status', 'OPEN')
+            ->whereMonth('date', substr($outgoing_good->date, 5, 2))
             ->whereYear('date', substr($outgoing_good->date, 0, 4))
-            ->latest()->first();
+            ->oldest()->first();
 
         if (!$request_order) {
             $request_order = new RequestOrder;
@@ -282,18 +283,6 @@ class OutgoingGoods extends ApiController
             $outgoing_good->save();
         }
 
-        // foreach ($outgoing_good->request_order_items as $detail) {
-        //     if ($detail->request_order->status != "OPEN") $this->error("The data has RELATIONSHIP [#" . $detail->request_order->status . "], is not allowed to be $mode");
-        //     $detail->forceDelete();
-        //     $request_order = RequestOrder::find($detail->request_order_id);
-        //     if ($request_order->request_order_items->count() == 0) {
-        //         $request_order->status = 'VOID';
-        //         $request_order->save();
-        //         $request_order->delete();
-        //     }
-        // }
-
-        // ????? SCHEMA 1: REMOVE DETAIL & CALCULATE BACK ITEMSTOCK
         foreach ($outgoing_good->outgoing_good_items as $detail) {
             $detail->item->distransfer($detail);
             $detail->delete();

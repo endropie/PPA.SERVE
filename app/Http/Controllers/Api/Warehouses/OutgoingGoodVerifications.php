@@ -52,7 +52,6 @@ class OutgoingGoodVerifications extends ApiController
                 $pre_delivery_item = PreDeliveryItem::findOrFail($row['pre_delivery_item_id']);
                 $detail = $pre_delivery_item->outgoing_verifications()->create(array_merge($row, ['date' => $request->date]));
                 $pre_delivery_item->calculate();
-
                 $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
             }
         }
@@ -105,8 +104,11 @@ class OutgoingGoodVerifications extends ApiController
             $this->error('The data has relationships, is not allowed to be deleted');
         }
 
+        $pre_delivery_item = $detail->pre_delivery_item;
+
         $detail->item->distransfer($detail);
         $detail->forceDelete();
+        $pre_delivery_item->calculate();
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
