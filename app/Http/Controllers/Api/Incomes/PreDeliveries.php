@@ -54,6 +54,13 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
         }
 
+        $schedules = collect($request->schedules)->map(function($item) {
+            if ($item->status != "OPEN") $this->error("$item->number has not OPEN state. CREATED FAILED!");
+            return $item["id"];
+        });
+
+        $pre_delivery->schedules()->sync($schedules);
+
         $this->DATABASE::commit();
         return response()->json($pre_delivery);
     }
@@ -62,6 +69,7 @@ class PreDeliveries extends ApiController
     {
         $pre_delivery = PreDelivery::with([
             'customer',
+            'schedules',
             'pre_delivery_items.item.item_units',
             'pre_delivery_items.item.unit',
             'pre_delivery_items.unit',
@@ -111,6 +119,13 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
             if($detail->item->stock($TransPDO)->total < (0)) $this->error('Data is not allowed to be changed!');
         }
+
+        $schedules = collect($request->schedules)->map(function($item) {
+            if ($item["status"] != "OPEN") $this->error($item["number"] ." has not OPEN state. CREATED FAILED!");
+            return $item["id"];
+        });
+        $pre_delivery->schedules()->sync($schedules);
+
 
         $this->DATABASE::commit();
         return response()->json($pre_delivery);

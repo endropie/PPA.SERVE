@@ -28,4 +28,10 @@ class OpnameVoucher extends Filter
         return $this->builder->orWhereIn('id',  $ids);
     }
 
+    public function customer_id($value) {
+        return $this->builder->whereHas('item', function($q) use($value) {
+            return $q->where('customer_id', $value);
+        });
+    }
+
 }

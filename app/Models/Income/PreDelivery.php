@@ -27,6 +27,11 @@ class PreDelivery extends Model
         return $this->hasMany('App\Models\Income\PreDeliveryItem')->withTrashed();
     }
 
+    public function schedules()
+    {
+        return $this->belongsToMany('App\Models\Transport\ScheduleBoard', 'pre_delivery_schedules')->using('App\Models\Income\PreDeliverySchedule');
+    }
+
     public function incoming_good() {
         return $this->hasOne('App\Models\Warehouse\IncomingGood');
     }
