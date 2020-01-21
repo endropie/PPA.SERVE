@@ -20,4 +20,11 @@ class ScheduleBoard extends Filter
     public function until_date($value) {
         return $this->builder->where('date', '<=',  $value);
     }
+
+    public function customer_in($value) {
+        $value = explode(',', $value);
+        return $this->builder->whereHas('customers', function($query) use($value) {
+            return $query->where('customer_id', $value);
+        });
+    }
 }

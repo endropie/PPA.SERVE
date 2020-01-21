@@ -13,4 +13,10 @@ class OpnameStock extends Filter
         parent::__construct($request);
     }
 
+    public function customer_id($value) {
+        return $this->builder->whereHas('item', function($q) use($value) {
+            return $q->where('customer_id', $value);
+        });
+    }
+
 }
