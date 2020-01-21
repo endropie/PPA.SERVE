@@ -131,9 +131,6 @@ class OutgoingGoods extends ApiController
                 $request_order->number = $this->getNextRequestOrderNumber($outgoing_good->date);
             }
             $request_order->save();
-
-            // $outgoing_good->request_order_id = $request_order->id;
-            // $outgoing_good->save();
         }
 
         $delivery_order = $outgoing_good->delivery_orders()->create([
