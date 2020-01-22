@@ -82,13 +82,9 @@ class OpnameStocks extends ApiController
             $init_amount = $opname_stock->init_amount;
             $final_amount = $opname_stock->opname_vouchers->sum('unit_amount');
 
-            // $this->error($opname_stock->item->part_name ."-". $opname_stock->stockist ." => ". $final_amount ."<=>". $init_amount);
             $opname_stock->opname()->associate($opname);
             $opname_stock->move_amount = (double) ($final_amount - $init_amount);
             $opname_stock->save();
-
-            // $opname_stock->item->distransfer($opname_stock);
-            // $opname_stock->item->transfer($opname_stock, $opname_stock->move_amount, $stockist);
         }
 
         $this->DATABASE::commit();
@@ -103,7 +99,7 @@ class OpnameStocks extends ApiController
             'opname_vouchers'
         ])->findOrFail($id);
 
-        $opname_stock->append(['opname_number', 'final_amount','is_relationship','has_relationship']);
+        $opname_stock->append(['opname_number','is_relationship','has_relationship']);
 
         return response()->json($opname_stock);
     }
