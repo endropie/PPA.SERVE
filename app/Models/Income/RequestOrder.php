@@ -24,6 +24,11 @@ class RequestOrder extends Model
         return $this->hasMany('App\Models\Income\RequestOrderItem')->withTrashed();
     }
 
+    public function delivery_order_items()
+    {
+        return $this->hasManyThrough('App\Models\Income\DeliveryOrderItem', 'App\Models\Income\RequestOrderItem', 'request_order_id',  'request_order_item_id');
+    }
+
     public function delivery_orders() {
         return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
@@ -31,5 +36,13 @@ class RequestOrder extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function getTotalUnitAmountAttribute() {
+        return (double) $this->request_order_items->sum('unit_amount');
+    }
+
+    public function getTotalUnitDeliveryAttribute() {
+        return (double) $this->delivery_order_items->sum('unit_amount');
     }
 }

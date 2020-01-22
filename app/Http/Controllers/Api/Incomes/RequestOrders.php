@@ -23,25 +23,23 @@ class RequestOrders extends ApiController
                 break;
 
             case 'datagrid':
-                $request_orders = RequestOrder::with(['customer'])->filter($filters)
+                $request_orders = RequestOrder::with(['user_by', 'customer'])->filter($filters)
                   ->latest()->get();
                 $request_orders->each->setAppends(['is_relationship']);
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['customer'])
+                $request_orders = RequestOrder::with(['user_by', 'customer'])
                   ->filter($filters)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
                     $item->setAppends(['is_relationship']);
+                    $item->setAppends(['total_unit_amount', 'total_unit_delivery']);
+                    // $item->request_order_items->each->setAppends(['unit_amount']);
                     return $item;
                 });
                 break;
         }
-
-        $request_orders->map(function($row) {
-            $row->request_order_items->each->setAppends(['unit_amount']);
-        });
 
         return response()->json($request_orders);
     }
@@ -73,7 +71,7 @@ class RequestOrders extends ApiController
             'request_order_items.unit'
         ])->withTrashed()->findOrFail($id);
 
-        $request_order->setAppends(['has_relationship']);
+        $request_order->setAppends(['has_relationship','total_unit_amount', 'total_unit_delivery']);
 
         return response()->json($request_order);
     }
