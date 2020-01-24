@@ -80,6 +80,7 @@ class RequestOrders extends ApiController
     {
         if(request('mode') === 'estimate_updated') return $this->estimate_updated($request, $id);
         if(request('mode') === 'estimate_finished') return $this->estimate_finished($request, $id);
+        if(request('mode') === 'closed') return $this->closed($request, $id);
 
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -157,6 +158,42 @@ class RequestOrders extends ApiController
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
+    }
+
+
+    public function closed($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+
+        if ($request_order->status !== 'OPEN') {
+            $this->error('The data has not OPEN state, Not allowed to be CLOSED');
+        }
+
+        if ($request_order->trashed()) {
+            $this->error('The data failed, Not allowed to be CLOSED');
+        }
+
+        if ($request_order->total_unit_delivery == 0) {
+            $this->error('delivery undefined, Not allowed to be CLOSED');
+        }
+
+        if ($request_order->order_mode == 'NONE') {
+            $this->error("The data '$request_order->order_mode' mode , Not allowed to be CLOSED");
+        }
+
+        // foreach ($request_order->delivery_orders as $delivery_order) {
+        //     if ($delivery_order->status != 'CONFIRMED') $this->error("The data has UNCONFIRMED Delivery, Not allowed to be CLOSED");
+        // }
+
+        $this->error("$request_order->order_mode LOLOS");
+
+        $request_order->status = 'CLOSED';
+        $request_order->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order);
     }
 
     public function estimate_updated($request, $id)
