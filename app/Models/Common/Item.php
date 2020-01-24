@@ -186,7 +186,7 @@ class Item extends Model
     public function distransfer($collect, $delete=true) {
         if ($collect->stockable->count() == 0) return;
 
-        if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
+        // if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
 
         foreach ($collect->stockable as $log) {
             $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
