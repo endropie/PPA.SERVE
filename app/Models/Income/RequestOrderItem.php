@@ -12,7 +12,7 @@ class RequestOrderItem extends Model
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
     ];
 
-    protected $appends = ['unit_amount', 'total_delivery_order_item'];
+    protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -20,6 +20,8 @@ class RequestOrderItem extends Model
         'unit_rate' => 'double',
         'quantity' => 'double',
         'price' => 'double',
+        'unit_amount' => 'double',
+        'amount_delivery' => 'double'
     ];
 
     protected $relationships = [];
@@ -56,5 +58,12 @@ class RequestOrderItem extends Model
     public function getUnitAmountAttribute() {
         if($this->unit_rate <= 0) return false;
         return (double) $this->quantity * $this->unit_rate;
+    }
+
+    public function calculate() {
+        // Summary Delivery.
+        $amount_delivery = $this->delivery_order_items->sum('unit_amount');
+        $this->amount_delivery = $amount_delivery;
+        $this->save();
     }
 }

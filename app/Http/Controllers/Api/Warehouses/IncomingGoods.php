@@ -351,10 +351,6 @@ class IncomingGoods extends ApiController
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
 
-            // if ($request_order_item->unit_amount < $request_order_item->total_delivery_order_item) {
-            //     $this->error("PART[". $request_order_item->item->part_name ."] total unit invalid. REVISION has not allowed!");
-            // }
-
             $TO = $request_order->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
             $detail->request_order_item->item->transfer($detail->request_order_item, $detail->unit_amount, $TO);
         }

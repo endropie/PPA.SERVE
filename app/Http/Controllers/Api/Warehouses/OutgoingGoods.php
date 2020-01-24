@@ -190,7 +190,7 @@ class OutgoingGoods extends ApiController
 
         $request_order_items = $request_order_items
             ->filter(function ($x) {
-                return ($x->unit_amount > $x->total_delivery_order_item);
+                return ($x->unit_amount > $x->amount_delivery);
             })
             ->map(function ($detail) {
                 $detail->sort_date = $detail->request_order->date;
@@ -208,7 +208,7 @@ class OutgoingGoods extends ApiController
             if (isset($rows[$detail->item_id])) {
 
                 $max_amount = $rows[$detail->item_id];
-                $unit_amount = $detail->unit_amount - $detail->total_delivery_order_item;
+                $unit_amount = $detail->unit_amount - $detail->unit_delivery;
                 $unit_amount = ($max_amount < $unit_amount ? $max_amount : $unit_amount);
 
                 $rows[$detail->item_id] -= $unit_amount;
@@ -254,9 +254,9 @@ class OutgoingGoods extends ApiController
                 $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
                 $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
-
                 $detail->request_order_item_id = $DTL;
                 $detail->save();
+                $detail->calculate();
             }
 
             $delivery_order->request_order()->associate($request_order);

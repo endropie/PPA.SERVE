@@ -73,10 +73,8 @@ class DeliveryOrders extends ApiController
         if($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $delivery_order->status != "OPEN") $this->error("The data $delivery_order->status state, is not allowed to be $mode!");
 
-        if ($mode == "VOID") {
-            $delivery_order->status = 'VOID';
-            $delivery_order->save();
-        }
+        $delivery_order->status = $mode;
+        $delivery_order->save();
 
         foreach ($delivery_order->delivery_order_items as $detail) {
             $detail->item->distransfer($detail);
@@ -99,6 +97,7 @@ class DeliveryOrders extends ApiController
 
         foreach ($delivery_order->delivery_order_items as $detail) {
             if (!$detail->request_order_item) $this->error("SJDO DETAIL[#$detail->id] '". $detail->item->part_name ."' not has SO Relation. Confirmation not allowed!");
+            $detail->request_order_item->calculate();
         }
 
         $delivery_order->status = 'CONFIRMED';
@@ -112,11 +111,13 @@ class DeliveryOrders extends ApiController
 
     private function setRequestOrderClosed($request_order)
     {
-        $unClosedDetail = $request_order->request_order_items->filter(function($detail) {
-            return $detail->unit_amount !== $detail->total_delivery_order_item;
+        $unconfirm = $request_order->delivery_orders->filter(function($delivery) {
+            return $delivery->status != "CONFIRMED";
         });
 
-        if ($unClosedDetail->count() == 0) {
+        $delivered = round($request_order->total_unit_amount) == round($request_order->total_unit_delivery);
+
+        if ($request_order->order_mode == "NONE" && $unconfirm->count() && $delivered) {
             $request_order->status = 'CLOSED';
             $request_order->save();
         }
@@ -126,7 +127,6 @@ class DeliveryOrders extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        // $this->error('REVISION');
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
 
@@ -182,8 +182,8 @@ class DeliveryOrders extends ApiController
             $detail->save();
 
             if($detail->request_order_item) {
-                if(round($detail->request_order_item->total_delivery_order_item) > round($detail->request_order_item->unit_amount)) {
-                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->total_delivery_order_item);
+                if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
+                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
                     $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
                 }
             }
