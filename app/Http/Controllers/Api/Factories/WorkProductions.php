@@ -131,6 +131,16 @@ class WorkProductions extends ApiController
             $detail = $work_production->work_production_items()->create($row);
 
             if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+
+                if($work_order = $line->work_order_item->work_order) {
+                    if ($work_order->status == 'CLOSED') {
+                        $this->error("[$work_order->number] has CLOSED state. Not Allowed to be UPDATED!");
+                    }
+                    if ($work_order->has_producted) {
+                        $this->error("[$work_order->number] has PRODUCTED state. Not Allowed to be UPDATED!");
+                    }
+                }
+
                 $detail->work_order_item_line()->associate($line);
                 $detail->save();
 
