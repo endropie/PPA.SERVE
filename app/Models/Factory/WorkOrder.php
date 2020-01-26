@@ -13,7 +13,7 @@ class WorkOrder extends Model
     use Filterable, SoftDeletes, WithUserBy, WithStateable;
 
     protected $fillable = [
-        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'description',
+        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'mode_line', 'description',
     ];
 
     protected $relationships = [
