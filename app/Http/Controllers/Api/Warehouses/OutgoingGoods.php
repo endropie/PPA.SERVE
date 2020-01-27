@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Filters\Warehouse\OutgoingGood as Filters;
 use App\Http\Requests\Warehouse\OutgoingGood as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Common\Item;
 use App\Models\Warehouse\OutgoingGood;
 use App\Models\Warehouse\OutgoingGoodVerification;
 use App\Models\Income\RequestOrder;
@@ -182,15 +183,17 @@ class OutgoingGoods extends ApiController
     public function storeDeliveryOrder($outgoing_good)
     {
         $list = [];
-        $request_order_items = RequestOrderItem::whereHas('request_order', function ($query) use ($outgoing_good) {
-            return $query->where('status', 'OPEN')
-                ->where('transaction', $outgoing_good->transaction)
-                ->where('customer_id', $outgoing_good->customer_id);
-        })->get();
+        $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
+            ->whereHas('request_order', function ($query) use ($outgoing_good) {
+                return $query->where('status', 'OPEN')
+                    ->where('transaction', $outgoing_good->transaction)
+                    ->where('customer_id', $outgoing_good->customer_id);
+            })->get();
 
         $request_order_items = $request_order_items
-            ->filter(function ($x) {
-                return ($x->unit_amount > $x->amount_delivery);
+            ->filter(function ($x) use ($outgoing_good) {
+                if ($x->request_order->order_mode != 'PO') return true;
+                return $x->request_order->actived_date >= $outgoing_good->date;
             })
             ->map(function ($detail) {
                 $detail->sort_date = $detail->request_order->date;
@@ -198,20 +201,20 @@ class OutgoingGoods extends ApiController
             })
             ->sortBy('sort_date');
 
-        $rows = $outgoing_good->outgoing_good_items
+        $outer = $outgoing_good->outgoing_good_items
             ->groupBy('item_id')
             ->map(function ($group) {
                 return $group->sum('unit_amount');
             });
 
         foreach ($request_order_items as $detail) {
-            if (isset($rows[$detail->item_id])) {
+            if (isset($outer[$detail->item_id])) {
 
-                $max_amount = $rows[$detail->item_id];
+                $max_amount = $outer[$detail->item_id];
                 $unit_amount = $detail->unit_amount - $detail->unit_delivery;
                 $unit_amount = ($max_amount < $unit_amount ? $max_amount : $unit_amount);
 
-                $rows[$detail->item_id] -= $unit_amount;
+                $outer[$detail->item_id] -= $unit_amount;
 
                 if ($unit_amount > 0) {
                     $RO = $detail->request_order_id;
@@ -224,6 +227,14 @@ class OutgoingGoods extends ApiController
                         'quantity' => $unit_amount
                     ];
                 }
+            }
+        }
+
+        foreach ($outer as $key => $over) {
+            if (round($over) > 0) {
+                $item = Item::find($key);
+                $label = ($item->part_name ?? $key);
+                $this->error("OVER OUTGOING [$label] $over");
             }
         }
 
@@ -247,22 +258,23 @@ class OutgoingGoods extends ApiController
             ]);
 
             foreach ($rows as $DTL => $row) {
-
+                $request_order_item = RequestOrderItem::find($DTL);
                 $detail = $delivery_order->delivery_order_items()->create($row);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
                 $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
                 $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
-                $detail->request_order_item_id = $DTL;
+                $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
-                $detail->calculate();
+                $request_order_item->calculate();
             }
 
             $delivery_order->request_order()->associate($request_order);
             $delivery_order->save();
 
         }
+
     }
 
     public function destroy($id)
