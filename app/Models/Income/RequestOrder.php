@@ -11,7 +11,8 @@ class RequestOrder extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'date', 'customer_id', 'reference_number', 'description', 'transaction', 'order_mode', 'is_estimate', 'estimate_number'
+        'number', 'date', 'customer_id', 'transaction', 'reference_number', 'description',
+        'actived_date', 'order_mode', 'is_estimate', 'estimate_number'
     ];
 
     protected $relationships = [
