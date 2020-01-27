@@ -36,12 +36,12 @@ class RequestOrder extends Request
                         $fail('Quantity must be more than 0 unit.');
                     }
                 },
-            'request_order_items.*.price' =>
-                function ($attribute, $value, $fail) {
-                    if (floatval($value) <= 0) {
-                        $fail('Price must be more than 0 unit.');
-                    }
-                },
+            // 'request_order_items.*.price' =>
+            //     function ($attribute, $value, $fail) {
+            //         if (floatval($value) <= 0) {
+            //             $fail('Price must be more than 0 unit.');
+            //         }
+            //     },
         ];
     }
 

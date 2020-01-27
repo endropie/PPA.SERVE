@@ -372,10 +372,12 @@ class IncomingGoods extends ApiController
                 'number'        => $number,
                 'date'          => $incoming_good->date,
                 'customer_id'   => $incoming_good->customer_id,
-                'reference_number' => $incoming_good->reference_number,
+                // 'reference_number' => $incoming_good->reference_number,
                 'transaction'    => $incoming_good->transaction,
                 'order_mode'    => $incoming_good->order_mode,
-                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number",
+                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING"
+                                  ."\nNO: $incoming_good->number"
+                                  ."\nREF: $incoming_good->reference_number",
             ]);
             $incoming_good->request_order()->associate($model);
             $incoming_good->save();

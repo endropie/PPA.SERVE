@@ -97,6 +97,11 @@ class RequestOrders extends ApiController
 
         $request_order->update($request->input());
 
+        if(request('mode') === 'referenced') {
+            $this->DATABASE::commit();
+            return response()->json($request_order);
+        }
+
         // Delete old incoming goods items when $request detail rows has not ID
         if($request_order->request_order_items) {
           foreach ($request_order->request_order_items as $detail) {
