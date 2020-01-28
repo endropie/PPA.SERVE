@@ -11,6 +11,8 @@ use App\Models\Warehouse\OutgoingGoodVerification;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
+use Illuminate\Validation\Validator;
+
 // use function Safe\substr;
 
 class OutgoingGoods extends ApiController
@@ -55,6 +57,7 @@ class OutgoingGoods extends ApiController
 
     public function store(Request $request)
     {
+        $this->request = $request;
         $this->DATABASE::beginTransaction();
 
         if (!$request->number) $request->merge(['number' => $this->getNextOutgoingGoodNumber()]);
@@ -234,7 +237,7 @@ class OutgoingGoods extends ApiController
             if (round($over) > 0) {
                 $item = Item::find($key);
                 $label = ($item->part_name ?? $key);
-                $this->error("OVER OUTGOING [$label] $over");
+                $this->error("OVER OUTGOING BY PO [$label:$over]");
             }
         }
 

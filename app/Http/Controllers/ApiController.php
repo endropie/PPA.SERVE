@@ -13,6 +13,8 @@ class ApiController extends BaseController
 
     protected $DATABASE = \DB::class;
 
+    // protected $request =
+
     public function __construct()
     {
         # Code..
@@ -21,7 +23,7 @@ class ApiController extends BaseController
     protected function assignMiddleware($value, $crud = false){
         // No need to check for permission in console
         if (app()->runningInConsole()) return;
-            
+
         if ($crud) {
             $this->middleware('permission:'. $value .'-create')->only(['create', 'store', 'duplicate', 'import']);
             $this->middleware('permission:'. $value .'-read')->only(['index', 'show', 'edit', 'export']);
@@ -38,10 +40,10 @@ class ApiController extends BaseController
         foreach ($relationships as $relationship => $text) {
             $relation = explode('.', $relationship);
             $model = $model;
-            for ($i=0; $i < count($relation); $i++) { 
+            for ($i=0; $i < count($relation); $i++) {
                 $function = $relation[$i];
                 $model = $model->$function();
-               
+
                 if ($i == count($relation)-1 && $c = $model->count()) {
                     // dd($c, $function, $model);
                     $counter[] = $c . ' ' . strtolower($text);
@@ -51,10 +53,10 @@ class ApiController extends BaseController
         return $counter;
     }
 
-    public function error($message = 'The Rosource is not Allowed!', $code = 501) {
+    public function error($message = 'Rosource is not Allowed!', $code = 501) {
         // return response()->json(['message' => $message, 'context' => $context], $code);
-        if(! is_numeric($code)) $code = 501;
+        if(! is_numeric($code) && !is_object($code) ) $code = 501;
         if(! is_string($message)) $message = json_encode($message);
-        abort(501, $message);
+        abort($code, $message);
     }
 }

@@ -15,7 +15,7 @@ class AddColumnAmountDeliveryOnRequestOrderItemsTable extends Migration
     public function up()
     {
         Schema::table('request_order_items', function (Blueprint $table) {
-            $table->double('amount_delivery')->default(0)->after('price');
+            $table->decimal('amount_delivery',24,4)->default(0)->after('price');
         });
 
         $details = RequestOrderItem::all();
