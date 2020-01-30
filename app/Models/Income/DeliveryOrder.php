@@ -17,6 +17,8 @@ class DeliveryOrder extends Model
         'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $hidden = [];
 
     protected $relationships = [
@@ -65,5 +67,12 @@ class DeliveryOrder extends Model
     public function getHasRevisionAttribute()
     {
         return $this->hasMany(get_class($this),'id')->where('number', $this->number)->where('id', '!=', $this->id);
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }

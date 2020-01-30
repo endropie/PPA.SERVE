@@ -15,6 +15,8 @@ class RequestOrder extends Model
         'actived_date', 'order_mode', 'is_estimate', 'estimate_number'
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $relationships = [
         'delivery_orders',
         // 'request_order_items.delivery_order_items',
@@ -45,5 +47,12 @@ class RequestOrder extends Model
 
     public function getTotalUnitDeliveryAttribute() {
         return (double) $this->delivery_order_items->sum('unit_amount');
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }
