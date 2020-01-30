@@ -55,8 +55,24 @@ trait GenerateNumber
     {
         $modul = 'sj_delivery';
         $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul);
+        $prefix = $this->prefixParser($modul, 'SJDO');
         $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextSJInternalNumber($date = null)
+    {
+        $modul = 'sj_internal';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, 'SJID');
+        $prefix = $this->dateParser($prefix, $date, '');
 
         $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
@@ -218,15 +234,18 @@ trait GenerateNumber
         return $number;
     }
 
-    protected function prefixParser($modul, $prefix = '')
+    protected function prefixParser($modul, $default_prefix = '', $default_interval = '{Y}')
     {
-        if (setting()->get("$modul.number_prefix")) $prefix .= setting()->get("$modul.number_prefix");
-        if (strlen($prefix) > 0) $prefix .= setting()->get("general.prefix_separator",'/');
+        $result_number = '';
+        if ($code = setting()->get("$modul.number_prefix", $default_prefix)) {
+            $result_number .= $code . setting()->get("general.prefix_separator",'/');
+        }
 
-        if (setting()->get("$modul.number_interval")) $prefix .= setting()->get("$modul.number_interval");
-        if (strlen($prefix) > 0) $prefix .= setting()->get("general.prefix_separator",'/');
+        if ($interval = setting()->get("$modul.number_interval", $default_interval)) {
+            $result_number .= $interval . setting()->get("general.prefix_separator",'/');
+        }
 
-        return $prefix;
+        return $result_number;
     }
 
     protected function dateParser($str, $date)

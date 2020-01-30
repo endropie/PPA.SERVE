@@ -55,12 +55,9 @@ class DeliveryOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if (request('mode') == 'confirmation') {
-            return $this->confirmation($id);
-        }
-        else if (request('mode') == 'revision') {
-            return $this->revision($request, $id);
-        }
+        if (request('mode') == 'confirmation') return $this->confirmation($id);
+        else if (request('mode') == 'revision') return $this->revision($request, $id);
+        else return abort(404);
     }
 
     public function destroy($id)
@@ -133,13 +130,15 @@ class DeliveryOrders extends ApiController
         if($revise) {
             if($revise->trashed()) $this->error("SJDO [". $revise->number ."] is trashed. REVISION Not alowed!");
 
-            $revise->delivery_order_items->each(function($detail) use($revise){
+            if (!$revise->is_internal) {
+              $revise->delivery_order_items->each(function($detail) use($revise) {
                 if($detail->trashed()) $this->error("Part [". $detail->item->part_name ."] is trashed. REVISION Not alowed!");
 
                 if($revise->request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item = $detail->request_order_item;
                     $request_order_item->item->distransfer($request_order_item);
                     $request_order_item->forceDelete();
+                    $request_order_item->calculate();
                 }
                 else {
                     $detail->request_order_item()->associate(null);
@@ -147,7 +146,8 @@ class DeliveryOrders extends ApiController
                 $detail->item->distransfer($detail);
                 $detail->save();
                 $detail->delete();
-            });
+              });
+            }
         }
 
         // Auto generate number of revision
@@ -156,18 +156,22 @@ class DeliveryOrders extends ApiController
             $request->merge(['revise_number'=> ($max + 1)]);
         }
 
+        // $this->error($request->toArray());
+
         $delivery_order = DeliveryOrder::create($request->all());
 
         $rows = $request->delivery_order_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            // IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
-            if($request_order->order_mode == 'ACCUMULATE') {
-                $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
-            }
-            else {
-                $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
+            if (!$revise->is_internal) {
+                // IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
+                if($request_order->order_mode == 'ACCUMULATE') {
+                    $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
+                }
+                else {
+                    $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
+                }
             }
 
             // create DeliveryOrder items on the Delivery order revision!
@@ -178,28 +182,33 @@ class DeliveryOrders extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
             $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
 
-            $detail->request_order_item()->associate($request_order_item);
-            $detail->save();
+            if (!$revise->is_internal) {
+                $detail->request_order_item()->associate($request_order_item);
+                $detail->save();
 
-            if($detail->request_order_item) {
-                if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
-                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                    $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
+                if($detail->request_order_item) {
+                    if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
+                        $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
+                        $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
+                    }
                 }
+                else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
+
+                $detail->request_order_item->calculate();
             }
-            else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
+
         }
-        $delivery_order->status = 'CONFIRMED';
-        $delivery_order->request_order_id = $request->request_order_id;
+
+        if (!$revise->is_internal) $delivery_order->request_order_id = $request->request_order_id;
         $delivery_order->outgoing_good_id = $request->outgoing_good_id;
+
+        $delivery_order->status = 'CONFIRMED';
         $delivery_order->save();
 
         $revise->revise_id = $delivery_order->id;
         $revise->status = 'REVISED';
         $revise->save();
         $revise->delete();
-
-        // $this->error($request_order->request_order_items);
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Warehouses;
 use App\Filters\Warehouse\OutgoingGood as Filters;
 use App\Http\Requests\Warehouse\OutgoingGood as Request;
 use App\Http\Controllers\ApiController;
+use App\Http\Requests\Request as RequestsRequest;
 use App\Models\Common\Item;
 use App\Models\Warehouse\OutgoingGood;
 use App\Models\Warehouse\OutgoingGoodVerification;
@@ -185,7 +186,7 @@ class OutgoingGoods extends ApiController
 
     public function storeDeliveryOrder($outgoing_good)
     {
-        $list = [];
+        $list = []; $over=[];
         $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($outgoing_good) {
                 return $query->where('status', 'OPEN')
@@ -233,11 +234,50 @@ class OutgoingGoods extends ApiController
             }
         }
 
-        foreach ($outer as $key => $over) {
-            if (round($over) > 0) {
+        foreach ($outer as $key => $amount) {
+            if (round($amount) > 0) {
                 $item = Item::find($key);
                 $label = ($item->part_name ?? $key);
-                $this->error("OVER OUTGOING BY PO [$label:$over]");
+
+                if ($outgoing_good->transaction == 'REGULER' && $outgoing_good->customer->order_mode == 'PO') {
+                    $this->request->validate(['delivery_order_intern' => 'required']);
+                    if ($this->request->delivery_order_intern) {
+                        $over[$key] = $amount;
+                        continue;
+                    }
+                }
+                $this->error("OVER OUTGOING BY PO [$label:$amount]");
+            }
+        }
+
+        if (sizeof($over)) {
+            $delivery_order = $outgoing_good->delivery_orders()->create([
+                'number' => $this->getNextSJInternalNumber(),
+                'transaction' =>  $outgoing_good->transaction,
+                'customer_id' => $outgoing_good->customer_id,
+                'customer_name' => $outgoing_good->customer_name,
+                'customer_phone' => $outgoing_good->customer_phone,
+                'customer_address' => $outgoing_good->customer_address,
+                'customer_note' => $outgoing_good->customer_note,
+                'date' => $outgoing_good->date,
+                'operator_id' => $outgoing_good->operator_id,
+                'vehicle_id' => $outgoing_good->vehicle_id,
+                'transfer_rate' => $outgoing_good->transfer_rate,
+                'is_internal' => true,
+            ]);
+
+            foreach ($over as $key => $amount) {
+                $item = Item::find($key);
+                $detail = $delivery_order->delivery_order_items()->create([
+                    'item_id' => $item->id,
+                    'unit_id' => $item->unit->id,
+                    'quantity' => $amount
+                ]);
+                $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+                $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+                $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
+                $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+                $detail->save();
             }
         }
 
@@ -253,7 +293,6 @@ class OutgoingGoods extends ApiController
                 'customer_address' => $outgoing_good->customer_address,
                 'customer_note' => $outgoing_good->customer_note,
                 'date' => $outgoing_good->date,
-                'due_date' => $outgoing_good->due_date,
 
                 'operator_id' => $outgoing_good->operator_id,
                 'vehicle_id' => $outgoing_good->vehicle_id,
@@ -275,8 +314,9 @@ class OutgoingGoods extends ApiController
 
             $delivery_order->request_order()->associate($request_order);
             $delivery_order->save();
-
         }
+
+
 
     }
 

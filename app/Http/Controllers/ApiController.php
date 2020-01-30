@@ -13,8 +13,6 @@ class ApiController extends BaseController
 
     protected $DATABASE = \DB::class;
 
-    // protected $request =
-
     public function __construct()
     {
         # Code..

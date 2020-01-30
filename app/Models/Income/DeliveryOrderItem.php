@@ -13,6 +13,8 @@ class DeliveryOrderItem extends Model
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
     ];
 
+    protected $appends = ['unit_amount'];
+
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [

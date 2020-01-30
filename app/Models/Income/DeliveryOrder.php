@@ -12,14 +12,19 @@ class DeliveryOrder extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'revise_number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'customer_note', 'description',
+        'number', 'revise_number', 'customer_id', 'description', 'is_internal',
         'transaction', 'date', 'due_date', 'operator_id', 'vehicle_id', 'transport_rate',
+        'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
 
     protected $hidden = [];
 
     protected $relationships = [
         'request_order_closed'
+    ];
+
+    protected $casts = [
+        'is_internal' => 'bool'
     ];
 
     public function delivery_order_items()
