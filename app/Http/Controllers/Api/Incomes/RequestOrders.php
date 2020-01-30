@@ -68,7 +68,8 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::with([
             'customer',
             'request_order_items.item.item_units',
-            'request_order_items.unit'
+            'request_order_items.unit',
+            'delivery_orders'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->setAppends(['has_relationship','total_unit_amount', 'total_unit_delivery']);
