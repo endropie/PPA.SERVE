@@ -108,7 +108,8 @@ class RequestOrders extends ApiController
           foreach ($request_order->request_order_items as $detail) {
             // Delete detail of "Request Order"
             $detail->item->distransfer($detail);
-            if($detail->item->stock('RDO.REG')->total < (0)) $this->error('Data is not allowed to be changed');
+
+            // if($detail->item->stock('RDO.REG')->total < (0)) $this->error('Data is not allowed to be changed');
             $detail->forceDelete();
           }
         }

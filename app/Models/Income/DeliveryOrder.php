@@ -22,7 +22,8 @@ class DeliveryOrder extends Model
     protected $hidden = [];
 
     protected $relationships = [
-        'request_order_closed'
+        'request_order_closed',
+        'delivery_order_items.reconcile_items'
     ];
 
     protected $casts = [

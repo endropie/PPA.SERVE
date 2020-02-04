@@ -29,7 +29,7 @@ class DeliveryOrders extends ApiController
             default:
                 $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->append(['is_relationship']);
                     return $item;
                 });
                 break;
@@ -44,11 +44,11 @@ class DeliveryOrders extends ApiController
         $delivery_order = DeliveryOrder::with([
             'customer',
             'request_order',
-            'delivery_order_items.item.item_units',
+            'delivery_order_items.item.unit',
             'delivery_order_items.unit',
         ])->withTrashed()->findOrFail($id);
 
-        $delivery_order->setAppends(['has_revision', 'has_relationship']);
+        $delivery_order->append(['has_revision', 'has_relationship']);
 
         return response()->json($delivery_order);
     }
@@ -57,6 +57,7 @@ class DeliveryOrders extends ApiController
     {
         if (request('mode') == 'confirmation') return $this->confirmation($id);
         else if (request('mode') == 'revision') return $this->revision($request, $id);
+        else if (request('mode') == 'reconciliation') return $this->reconciliation($request, $id);
         else return abort(404);
     }
 
@@ -74,8 +75,16 @@ class DeliveryOrders extends ApiController
         $delivery_order->save();
 
         foreach ($delivery_order->delivery_order_items as $detail) {
+            $request_order_item = $detail->request_order_item;
+            $reconcile_item = $detail->reconcile_item;
+
+            $delivery_order_item = $detail;
             $detail->item->distransfer($detail);
             $detail->delete();
+
+            $delivery_order_item->calculate();
+            if ($request_order_item) $request_order_item->calculate();
+            if ($reconcile_item) $reconcile_item->calculate();
         }
 
         $delivery_order->delete();
@@ -104,20 +113,6 @@ class DeliveryOrders extends ApiController
 
         $this->DATABASE::commit();
         return $this->show($delivery_order->id);
-    }
-
-    private function setRequestOrderClosed($request_order)
-    {
-        $unconfirm = $request_order->delivery_orders->filter(function($delivery) {
-            return $delivery->status != "CONFIRMED";
-        });
-
-        $delivered = round($request_order->total_unit_amount) == round($request_order->total_unit_delivery);
-
-        if ($request_order->order_mode == "NONE" && $unconfirm->count() && $delivered) {
-            $request_order->status = 'CLOSED';
-            $request_order->save();
-        }
     }
 
     public function revision($request, $id)
@@ -212,5 +207,70 @@ class DeliveryOrders extends ApiController
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
+    }
+
+    public function reconciliation($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request->validate([
+            "reconcile_id" => "required",
+            "delivery_order_items.*.request_order_item_id" => "required",
+            "delivery_order_items.*.item_id" => "required",
+        ]);
+
+        $reconcile = DeliveryOrder::findOrFail($id);
+        $request_order = RequestOrder::find($request->request_order["id"]);
+
+        // Auto generate number of reconciliation
+        $request->merge(['number'=> $this->getNextSJDeliveryNumber()]);
+
+        $delivery_order = DeliveryOrder::create($request->all());
+
+        $rows = $request->delivery_order_items;
+        for ($i=0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+
+            // create DeliveryOrder items on the Delivery order revision!
+            $detail = $delivery_order->delivery_order_items()->create($row);
+
+            if ($request_order_item = RequestOrderItem::find($row['request_order_item_id'])) {
+                $detail->request_order_item()->associate($request_order_item);
+            }
+
+            if ($reconcile_item = $detail->getReconcileItem($reconcile)) {
+                $detail->reconcile_item_id = $reconcile_item->id;
+            }
+            else $this->error('Reconcile Item Undefined!');
+
+            $detail->save();
+            $detail->reconcile_item->calculate();
+            $detail->request_order_item->calculate();
+        }
+
+        // $delivery_order->outgoing_good_id = $reconcile->outgoing_good_id;
+        $delivery_order->request_order_id = $request_order->id;
+        $delivery_order->reconcile_id = $reconcile->id;
+        $delivery_order->status = $reconcile->status;
+        $delivery_order->save();
+
+        // $this->error('LOLOS');
+
+        $this->DATABASE::commit();
+        return response()->json($delivery_order);
+    }
+
+    private function setRequestOrderClosed($request_order)
+    {
+        $unconfirm = $request_order->delivery_orders->filter(function($delivery) {
+            return $delivery->status != "CONFIRMED";
+        });
+
+        $delivered = round($request_order->total_unit_amount) == round($request_order->total_unit_delivery);
+
+        if ($request_order->order_mode == "NONE" && $unconfirm->count() == 0 && $delivered) {
+            $request_order->status = 'CLOSED';
+            $request_order->save();
+        }
     }
 }
