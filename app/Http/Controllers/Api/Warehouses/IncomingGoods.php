@@ -390,9 +390,9 @@ class IncomingGoods extends ApiController
                 $TO = $incoming_good->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
                 $detail->item->transfer($detail, $detail->unit_amount, $TO);
 
+                $detail->price = $detail->item->price ?? 0;
                 $row->request_order_item()->associate($detail);
                 $row->save();
-
             }
         }
     }

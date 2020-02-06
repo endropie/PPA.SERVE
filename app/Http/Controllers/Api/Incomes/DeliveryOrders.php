@@ -102,14 +102,13 @@ class DeliveryOrders extends ApiController
         if ($delivery_order->status != "OPEN") $this->error("SJDO[$delivery_order->number] has not OPEN state. Confirmation not allowed!");
 
         foreach ($delivery_order->delivery_order_items as $detail) {
-            if (!$detail->request_order_item) $this->error("SJDO DETAIL[#$detail->id] '". $detail->item->part_name ."' not has SO Relation. Confirmation not allowed!");
-            $detail->request_order_item->calculate();
+            if ($detail->request_order_item) $detail->request_order_item->calculate();
         }
 
         $delivery_order->status = 'CONFIRMED';
         $delivery_order->save();
 
-        $this->setRequestOrderClosed($delivery_order->request_order);
+        if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
 
         $this->DATABASE::commit();
         return $this->show($delivery_order->id);

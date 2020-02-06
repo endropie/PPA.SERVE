@@ -33,9 +33,7 @@ class RequestOrders extends ApiController
                   ->filter($filters)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
-                    $item->setAppends(['total_unit_amount', 'total_unit_delivery']);
-                    // $item->request_order_items->each->setAppends(['unit_amount']);
+                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery']);
                     return $item;
                 });
                 break;
@@ -88,7 +86,7 @@ class RequestOrders extends ApiController
 
         $request_order = RequestOrder::findOrFail($id);
 
-        if ($request_order->is_relationship == true) {
+        if (request('mode') !== 'referenced' && $request_order->is_relationship == true) {
             $this->error('The data has relationships, Not allowed to be changed');
         }
 

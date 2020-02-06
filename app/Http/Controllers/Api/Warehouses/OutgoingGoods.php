@@ -159,10 +159,10 @@ class OutgoingGoods extends ApiController
             ->map(function ($group) {
                 return [
                     'item_id' => $group[0]->item_id,
+                    'quantity' => $group->sum('unit_amount'),
+                    'price' => $group[0]->item->price,
                     'unit_id' => $group[0]->item->unit_id,
                     'unit_rate' => 1,
-                    'quantity' => $group->sum('unit_amount'),
-                    'price' => 0,
                 ];
             });
 
@@ -215,7 +215,7 @@ class OutgoingGoods extends ApiController
             if (isset($outer[$detail->item_id])) {
 
                 $max_amount = $outer[$detail->item_id];
-                $unit_amount = $detail->unit_amount - $detail->unit_delivery;
+                $unit_amount = $detail->unit_amount - $detail->amount_delivery;
                 $unit_amount = ($max_amount < $unit_amount ? $max_amount : $unit_amount);
 
                 $outer[$detail->item_id] -= $unit_amount;
@@ -226,9 +226,10 @@ class OutgoingGoods extends ApiController
 
                     $list[$RO][$DTL] = [
                         'item_id' => $detail->item_id,
+                        'quantity' => $unit_amount,
+                        'price' => $detail->item->price ?? 0,
                         'unit_id' => $detail->item->unit_id,
                         'unit_rate' => 1,
-                        'quantity' => $unit_amount
                     ];
                 }
             }
@@ -266,16 +267,19 @@ class OutgoingGoods extends ApiController
                 'is_internal' => true,
             ]);
 
+
             foreach ($over as $key => $amount) {
                 $item = Item::find($key);
                 $detail = $delivery_order->delivery_order_items()->create([
                     'item_id' => $item->id,
+                    'quantity' => $amount,
+                    'price' => $item->price ?? 0,
                     'unit_id' => $item->unit->id,
-                    'quantity' => $amount
+                    'unit_rate' => 1
                 ]);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
-                $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
+                $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+                $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->save();
             }
@@ -304,8 +308,8 @@ class OutgoingGoods extends ApiController
                 $detail = $delivery_order->delivery_order_items()->create($row);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-                $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
+                $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+                $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
@@ -315,9 +319,6 @@ class OutgoingGoods extends ApiController
             $delivery_order->request_order()->associate($request_order);
             $delivery_order->save();
         }
-
-
-
     }
 
     public function destroy($id)

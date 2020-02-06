@@ -60,7 +60,7 @@ class ScheduleBoards extends ApiController
         $customers = collect($request->input('customers', []))->pluck('id');
         $schedule_board->customers()->sync($customers);
 
-        $schedule_board->createRecurring(['started_at'=> $request->input('date')]);
+        if ($request->recurring) $schedule_board->createRecurring(['started_at'=> $request->input('date')]);
 
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
@@ -99,7 +99,7 @@ class ScheduleBoards extends ApiController
         $customers = collect($request->input('customers', []))->pluck('id');
         $schedule_board->customers()->sync($customers);
 
-        $schedule_board->updateRecurring(['started_at'=> $request->input('date')]);
+        if ($request->recurring) $schedule_board->updateRecurring(['started_at'=> $request->input('date')]);
 
         // DB::Commit => Before return function!
         $this->DATABASE::commit();
