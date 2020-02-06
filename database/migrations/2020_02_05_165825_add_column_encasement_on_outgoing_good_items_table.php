@@ -14,7 +14,7 @@ class AddColumnEncasementOnOutgoingGoodItemsTable extends Migration
     public function up()
     {
         Schema::table('outgoing_good_items', function (Blueprint $table) {
-            $table->string('encasement')->null()->after('quantity');
+            $table->string('encasement')->nullable()->after('quantity');
         });
     }
 
