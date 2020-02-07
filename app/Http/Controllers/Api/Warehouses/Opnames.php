@@ -122,7 +122,8 @@ class Opnames extends ApiController
 
         foreach ($opname->opname_stocks as $detail) {
             $stockist = $detail->stockist;
-            $detail->item->distransfer($detail);
+            if ($detail->stockable->count() > 0) $this->error('FAILED, Please contact administrator');
+            // $detail->item->distransfer($detail);
             $detail->item->transfer($detail, $detail->move_amount, $stockist);
         }
 
