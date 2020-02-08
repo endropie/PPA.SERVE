@@ -60,18 +60,11 @@ class PreDeliveryItem extends Model
         return (double) $total * $this->unit_rate;
     }
 
-    public function calculate($param = null)
+    public function calculate()
     {
-        if(!$param || $param == 'verification') {
-            // UPDATE AMOUNT PACKING
-
-            $total = (double) $this->outgoing_verifications->sum('unit_amount');
-            $this->amount_verification = $total * $this->unit_rate;
-            $this->save();
-
-            if((round($this->amount_verification) > round($this->unit_amount))) {
-                abort(501, "AMOUNT Verify [#$this->id] INVALID");
-            }
-        }
+        // UPDATE AMOUNT PACKING
+        $total = (double) $this->outgoing_verifications->sum('unit_amount');
+        $this->amount_verification = $total * $this->unit_rate;
+        $this->save();
     }
 }

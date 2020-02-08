@@ -15,6 +15,13 @@ Route::middleware('auth')->get('/user', function () {
     return auth()->user;
 });
 
+Route::get('/calculate-delivery', function() {
+    return App\Models\Common\ItemStock::deliveryTransferAmount();
+});
+
+Route::get('/check-delivery', function() {
+    return App\Models\Common\ItemStock::deliveryCheckAmount();
+});
 
 Route::get('/test-incoming-good', function() {
     // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'

@@ -46,14 +46,23 @@ class OutgoingGoodVerifications extends ApiController
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
-        foreach ($request->outgoing_good_verifications as $row) {
-            if($row['quantity'] > 0) {
+        foreach ($request->outgoing_good_verifications as $key => $row) {
+            if(round($row['quantity']) <= 0) continue;
 
-                $pre_delivery_item = PreDeliveryItem::findOrFail($row['pre_delivery_item_id']);
+            // $this->error($row['pre_delivery_item_id']);
+            if ($pre_delivery_item = PreDeliveryItem::find($row['pre_delivery_item_id'])) {
+
+                if ($pre_delivery_item->pre_delivery->status != 'OPEN') {
+                    $this->error('PDO has not OPEN state, is not allowed to be changed');
+                }
                 $detail = $pre_delivery_item->outgoing_verifications()->create(array_merge($row, ['date' => $request->date]));
-                $pre_delivery_item->calculate();
                 $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
+                $pre_delivery_item->calculate();
+                if (round($pre_delivery_item->unit_amount) < round($pre_delivery_item->amount_verification)) {
+                    $request->validate(["outgoing_good_verifications.$key.quantity" => "required|not_in:".$row['quantity']]);
+                }
             }
+            else $request->validate(["outgoing_good_verifications.$key.pre_delivery_item_id" => "required|not_in:".$row['pre_delivery_item_id']]);
         }
 
         $this->DATABASE::commit();
@@ -79,7 +88,9 @@ class OutgoingGoodVerifications extends ApiController
 
         $detail = OutgoingGoodVerification::findOrFail($id);
 
-
+        if ($detail->pre_delivery_item->pre_delivery->status != 'OPEN') {
+            $this->error('PDO has not OPEN state, is not allowed to be changed');
+        }
         if ($detail->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be changed');
         }
@@ -87,8 +98,11 @@ class OutgoingGoodVerifications extends ApiController
         $detail->item->distransfer($detail);
 
         $detail->update($request->input());
-        $detail->pre_delivery_item->calculate();
         $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
+        $detail->pre_delivery_item->calculate();
+        if (round($detail->pre_delivery_item->unit_amount) < round($detail->pre_delivery_item->amount_verification)) {
+            $request->validate(["quantity" => "required|not_in:".$request->input('quantity')]);
+        }
 
         $this->DATABASE::commit();
         return response()->json($detail);
@@ -100,6 +114,9 @@ class OutgoingGoodVerifications extends ApiController
 
         $detail = OutgoingGoodVerification::findOrFail($id);
 
+        if ($detail->pre_delivery_item->pre_delivery->status != 'OPEN') {
+            $this->error('PDO has not OPEN state, is not allowed to be changed');
+        }
         if ($detail->is_relationship == true) {
             $this->error('The data has relationships, is not allowed to be deleted');
         }

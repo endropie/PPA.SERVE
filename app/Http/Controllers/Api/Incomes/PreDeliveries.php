@@ -48,10 +48,14 @@ class PreDeliveries extends ApiController
             // create detail item created!
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
 
-            $TransRDO = $pre_delivery->transaction === 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $TransPDO = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $stockist = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
 
-            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
+            $detail->item->transfer($detail, $detail->unit_amount, $stockist);
+
+            $totals = $detail->item->totals;
+            if (round($totals[$stockist]) > round($totals["*"])) {
+                $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
+            }
         }
 
         $schedules = collect($request->schedules)->map(function($item) {
@@ -113,15 +117,18 @@ class PreDeliveries extends ApiController
             // create detail item created!
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
 
-            $TransRDO = $pre_delivery->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $TransPDO = $pre_delivery->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
 
-            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
-            if($detail->item->stock($TransPDO)->total < (0)) $this->error('Data is not allowed to be changed!');
+            $stockist = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, $stockist);
+
+            $totals = $detail->item->totals;
+            if (round($totals[$stockist]) > round($totals["*"])) {
+                $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
+            }
         }
 
         $schedules = collect($request->schedules)->map(function($item) {
-            if ($item["status"] != "OPEN") $this->error($item["number"] ." has not OPEN state. CREATED FAILED!");
+            if ($item["status"] != "OPEN") $this->error($item["number"] ." has not OPEN state. UPDATE FAILED!");
             return $item["id"];
         });
         $pre_delivery->schedules()->sync($schedules);
@@ -162,10 +169,13 @@ class PreDeliveries extends ApiController
             // create detail item created!
             $detail = $pre_delivery->pre_delivery_items()->create($rows[$i]);
 
-            $TransRDO = $pre_delivery->transaction === 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $TransPDO = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $stockist = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, $stockist);
+            $totals = $detail->item->totals;
 
-            $detail->item->transfer($detail, $detail->unit_amount, $TransPDO, $TransRDO);
+            if (round($totals[$stockist]) > round($totals["*"])) {
+                $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
+            }
 
             $verifications = $rows[$i]['outgoing_verifications'];
             foreach ($verifications as $verification) {

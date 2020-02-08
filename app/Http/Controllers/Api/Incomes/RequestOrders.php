@@ -54,7 +54,7 @@ class RequestOrders extends ApiController
         for ($i=0; $i < count($item); $i++) {
 
             $detail = $request_order->request_order_items()->create($item[$i]);
-            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
+
         }
 
         $this->DATABASE::commit();
@@ -106,8 +106,6 @@ class RequestOrders extends ApiController
           foreach ($request_order->request_order_items as $detail) {
             // Delete detail of "Request Order"
             $detail->item->distransfer($detail);
-
-            // if($detail->item->stock('RDO.REG')->total < (0)) $this->error('Data is not allowed to be changed');
             $detail->forceDelete();
           }
         }
@@ -118,7 +116,6 @@ class RequestOrders extends ApiController
 
             // abort(501, json_encode($fields));
             $detail = $request_order->request_order_items()->create($row);
-            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
         }
 
         // DB::Commit => Before return function!
@@ -254,7 +251,6 @@ class RequestOrders extends ApiController
             }
             $detail = $request_order->request_order_items()->updateOrCreate(['id'=> $row['id']], $row);
             $detail->item->distransfer($detail);
-            $detail->item->transfer($detail, $detail->unit_amount, 'RDO.REG');
         }
 
         return $request_order->fresh();

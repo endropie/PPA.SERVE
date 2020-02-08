@@ -121,31 +121,29 @@ class DeliveryOrders extends ApiController
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
 
+        if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
+
         if($revise) {
-            if($revise->trashed()) $this->error("SJDO [". $revise->number ."] is trashed. REVISION Not alowed!");
-
-            if (!$revise->is_internal) {
-              $revise->delivery_order_items->each(function($detail) use($revise) {
-                if($detail->trashed()) $this->error("Part [". $detail->item->part_name ."] is trashed. REVISION Not alowed!");
-
-                if($revise->request_order->order_mode == 'ACCUMULATE') {
-                    $request_order_item = $detail->request_order_item;
-                    $request_order_item->item->distransfer($request_order_item);
-                    $request_order_item->forceDelete();
-                    $request_order_item->calculate();
-                }
-                else {
-                    $detail->request_order_item()->associate(null);
+            $revise->delivery_order_items->each(function($detail) use($revise) {
+                if (!$revise->is_internal) {
+                    if($revise->request_order->order_mode == 'ACCUMULATE') {
+                        $request_order_item = $detail->request_order_item;
+                        $request_order_item->item->distransfer($request_order_item);
+                        $request_order_item->forceDelete();
+                        $request_order_item->calculate();
+                    }
+                    else {
+                        $detail->request_order_item()->associate(null);
+                    }
                 }
                 $detail->item->distransfer($detail);
                 $detail->save();
                 $detail->delete();
-              });
-            }
+            });
         }
 
         // Auto generate number of revision
-        if($request->number) {
+        if ($request->number) {
             $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
             $request->merge(['revise_number'=> ($max + 1)]);
         }

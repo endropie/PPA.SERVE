@@ -232,10 +232,6 @@ class IncomingGoods extends ApiController
             // Calculate stock on "validation" Incoming Goods!
             $to = $incoming_good->transaction == 'RETURN' ? 'RET' : 'FM';
             $detail->item->transfer($detail, $detail->unit_valid, $to);
-
-            if (strtoupper($incoming_good->order_mode) === 'ACCUMULATE') {
-                $detail->item->transfer($detail, $detail->unit_valid, 'RDO.REG');
-            }
         }
 
         if (strtoupper($incoming_good->order_mode) === 'NONE') {
@@ -283,10 +279,6 @@ class IncomingGoods extends ApiController
 
             $to = $incoming_good->transaction == 'RETURN' ? 'RET' : 'FM';
             $detail->item->transfer($detail, $detail->unit_valid, $to);
-
-            if (strtoupper($incoming_good->order_mode) === 'ACCUMULATE') {
-                $detail->item->transfer($detail, $detail->unit_valid, 'RDO.REG');
-            }
         }
 
         if (strtoupper($incoming_good->order_mode) === 'NONE') {
@@ -350,9 +342,6 @@ class IncomingGoods extends ApiController
                 ->updateOrCreate(['id'=>$detail->request_order_item_id],$field->toArray());
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
-
-            $TO = $request_order->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-            $detail->request_order_item->item->transfer($detail->request_order_item, $detail->unit_amount, $TO);
         }
 
 
@@ -386,9 +375,6 @@ class IncomingGoods extends ApiController
             foreach ($rows as $row) {
                 $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=>$row['valid'], 'price'=>0])->toArray();
                 $detail = $model->request_order_items()->create($fields);
-
-                $TO = $incoming_good->transaction == 'RETURN' ? 'RDO.RET' : 'RDO.REG';
-                $detail->item->transfer($detail, $detail->unit_amount, $TO);
 
                 $detail->price = $detail->item->price ?? 0;
                 $row->request_order_item()->associate($detail);

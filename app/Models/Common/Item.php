@@ -125,10 +125,12 @@ class Item extends Model
     public function getTotalsAttribute()
     {
         $stocks = [];
+        $all = 0;
         foreach (ItemStock::getStockists() as $key => $value) {
             $stocks[$key] = (double) $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
+            if (array_search($key, ['FM','WO','WIP','FG','NG','RET']) > -1) $all += $stocks[$key];
         }
-        return $stocks;
+        return array_merge($stocks, ['*' => $all]);
     }
 
     public function getCustomerCodeAttribute()
