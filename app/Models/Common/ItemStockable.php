@@ -62,4 +62,8 @@ class ItemStockable extends Model
             return null;
         }
     }
+
+    public function getBaseCreatedAtAttribute() {
+        return $this->base->created_at->toDateTimeString();
+    }
 }

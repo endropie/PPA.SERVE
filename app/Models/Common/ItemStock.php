@@ -84,7 +84,7 @@ class ItemStock extends Model
                     if (!$detail->delivery_order) dd($detail, $detail->stockable);
                     $stockist = $detail->delivery_order->transaction == "RETURN"
                         ? "PDO.REG" : "PDO.RET" ;
-                    $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
+
                     $detail->item->transfer($detail, $detail->unit_amount, null, "VDO");
                     $detail->item->transfer($detail, $detail->unit_amount, null, $stockist);
                 }
@@ -117,10 +117,13 @@ class ItemStock extends Model
             $result['STO'] = doubleval($row['PDO.REG'] ?? 0) + doubleval($row['PDO.RET'] ?? 0) - doubleval($row['VDO'] ?? 0);
             $result['ROW'] = doubleval($row['I-PDO'] ?? 0)  - doubleval($row['I-VDO'] ?? 0);
             $result['ERROR'] = $result['STO'] != $result['ROW'];
-            return $result;
+
+            return $row;
+            // return $result;
         })
         ->filter(function($row) {
-            return $row['ERROR'];
+            return true;
+            // return $row['ERROR'];
         });
     }
 }
