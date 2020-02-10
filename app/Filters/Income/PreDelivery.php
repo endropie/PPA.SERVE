@@ -20,7 +20,9 @@ class PreDelivery extends Filter
 
     public function available_outgoing_verification($value) {
         if ($value != 'true') return $this->builder;
-        return $this->builder->whereHas('pre_delivery_items', function($query) {
+        return $this->builder
+        ->where('status', 'OPEN')
+        ->whereHas('pre_delivery_items', function($query) {
             return $query->whereRaw('amount_verification < (quantity * unit_rate)');;
         });
     }

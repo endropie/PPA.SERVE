@@ -53,7 +53,7 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $stockist);
 
             $totals = $detail->item->totals;
-            if (round($totals[$stockist]) > round($totals["*"])) {
+            if ($pre_delivery->order_mode != "PO" && round($totals[$stockist]) > round($totals["*"])) {
                 $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
             }
         }
@@ -122,7 +122,7 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $stockist);
 
             $totals = $detail->item->totals;
-            if (round($totals[$stockist]) > round($totals["*"])) {
+            if ($pre_delivery->order_mode != "PO" && round($totals[$stockist]) > round($totals["*"])) {
                 $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
             }
         }
@@ -173,11 +173,12 @@ class PreDeliveries extends ApiController
             $detail->item->transfer($detail, $detail->unit_amount, $stockist);
             $totals = $detail->item->totals;
 
-            if (round($totals[$stockist]) > round($totals["*"])) {
+            if ($pre_delivery->order_mode != "PO" && round($totals[$stockist]) > round($totals["*"])) {
                 $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
             }
 
             $verifications = $rows[$i]['outgoing_verifications'];
+
             foreach ($verifications as $verification) {
                 $verification = array_merge($verification, [
                     'item_id' => $detail->item_id,
@@ -187,9 +188,15 @@ class PreDeliveries extends ApiController
                 $outgoing_verification = $detail->outgoing_verifications()->create($verification);
                 $outgoing_verification->item->transfer($outgoing_verification, $outgoing_verification->unit_amount, 'VDO');
                 $outgoing_verification->pre_delivery_item()->associate($detail);
+                $outgoing_verification->created_by = $verification['created_by'];
+                $outgoing_verification->created_at = $verification['created_at'];
                 $outgoing_verification->save();
             }
             $detail->calculate();
+
+            if (round($detail->unit_amount) < round($detail->amount_verification)) {
+                $request->validate(["pre_delivery_items.$i.quantity" => "not_in:$detail->quantity"]);
+            }
         }
 
         $revise->status = 'REVISED';

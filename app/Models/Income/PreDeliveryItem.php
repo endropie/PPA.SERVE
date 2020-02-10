@@ -18,7 +18,8 @@ class PreDeliveryItem extends Model
 
     protected $casts = [
         'unit_rate' => 'double',
-        'quantity' => 'double'
+        'quantity' => 'double',
+        'amount_verification' => 'double'
     ];
 
     public function pre_delivery()
