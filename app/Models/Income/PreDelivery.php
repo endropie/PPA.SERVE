@@ -16,6 +16,8 @@ class PreDelivery extends Model
         'transaction', 'order_mode', 'rit', 'date', // 'plan_begin_date', 'plan_until_date'
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
@@ -39,5 +41,12 @@ class PreDelivery extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }
