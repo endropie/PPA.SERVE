@@ -37,7 +37,7 @@ class Positions extends ApiController
     public function show($id)
     {
         $position = Position::findOrFail($id);
-        $position->setAppends(['has_relationship']);
+        $position->append(['has_relationship']);
 
         return response()->json($position);
     }

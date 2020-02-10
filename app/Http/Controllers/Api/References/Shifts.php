@@ -38,7 +38,7 @@ class Shifts extends ApiController
     public function show($id)
     {
         $shift = Shift::findOrFail($id);
-        $shift->setAppends(['has_relationship']);
+        $shift->append(['has_relationship']);
 
         return response()->json($shift);
     }

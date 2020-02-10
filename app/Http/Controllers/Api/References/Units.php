@@ -40,7 +40,7 @@ class Units extends ApiController
     public function show($id)
     {
         $unit = Unit::findOrFail($id);
-        $unit->setAppends(['has_relationship']);
+        $unit->append(['has_relationship']);
 
         return response()->json($unit);
     }

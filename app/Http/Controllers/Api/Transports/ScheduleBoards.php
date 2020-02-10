@@ -76,7 +76,7 @@ class ScheduleBoards extends ApiController
             'operator'
         ])->withTrashed()->findOrFail($id);
 
-        $schedule_board->setAppends(['has_relationship']);
+        $schedule_board->append(['has_relationship']);
 
         return response()->json($schedule_board);
     }

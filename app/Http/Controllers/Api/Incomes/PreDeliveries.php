@@ -21,13 +21,13 @@ class PreDeliveries extends ApiController
 
             case 'datagrid':
                 $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->get();
-                $pre_deliveries->each->setAppends(['is_relationship']);
+                $pre_deliveries->each->append(['is_relationship']);
                 break;
 
             default:
                 $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->append(['is_relationship']);
                     return $item;
                 });
                 break;
@@ -80,7 +80,7 @@ class PreDeliveries extends ApiController
             'pre_delivery_items.outgoing_verifications'
         ])->withTrashed()->findOrFail($id);
 
-        $pre_delivery->setAppends(['has_relationship']);
+        $pre_delivery->append(['has_relationship']);
 
         return response()->json($pre_delivery);
     }

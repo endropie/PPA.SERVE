@@ -23,7 +23,7 @@ class DeliveryOrders extends ApiController
 
             case 'datagrid':
                 $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->get();
-                $delivery_orders->each->setAppends(['is_relationship']);
+                $delivery_orders->each->append(['is_relationship']);
                 break;
 
             default:

@@ -37,7 +37,7 @@ class TypeItems extends ApiController
     public function show($id)
     {
         $typeItem = TypeItem::findOrFail($id);
-        $typeItem->setAppends(['has_relationship']);
+        $typeItem->append(['has_relationship']);
 
         return response()->json($typeItem);
     }

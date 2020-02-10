@@ -38,7 +38,7 @@ class Vehicles extends ApiController
     public function show($id)
     {
         $vehicle = Vehicle::findOrFail($id);
-        $vehicle->setAppends(['has_relationship']);
+        $vehicle->append(['has_relationship']);
 
         return response()->json($vehicle);
     }

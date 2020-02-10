@@ -38,7 +38,7 @@ class Colors extends ApiController
     public function show($id)
     {
         $color = Color::findOrFail($id);
-        $color->setAppends(['has_relationship']);
+        $color->append(['has_relationship']);
 
         return response()->json($color);
     }

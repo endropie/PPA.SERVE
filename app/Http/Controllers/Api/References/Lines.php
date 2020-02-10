@@ -38,7 +38,7 @@ class Lines extends ApiController
     public function show($id)
     {
         $line = Line::findOrFail($id);
-        $line->setAppends(['has_relationship']);
+        $line->append(['has_relationship']);
 
         return response()->json($line);
     }

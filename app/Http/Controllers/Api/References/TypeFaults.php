@@ -38,7 +38,7 @@ class TypeFaults extends ApiController
     public function show($id)
     {
         $typeFault = TypeFault::findOrFail($id);
-        $typeFault->setAppends(['has_relationship']);
+        $typeFault->append(['has_relationship']);
 
         return response()->json($typeFault);
     }

@@ -23,13 +23,13 @@ class Opnames extends ApiController
 
             case 'datagrid':
                 $opnames = Opname::filter($filters)->latest()->get();
-                $opnames->each->setAppends(['is_relationship']);
+                $opnames->each->append(['is_relationship']);
                 break;
 
             default:
                 $opnames = Opname::filter($filters)->latest()->collect();
                 $opnames->getCollection()->transform(function($item) {
-                    // $item->setAppends();
+                    // $item->append();
                     return $item;
                 });
                 break;

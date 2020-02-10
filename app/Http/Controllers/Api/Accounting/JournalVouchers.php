@@ -14,10 +14,10 @@ class JournalVouchers extends ApiController
     public function index()
     {
         switch (request('mode')) {
-            case 'all':            
+            case 'all':
                 $journals = Journal::filterable()->get();
                 $journals->map(function ($journal) {
-                    $journal->setAppends(['amount']);
+                    $journal->append(['amount']);
                     return $journal;
                 });
                 $journals->makeHidden(['created_at','updated_at']);
@@ -27,7 +27,7 @@ class JournalVouchers extends ApiController
                 $journals = Journal::collect();
 
                 $journals->map(function ($journal) {
-                    $journal->setAppends(['amount']);
+                    $journal->append(['amount']);
                     return $journal;
                 });
                 break;
@@ -43,7 +43,7 @@ class JournalVouchers extends ApiController
         $account->date = date('Y-m-d');
         $account->description = null;
         $account->journal_entries = [];
-        
+
         return response()->json($account);
     }
 
@@ -75,7 +75,7 @@ class JournalVouchers extends ApiController
                             $credit += $value;
                         }
                         break;
-                    
+
                     default:
                         $journalEntryRows[$index][$key] = $value;
                         break;
@@ -115,7 +115,7 @@ class JournalVouchers extends ApiController
         $journal = Journal::findOrFail($id);
         foreach ($journal->journalEntries as $entries) {
             $entries->account;
-            $entries->setAppends(['amount_credit','amount_debit']);
+            $entries->append(['amount_credit','amount_debit']);
         }
 
         $journal->isForm = [
@@ -152,7 +152,7 @@ class JournalVouchers extends ApiController
 
         $entries->map(function($entri){
             $entri->account;
-            $entri->setAppends(['source_number', 'amount_debit', 'amount_credit']);
+            $entri->append(['source_number', 'amount_debit', 'amount_credit']);
             return $entri;
         });
 
@@ -165,14 +165,14 @@ class JournalVouchers extends ApiController
        \DB::beginTransaction();
 
         $count_etries = 0;
-        try 
-        {            
+        try
+        {
             foreach ($request->data as $key => $row) {
-                
+
                 if($row['total_debit'] != $row['total_credit'] && ($row['total_debit'] == 0 || $row['total_credit'] == 0))
                 {
                     \DB::rollback();
-                    return response()->json(['success'=>false, 'message'=> 'Journal['. $row['number'] .'] total amount invalid!']); 
+                    return response()->json(['success'=>false, 'message'=> 'Journal['. $row['number'] .'] total amount invalid!']);
                 }
 
                 if($row['id'])
@@ -197,7 +197,7 @@ class JournalVouchers extends ApiController
                         \DB::rollback();
                         return response()->json(['success'=>false, 'message'=> 'Invalid account[id] of entries Journal['. $row['number'] .']!']);
                     }
-                    
+
                     $entry = new JournalEntry();
                     $entry->date = $journal->date;
                     $entry->account_id   = $account->id;
@@ -214,9 +214,9 @@ class JournalVouchers extends ApiController
             \DB::commit();
         }
         catch (\Throwable $e) {
-            
+
             \DB::rollback();
-            
+
             if($e){
                 return response()->json([
                     'success' => false,
@@ -233,7 +233,7 @@ class JournalVouchers extends ApiController
             }
             else throw $e;
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Import Success: '. count($request->data).' Journals, '. $count_etries .' entries',

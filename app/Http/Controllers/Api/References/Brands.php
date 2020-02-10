@@ -38,7 +38,7 @@ class Brands extends ApiController
     public function show($id)
     {
         $brand = Brand::findOrFail($id);
-        $brand->setAppends(['has_relationship']);
+        $brand->append(['has_relationship']);
 
         return response()->json($brand);
     }

@@ -24,13 +24,13 @@ class OpnameStocks extends ApiController
 
             case 'datagrid':
                 $opname_stocks = OpnameStock::filter($filters)->latest()->get();
-                $opname_stocks->each->setAppends(['is_relationship']);
+                $opname_stocks->each->append(['is_relationship']);
                 break;
 
             default:
                 $opname_stocks = OpnameStock::with('opname','item.unit')->filter($filters)->latest()->collect();
                 $opname_stocks->getCollection()->transform(function($item) {
-                    $item->setAppends(['opname_number','is_relationship']);
+                    $item->append(['opname_number','is_relationship']);
                     return $item;
                 });
                 break;

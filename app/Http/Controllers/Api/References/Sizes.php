@@ -38,7 +38,7 @@ class Sizes extends ApiController
     public function show($id)
     {
         $size = Size::findOrFail($id);
-        $size->setAppends(['has_relationship']);
+        $size->append(['has_relationship']);
 
         return response()->json($size);
     }

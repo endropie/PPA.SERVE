@@ -17,13 +17,13 @@ class Faults extends ApiController
 
             case 'datagrid':
                 $faults = Fault::with('type_fault')->filter($filter)->latest()->get();
-                $faults->each->setAppends(['is_relationship']);
+                $faults->each->append(['is_relationship']);
                 break;
 
             default:
                 $faults = Fault::with('type_fault')->filter($filter)->latest()->collect();
                 $faults->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->append(['is_relationship']);
                     return $item;
                 });
                 break;
@@ -42,7 +42,7 @@ class Faults extends ApiController
     public function show($id)
     {
         $faulty = Fault::with('type_fault')->findOrFail($id);
-        $faulty->setAppends(['has_relationship']);
+        $faulty->append(['has_relationship']);
 
         return response()->json($faulty);
     }

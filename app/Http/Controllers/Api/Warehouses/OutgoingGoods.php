@@ -31,7 +31,7 @@ class OutgoingGoods extends ApiController
                 $outgoing_goods = OutgoingGood::with(['customer', 'operator'])
                     ->filter($filters)
                     ->latest()->get();
-                $outgoing_goods->each->setAppends(['is_relationship']);
+                $outgoing_goods->each->append(['is_relationship']);
                 break;
 
             default:
@@ -47,7 +47,7 @@ class OutgoingGoods extends ApiController
                     ->latest()->collect();
 
                 $outgoing_goods->getCollection()->transform(function ($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->append(['is_relationship']);
                     return $item;
                 });
                 break;
@@ -104,7 +104,7 @@ class OutgoingGoods extends ApiController
             'outgoing_good_items.unit'
         ])->withTrashed()->findOrFail($id);
 
-        $outgoing_good->setAppends(['has_relationship']);
+        $outgoing_good->append(['has_relationship']);
 
         return response()->json($outgoing_good);
     }

@@ -13,7 +13,7 @@ class Accounts extends ApiController
     public function index()
     {
         switch (request('mode')) {
-            case 'all':            
+            case 'all':
                 $accounts = Account::filterable()->get();
                 $accounts->map(function ($value) {
 
@@ -24,25 +24,25 @@ class Accounts extends ApiController
 
             case 'parents':
                 $accounts = Account::filterable()->orderBy('number','asc')->get();
-                
+
                 $accounts->map(function ($value) {
-                    $value->setAppends(['is_parent']);
+                    $value->append(['is_parent']);
                     $value->has_journal_entries = $value->journalEntries()->count();
                     return false;
                 });
                 $accounts->makeHidden(['subAccounts','journalEntries','created_at','updated_at']);
-                break; 
+                break;
 
             case 'entries':
                 $accounts = [];
                 $lists = Account::filterable()->orderBy('number','asc')->get();
-                    
+
                 $lists->makeHidden(['created_at','updated_at']);
 
                 foreach ($lists as $value) {
                     if(!$value->is_parent) $accounts[] = $value;
                 }
-                break; 
+                break;
 
             case 'tree':
                 $accounts = Account::where('parent_id',0)->orderBy('number','asc')->get();
@@ -54,7 +54,7 @@ class Accounts extends ApiController
                 break;
 
             default:
-                $accounts = Account::with(['accountType'])->collect();                
+                $accounts = Account::with(['accountType'])->collect();
                 break;
         }
 
@@ -110,7 +110,7 @@ class Accounts extends ApiController
                 $childs = array_merge($childs, $grandChild);
             }
         }
-        
+
         return $childs;
     }
 

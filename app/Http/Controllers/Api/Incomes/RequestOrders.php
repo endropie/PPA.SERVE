@@ -25,7 +25,7 @@ class RequestOrders extends ApiController
             case 'datagrid':
                 $request_orders = RequestOrder::with(['user_by', 'customer'])->filter($filters)
                   ->latest()->get();
-                $request_orders->each->setAppends(['is_relationship']);
+                $request_orders->each->append(['is_relationship']);
                 break;
 
             default:
@@ -70,7 +70,7 @@ class RequestOrders extends ApiController
             'delivery_orders'
         ])->withTrashed()->findOrFail($id);
 
-        $request_order->setAppends(['has_relationship','total_unit_amount', 'total_unit_delivery']);
+        $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
 
         return response()->json($request_order);
     }

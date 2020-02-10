@@ -39,7 +39,7 @@ class Packings extends ApiController
                 ])->filter($filter)->latest()->orderBy('id', 'DESC')->collect();
 
                 $packings->getCollection()->transform(function($row) {
-                    $row->setAppends(['is_relationship']);
+                    $row->append(['is_relationship']);
 
                     $row->packing_items->work_order_number = (
                       $row->packing_items->work_order_item
@@ -227,7 +227,7 @@ class Packings extends ApiController
             'packing_items.packing_item_faults.fault'
         ], $addWith))->withTrashed()->findOrFail($id);
 
-        $packing->setAppends(['has_relationship']);
+        $packing->append(['has_relationship']);
 
         return response()->json($packing);
     }

@@ -38,7 +38,7 @@ class Provinces extends ApiController
     public function show($id)
     {
         $province = Province::findOrFail($id);
-        $province->setAppends(['has_relationship']);
+        $province->append(['has_relationship']);
 
         return response()->json($province);
     }

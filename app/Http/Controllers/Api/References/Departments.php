@@ -37,7 +37,7 @@ class Departments extends ApiController
     public function show($id)
     {
         $department = Department::findOrFail($id);
-        $department->setAppends(['has_relationship']);
+        $department->append(['has_relationship']);
 
         return response()->json($department);
     }

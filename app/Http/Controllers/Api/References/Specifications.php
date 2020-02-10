@@ -54,7 +54,7 @@ class Specifications extends ApiController
     public function show($id)
     {
         $specification = Specification::with('specification_details')->findOrFail($id);
-        $specification->setAppends(['has_relationship']);
+        $specification->append(['has_relationship']);
 
         return response()->json($specification);
     }

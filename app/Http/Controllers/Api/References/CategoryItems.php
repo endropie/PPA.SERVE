@@ -37,7 +37,7 @@ class CategoryItems extends ApiController
     public function show($id)
     {
         $itemCategory = CategoryItem::findOrFail($id);
-        $itemCategory->setAppends(['has_relationship']);
+        $itemCategory->append(['has_relationship']);
 
         return response()->json($itemCategory);
     }

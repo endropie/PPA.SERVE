@@ -24,13 +24,13 @@ class IncomingGoods extends ApiController
 
             case 'datagrid':
                 $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->get();
-                $incoming_goods->each->setAppends(['is_relationship']);
+                $incoming_goods->each->append(['is_relationship']);
                 break;
 
             default:
                 $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->collect();
                 $incoming_goods->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship']);
+                    $item->append(['is_relationship']);
                     return $item;
                 });
                 break;
@@ -81,7 +81,7 @@ class IncomingGoods extends ApiController
             'incoming_good_items.unit'
         ])->findOrFail($id);
 
-        $incoming_good->setAppends(['is_relationship','has_relationship']);
+        $incoming_good->append(['is_relationship','has_relationship']);
 
         return response()->json($incoming_good);
     }

@@ -42,7 +42,7 @@ class Employees extends ApiController
     {
         $employee = Employee::with(['department','position','user'])->findOrFail($id);
 
-        $employee->setAppends(['has_relationship']);
+        $employee->append(['has_relationship']);
 
         return response()->json($employee);
     }

@@ -26,7 +26,7 @@ class OutgoingGoodVerifications extends ApiController
                 $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit'])
                 ->filter($filters)
                 ->latest()->get();
-                $outgoing_good_verifications->each->setAppends(['has_relationship']);
+                $outgoing_good_verifications->each->append(['has_relationship']);
                 break;
 
             default:
@@ -34,7 +34,7 @@ class OutgoingGoodVerifications extends ApiController
                 ->filter($filters)
                 ->latest()->collect();
                 $outgoing_good_verifications->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship', 'pre_delivery_number']);
+                    $item->append(['is_relationship', 'pre_delivery_number']);
                     return $item;
                 });
                 break;
@@ -77,7 +77,7 @@ class OutgoingGoodVerifications extends ApiController
             'unit',
         ])->withTrashed()->findOrFail($id);
 
-        $outgoing_good_verification->setAppends(['unit_amount','has_relationship']);
+        $outgoing_good_verification->append(['unit_amount','has_relationship']);
 
         return response()->json($outgoing_good_verification);
     }

@@ -21,7 +21,7 @@ class OpnameVouchers extends ApiController
 
             case 'datagrid':
                 $opname_vouchers = OpnameVoucher::filter($filters)->latest()->get();
-                $opname_vouchers->each->setAppends(['is_relationship']);
+                $opname_vouchers->each->append(['is_relationship']);
                 break;
 
             case 'counter':
@@ -31,7 +31,7 @@ class OpnameVouchers extends ApiController
             default:
                 $opname_vouchers = OpnameVoucher::with('item.unit')->filter($filters)->latest()->collect();
                 $opname_vouchers->getCollection()->transform(function($item) {
-                    $item->setAppends(['is_relationship', 'opname_number']);
+                    $item->append(['is_relationship', 'opname_number']);
                     return $item;
                 });
                 break;
