@@ -116,7 +116,7 @@ class ItemStock extends Model
 
             $result['STO'] = doubleval($row['PDO.REG'] ?? 0) + doubleval($row['PDO.RET'] ?? 0) - doubleval($row['VDO'] ?? 0);
             $result['ROW'] = doubleval($row['I-PDO'] ?? 0)  - doubleval($row['I-VDO'] ?? 0);
-            $result['ERROR'] = $result['STO'] != $result['ROW'];
+            $result['ERROR'] = round($result['STO']) != round($result['ROW']);
 
             return $result;
         })
