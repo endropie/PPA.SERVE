@@ -53,7 +53,7 @@ class OutgoingGoodVerifications extends ApiController
             if ($pre_delivery_item = PreDeliveryItem::find($row['pre_delivery_item_id'])) {
 
                 if ($pre_delivery_item->pre_delivery->status != 'OPEN') {
-                    $this->error('PDO has not OPEN state, is not allowed to be changed');
+                    $this->error('PDO has not OPEN state, Not allowed to be created');
                 }
                 $detail = $pre_delivery_item->outgoing_verifications()->create(array_merge($row, ['date' => $request->date]));
                 $detail->item->transfer($detail, $detail->unit_amount, 'VDO');
