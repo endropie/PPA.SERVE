@@ -118,12 +118,10 @@ class ItemStock extends Model
             $result['ROW'] = doubleval($row['I-PDO'] ?? 0)  - doubleval($row['I-VDO'] ?? 0);
             $result['ERROR'] = $result['STO'] != $result['ROW'];
 
-            return $row;
-            // return $result;
+            return $result;
         })
         ->filter(function($row) {
-            return true;
-            // return $row['ERROR'];
+            return $row['ERROR'];
         });
     }
 }
