@@ -17,6 +17,8 @@ class IncomingGood extends Model
         'revise_number', 'indexed_number'
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $relationships = [
         'request_order',
         'request_order.delivery_orders' => 'delivery_orders'
@@ -36,5 +38,12 @@ class IncomingGood extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }

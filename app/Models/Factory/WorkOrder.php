@@ -16,6 +16,8 @@ class WorkOrder extends Model
         'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'mode_line', 'description',
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $relationships = [
         'work_order_items.packing_items',
         'work_order_items.work_order_item_lines.work_production_items',
@@ -60,5 +62,12 @@ class WorkOrder extends Model
     public function getHasPackedAttribute() {
         $row = $this->stateable->where('state', 'PACKED')->last();
         return $row ?? null;
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }

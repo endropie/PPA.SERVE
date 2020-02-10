@@ -16,6 +16,8 @@ class Packing extends Model
         'worktime', 'operator_id'
     ];
 
+    protected $appends = ['fullnumber'];
+
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
@@ -46,5 +48,12 @@ class Packing extends Model
     public function shift()
     {
         return $this->belongsTo('App\Models\Reference\Shift');
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }

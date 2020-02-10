@@ -14,11 +14,19 @@ class Opname extends Model
         'number',
     ];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $appends = ['fullnumber'];
 
+    protected $hidden = ['created_at', 'updated_at'];
 
     public function opname_stocks()
     {
         return $this->hasMany('App\Models\Warehouse\OpnameStock')->withTrashed();
+    }
+
+    public function getFullnumberAttribute()
+    {
+        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+
+        return $this->number;
     }
 }
