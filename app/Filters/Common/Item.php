@@ -87,6 +87,20 @@ class Item extends Filter
         ->orderBy('fieldsort', $order);
     }
 
+    public function sort_PDOREG($order = '') {
+        $stockist = 'PDO.REG';
+        return $this->builder->select('items.*',
+            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort"))
+        ->orderBy('fieldsort', $order);
+    }
+
+    public function sort_PDORET($order = '') {
+        $stockist = 'PDO.RET';
+        return $this->builder->select('items.*',
+            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort"))
+        ->orderBy('fieldsort', $order);
+    }
+
     public function sort_VDO($order = '') {
         $stockist = 'VDO';
         return $this->builder->select('items.*',
