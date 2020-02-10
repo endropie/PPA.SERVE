@@ -12,10 +12,8 @@ class OutgoingGood extends Model
 
     protected $fillable = [
         'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'customer_note', 'description',
-        'transaction', 'date', 'due_date', 'operator_id', 'vehicle_id', 'transport_rate'
+        'transaction', 'date', 'vehicle_id', 'transport_rate'
     ];
-
-    protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
         'revise_delivery_orders' => 'delivery_orders.revise',

@@ -28,7 +28,7 @@ class OutgoingGoods extends ApiController
                 break;
 
             case 'datagrid':
-                $outgoing_goods = OutgoingGood::with(['customer', 'operator'])
+                $outgoing_goods = OutgoingGood::with(['customer'])
                     ->filter($filters)
                     ->latest()->get();
                 $outgoing_goods->each->append(['is_relationship']);
@@ -36,7 +36,7 @@ class OutgoingGoods extends ApiController
 
             default:
                 $outgoing_goods = OutgoingGood::with([
-                    'operator',
+                    'user_by',
                     'delivery_orders' => function ($q) {
                         $q->select(['id', 'outgoing_good_id', 'number', 'revise_number']);
                     },
@@ -147,9 +147,6 @@ class OutgoingGoods extends ApiController
             'customer_address' => $outgoing_good->customer_address,
             'customer_note' => $outgoing_good->customer_note,
             'date' => $outgoing_good->date,
-            'due_date' => $outgoing_good->due_date,
-
-            'operator_id' => $outgoing_good->operator_id,
             'vehicle_id' => $outgoing_good->vehicle_id,
             'transfer_rate' => $outgoing_good->transfer_rate,
         ]);
@@ -261,7 +258,6 @@ class OutgoingGoods extends ApiController
                 'customer_address' => $outgoing_good->customer_address,
                 'customer_note' => $outgoing_good->customer_note,
                 'date' => $outgoing_good->date,
-                'operator_id' => $outgoing_good->operator_id,
                 'vehicle_id' => $outgoing_good->vehicle_id,
                 'transfer_rate' => $outgoing_good->transfer_rate,
                 'is_internal' => true,
@@ -297,8 +293,6 @@ class OutgoingGoods extends ApiController
                 'customer_address' => $outgoing_good->customer_address,
                 'customer_note' => $outgoing_good->customer_note,
                 'date' => $outgoing_good->date,
-
-                'operator_id' => $outgoing_good->operator_id,
                 'vehicle_id' => $outgoing_good->vehicle_id,
                 'transfer_rate' => $outgoing_good->transfer_rate,
             ]);

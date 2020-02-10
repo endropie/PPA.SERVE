@@ -27,7 +27,7 @@ class DeliveryOrders extends ApiController
                 break;
 
             default:
-                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
+                $delivery_orders = DeliveryOrder::with(['user_by','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
                     $item->append(['is_relationship']);
                     return $item;

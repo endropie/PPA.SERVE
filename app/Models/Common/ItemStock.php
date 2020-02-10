@@ -59,7 +59,7 @@ class ItemStock extends Model
                 $detail->stockable()->delete();
 
                 $stockist = $detail->pre_delivery->transaction == "RETURN"
-                    ? "PDO.REG" : "PDO.RET" ;
+                    ? "PDO.RET" : "PDO.REG" ;
                 if ($detail->pre_delivery->status == "CLOSED") {
                     $detail->item->transfer($detail, $detail->amount_verification, $stockist);
                 }
@@ -83,7 +83,7 @@ class ItemStock extends Model
                     $detail->stockable()->whereNotIN('stockist', ['FG'])->delete();
                     if (!$detail->delivery_order) dd($detail, $detail->stockable);
                     $stockist = $detail->delivery_order->transaction == "RETURN"
-                        ? "PDO.REG" : "PDO.RET" ;
+                        ? "PDO.RET" : "PDO.REG" ;
 
                     $detail->item->transfer($detail, $detail->unit_amount, null, "VDO");
                     $detail->item->transfer($detail, $detail->unit_amount, null, $stockist);

@@ -30,7 +30,7 @@ class OutgoingGoodVerifications extends ApiController
                 break;
 
             default:
-                $outgoing_good_verifications = OutgoingGoodVerification::with(['item','unit','pre_delivery_item.pre_delivery'])
+                $outgoing_good_verifications = OutgoingGoodVerification::with(['user_by','item','unit','pre_delivery_item.pre_delivery'])
                 ->filter($filters)
                 ->latest()->collect();
                 $outgoing_good_verifications->getCollection()->transform(function($item) {

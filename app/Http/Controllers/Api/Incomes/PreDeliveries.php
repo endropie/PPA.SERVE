@@ -25,7 +25,7 @@ class PreDeliveries extends ApiController
                 break;
 
             default:
-                $pre_deliveries = PreDelivery::with(['customer'])->filter($filter)->latest()->collect();
+                $pre_deliveries = PreDelivery::with(['user_by','customer'])->filter($filter)->latest()->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
                     $item->append(['is_relationship']);
                     return $item;
@@ -59,7 +59,7 @@ class PreDeliveries extends ApiController
         }
 
         $schedules = collect($request->schedules)->map(function($item) {
-            if ($item->status != "OPEN") $this->error("$item->number has not OPEN state. CREATED FAILED!");
+            if ($item['status'] != "OPEN") $this->error($item['number'] ." has not OPEN state. CREATED FAILED!");
             return $item["id"];
         });
 

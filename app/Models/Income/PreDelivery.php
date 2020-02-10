@@ -18,8 +18,6 @@ class PreDelivery extends Model
 
     protected $appends = ['fullnumber'];
 
-    protected $hidden = ['created_at', 'updated_at'];
-
     protected $relationships = [
         'pre_delivery_items.outgoing_verifications'
     ];

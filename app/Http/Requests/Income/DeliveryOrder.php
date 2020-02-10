@@ -26,11 +26,8 @@ class DeliveryOrder extends Request
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,revise_number,' . $id,
             'date' => 'required',
-            'due_date' => 'required',
             'customer_id' => 'required',
-
             'delivery_order_items.*.item_id' => 'required',
-
             'delivery_order_items' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0) {

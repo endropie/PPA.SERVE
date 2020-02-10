@@ -26,11 +26,8 @@ class OutgoingGood extends Request
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:outgoing_goods,NULL,' . $id,
             'date' => 'required',
-            'time' => 'required',
             'customer_id' => 'required',
-
             'shipdelivery_items.*.item_id' => 'required',
-
             'shipdelivery_items' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0) {

@@ -3,19 +3,18 @@ namespace App\Models\Warehouse;
 
 use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\WithUserBy;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OutgoingGoodVerification extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $appends = ['unit_amount'];
 
     protected $fillable = [
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'date', 'encasement' // 'pre_delivery_item_id'
     ];
-
-    protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [
         'unit_rate' => 'double',
