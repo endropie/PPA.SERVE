@@ -88,17 +88,22 @@ class PreDeliveries extends ApiController
     public function update(Request $request, $id)
     {
         if (request('mode') == 'revision') return $this->revision($request, $id);
+        if (request('mode') == 'close') return $this->close($request, $id);
 
         $this->DATABASE::beginTransaction();
 
         $pre_delivery = PreDelivery::findOrFail($id);
 
-        if ($pre_delivery->status == 'VOID') {
-            $this->error('The data has been VOID state, is not allowed to be changed!');
+        if ($pre_delivery->status == 'CLOSED') {
+            $this->error('PDO has been CLOSED state, is not allowed to be changed!');
+        }
+
+        if ($pre_delivery->trashed()) {
+            $this->error('PDO has trashed, is not allowed to be changed!');
         }
 
         if ($pre_delivery->is_relationship == true) {
-            $this->error('The data has relationships, is not allowed to be changed!');
+            $this->error('PDO has relationships, is not allowed to be changed!');
         }
 
         $pre_delivery->update($request->input());
@@ -138,11 +143,56 @@ class PreDeliveries extends ApiController
         return response()->json($pre_delivery);
     }
 
+    public function destroy($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $pre_delivery = PreDelivery::findOrFail($id);
+
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        if ($mode == "VOID") {
+            if ($pre_delivery->status == 'VOID') $this->error("PDO $pre_delivery->status state, is not allowed to be $mode");
+
+            $rels = $pre_delivery->has_relationship;
+            unset($rels["incoming_good"]);
+            if ($rels->count() > 0)  $this->error("PDO has RELATIONSHIP, is not allowed to be $mode");
+        }
+        else {
+            if ($pre_delivery->status != 'OPEN') $this->error("PDO $pre_delivery->status state, is not allowed to be $mode");
+            if ($pre_delivery->is_relationship) $this->error("PDO has RELATIONSHIP, is not allowed to be $mode");
+        }
+
+        if($mode == "VOID") {
+            $pre_delivery->status = "VOID";
+            $pre_delivery->save();
+        }
+
+        foreach ($pre_delivery->pre_delivery_items as $detail) {
+            $detail->item->distransfer($detail);
+            $detail->delete();
+        }
+        $pre_delivery->delete();
+
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
+    }
+
     public function revision($request, $id)
     {
         $this->DATABASE::beginTransaction();
 
         $revise = PreDelivery::findOrFail($id);
+
+        if ($revise->status == 'CLOSED') {
+            $this->error('PDO has been CLOSED state, is not allowed to be Revised!');
+        }
+
+        if ($revise->trashed()) {
+            $this->error('PDO has trashed, is not allowed to be Revised!');
+        }
+
         foreach ($revise->pre_delivery_items as $detail) {
             $detail->item->distransfer($detail);
             $detail->outgoing_verifications->each(function($verification) {
@@ -208,39 +258,37 @@ class PreDeliveries extends ApiController
         return response()->json($pre_delivery);
     }
 
-    public function destroy($id)
+    public function close($request, $id)
     {
         $this->DATABASE::beginTransaction();
 
         $pre_delivery = PreDelivery::findOrFail($id);
 
-        $mode = strtoupper(request('mode') ?? 'DELETED');
-
-        if ($mode == "VOID") {
-            if ($pre_delivery->status == 'VOID') $this->error("The data $pre_delivery->status state, is not allowed to be $mode");
-
-            $rels = $pre_delivery->has_relationship;
-            unset($rels["incoming_good"]);
-            if ($rels->count() > 0)  $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
-        }
-        else {
-            if ($pre_delivery->status != 'OPEN') $this->error("The data $pre_delivery->status state, is not allowed to be $mode");
-            if ($pre_delivery->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
+        if ($pre_delivery->trashed()) {
+            $this->error("PDO has trashed. Not Allowed to CLOSED" );
         }
 
-        if($mode == "VOID") {
-            $pre_delivery->status = "VOID";
-            $pre_delivery->save();
+        if ($pre_delivery->status === 'CLOSED') {
+            $this->error("status has CLOSED. Not Allowed to CLOSED" );
         }
 
         foreach ($pre_delivery->pre_delivery_items as $detail) {
+
+            if (round($detail->amount_verification) > round($detail->unit_amount)) {
+                $this->error("[". $detail->item->part_name ."] unit verification failed. Not Allowed to CLOSED" );
+            }
+
             $detail->item->distransfer($detail);
-            $detail->delete();
+            $detail->calculate();
+
+            $stockist = $pre_delivery->transaction === 'RETURN' ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->amount_verification, $stockist);
         }
-        $pre_delivery->delete();
+
+        $pre_delivery->status = 'CLOSED';
+        $pre_delivery->save();
 
         $this->DATABASE::commit();
-
-        return response()->json(['success' => true]);
+        return response()->json($pre_delivery);
     }
 }
