@@ -29,7 +29,7 @@ class DeliveryOrders extends ApiController
             default:
                 $delivery_orders = DeliveryOrder::with(['user_by','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
-                    $item->append(['is_relationship']);
+                    $item->append(['reconcile_number','is_relationship']);
                     return $item;
                 });
                 break;
@@ -48,7 +48,7 @@ class DeliveryOrders extends ApiController
             'delivery_order_items.unit',
         ])->withTrashed()->findOrFail($id);
 
-        $delivery_order->append(['has_revision', 'has_relationship']);
+        $delivery_order->append(['reconcile_number', 'has_revision', 'has_relationship']);
 
         return response()->json($delivery_order);
     }

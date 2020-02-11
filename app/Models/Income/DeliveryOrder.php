@@ -50,6 +50,11 @@ class DeliveryOrder extends Model
         return $this->request_order()->where('status', 'CLOSED');
     }
 
+    public function reconcile()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryOrder');
+    }
+
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
@@ -75,5 +80,12 @@ class DeliveryOrder extends Model
         if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
 
         return $this->number;
+    }
+
+    public function getReconcilenumberAttribute()
+    {
+        if ($this->reconcile) return $this->reconcile->fullnumber;
+
+        return null;
     }
 }
