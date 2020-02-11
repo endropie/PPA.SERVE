@@ -100,6 +100,7 @@ class OutgoingGoods extends ApiController
     {
         $outgoing_good = OutgoingGood::with([
             'customer',
+            'delivery_orders',
             'outgoing_good_items.item.item_units',
             'outgoing_good_items.unit'
         ])->withTrashed()->findOrFail($id);
