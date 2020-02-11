@@ -279,8 +279,6 @@ class Packings extends ApiController
             $newDetail->work_order_item->calculate();
         }
 
-        // $this->error('LOLOS!');
-
         $this->DATABASE::commit();
         return response()->json($packing);
     }

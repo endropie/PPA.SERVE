@@ -251,8 +251,6 @@ class DeliveryOrders extends ApiController
         $delivery_order->status = $reconcile->status;
         $delivery_order->save();
 
-        // $this->error('LOLOS');
-
         $this->DATABASE::commit();
         return response()->json($delivery_order);
     }

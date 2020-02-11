@@ -206,8 +206,6 @@ class IncomingGoods extends ApiController
         $revise->save();
         $revise->delete();
 
-        // $this->error('LOLOS');
-
         $this->DATABASE::commit();
         return response()->json($incoming_good);
     }
