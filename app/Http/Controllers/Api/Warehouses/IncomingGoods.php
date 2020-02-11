@@ -9,6 +9,7 @@ use App\Models\Income\Customer;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\PreDelivery;
+use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
 class IncomingGoods extends ApiController
@@ -263,6 +264,8 @@ class IncomingGoods extends ApiController
 
         $incoming_good = IncomingGood::create($request->all());
 
+        $request_order = $revise->request_order;
+
         $rows = $request->incoming_good_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
@@ -270,7 +273,7 @@ class IncomingGoods extends ApiController
             $detail = $incoming_good->incoming_good_items()->create($row);
 
             if (isset($row['request_order_item_id'])) {
-                $request_order_item = $incoming_good->request_order->request_order_items()->find($row['request_order_item_id']);
+                $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
             }
@@ -283,7 +286,8 @@ class IncomingGoods extends ApiController
             $this->reviseRequestOrder($revise, $incoming_good);
         }
 
-        $incoming_good->status = 'VALIDATED';
+        if ($request_order) $incoming_good->request_order()->associate($request_order);
+        $incoming_good->status = $revise->status;
         $incoming_good->save();
 
         $revise->status = 'REVISED';
@@ -335,9 +339,7 @@ class IncomingGoods extends ApiController
 
             $field = collect($detail)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=> $detail->valid, 'price'=>0]);
 
-            $request_order_item = $request_order
-                ->request_order_items()
-                ->updateOrCreate(['id'=>$detail->request_order_item_id],$field->toArray());
+            $request_order_item = RequestOrderItem::updateOrCreate(['id'=>$detail->request_order_item_id],$field->toArray());
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
         }
