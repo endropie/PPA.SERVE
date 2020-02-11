@@ -28,7 +28,7 @@ class OpnameStocks extends ApiController
                 break;
 
             default:
-                $opname_stocks = OpnameStock::with('opname','item.unit')->filter($filters)->latest()->collect();
+                $opname_stocks = OpnameStock::with('user_by','opname','item.unit')->filter($filters)->latest()->collect();
                 $opname_stocks->getCollection()->transform(function($item) {
                     $item->append(['opname_number','is_relationship']);
                     return $item;

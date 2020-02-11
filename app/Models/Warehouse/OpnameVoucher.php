@@ -5,16 +5,15 @@ namespace App\Models\Warehouse;
 use App\Filters\Filterable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
+use App\Models\WithUserBy;
 
 class OpnameVoucher extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number', 'item_id', 'stockist', 'quantity', 'unit_id', 'unit_rate'
     ];
-
-    protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = ['opname_stock'];
 

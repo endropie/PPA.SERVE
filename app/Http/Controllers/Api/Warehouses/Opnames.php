@@ -27,7 +27,7 @@ class Opnames extends ApiController
                 break;
 
             default:
-                $opnames = Opname::filter($filters)->latest()->collect();
+                $opnames = Opname::with('user_by')->filter($filters)->latest()->collect();
                 $opnames->getCollection()->transform(function($item) {
                     // $item->append();
                     return $item;
@@ -172,6 +172,5 @@ class Opnames extends ApiController
             $opname_stock->final_amount = $final_amount;
             $opname_stock->save();
         }
-
     }
 }

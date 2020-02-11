@@ -29,7 +29,7 @@ class OpnameVouchers extends ApiController
                 break;
 
             default:
-                $opname_vouchers = OpnameVoucher::with('item.unit')->filter($filters)->latest()->collect();
+                $opname_vouchers = OpnameVoucher::with(['user_by','item','unit'])->filter($filters)->latest()->collect();
                 $opname_vouchers->getCollection()->transform(function($item) {
                     $item->append(['is_relationship', 'opname_number']);
                     return $item;
@@ -58,8 +58,8 @@ class OpnameVouchers extends ApiController
     public function show($id)
     {
         $opname_voucher = OpnameVoucher::withTrashed()->with([
-            'item.unit',
-            // 'item.item_units',
+            'unit',
+            'item.item_units',
         ])->findOrFail($id);
 
         $opname_voucher->append(['is_relationship','has_relationship']);

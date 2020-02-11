@@ -5,18 +5,17 @@ namespace App\Models\Warehouse;
 use App\Filters\Filterable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
+use App\Models\WithUserBy;
 
 class Opname extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
         'number',
     ];
 
     protected $appends = ['fullnumber'];
-
-    protected $hidden = ['created_at', 'updated_at'];
 
     public function opname_stocks()
     {

@@ -27,7 +27,7 @@ class RecreateOpnameStocksTables extends Migration
             $table->integer('revise_number')->nullable();
             $table->string('status')->default('OPEN');
 
-            $table->integer('created_by')->nullable();
+            $table->bigInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -40,8 +40,8 @@ class RecreateOpnameStocksTables extends Migration
             $table->float('init_amount');
             $table->float('final_amount')->nullable();
 
-            $table->integer('created_by')->nullable();
             $table->bigInteger('opname_id')->unsigned();
+            $table->bigInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -61,6 +61,7 @@ class RecreateOpnameStocksTables extends Migration
             $table->string('status')->default('OPEN');
 
             $table->bigInteger('opname_stock_id')->unsigned()->nullable();
+            $table->bigInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
