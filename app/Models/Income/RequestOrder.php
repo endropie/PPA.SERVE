@@ -12,7 +12,7 @@ class RequestOrder extends Model
 
     protected $fillable = [
         'number', 'date', 'customer_id', 'transaction', 'reference_number', 'description',
-        'actived_date', 'order_mode', 'is_estimate', 'estimate_number'
+        'actived_date', 'order_mode'
     ];
 
     protected $appends = ['fullnumber'];

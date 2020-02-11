@@ -77,9 +77,7 @@ class RequestOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') === 'estimate_updated') return $this->estimate_updated($request, $id);
-        if(request('mode') === 'estimate_finished') return $this->estimate_finished($request, $id);
-        if(request('mode') === 'closed') return $this->closed($request, $id);
+        if(request('mode') === 'close') return $this->close($request, $id);
 
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -162,8 +160,7 @@ class RequestOrders extends ApiController
         return response()->json(['success' => true]);
     }
 
-
-    public function closed($request, $id)
+    public function close($request, $id)
     {
         $this->DATABASE::beginTransaction();
 
@@ -185,74 +182,10 @@ class RequestOrders extends ApiController
             $this->error("The data '$request_order->order_mode' mode , Not allowed to be CLOSED");
         }
 
-        // foreach ($request_order->delivery_orders as $delivery_order) {
-        //     if ($delivery_order->status != 'CONFIRMED') $this->error("The data has UNCONFIRMED Delivery, Not allowed to be CLOSED");
-        // }
-
-        $this->error("$request_order->order_mode LOLOS");
-
         $request_order->status = 'CLOSED';
         $request_order->save();
 
         $this->DATABASE::commit();
         return response()->json($request_order);
-    }
-
-    public function estimate_updated($request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $request_order = RequestOrder::findOrFail($id);
-
-        if (!$request_order->is_estimate) {
-            $this->error('The data has not ESTIMATE, Not allowed to be changed');
-        }
-
-        if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, Not allowed to be changed');
-        }
-
-        $request_order = $this->saveEstimate($request, $request_order);
-
-        $this->DATABASE::commit();
-        return response()->json($request_order);
-    }
-
-    public function estimate_finished($request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $request_order = RequestOrder::findOrFail($id);
-
-        if (!$request_order->is_estimate) {
-            $this->error('The data has not ESTIMATE, Not allowed to be changed');
-        }
-
-        if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, Not allowed to be changed');
-        }
-
-        $request_order = $this->saveEstimate($request, $request_order);
-
-        $request_order->update(['is_estimate' => 0]);
-
-        $this->DATABASE::commit();
-        return response()->json($request_order);
-    }
-
-    protected function saveEstimate($request, $request_order) {
-        $request_order->update($request->input());
-
-        $rows = $request->request_order_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            if ($row['id'] && $check = $request_order->request_order_items()->find($row['id'])) {
-                if ($check->quantity > $row['quantity']) $this->error('Quantity Invalid!');
-            }
-            $detail = $request_order->request_order_items()->updateOrCreate(['id'=> $row['id']], $row);
-            $detail->item->distransfer($detail);
-        }
-
-        return $request_order->fresh();
     }
 }
