@@ -24,8 +24,6 @@ class OpnameStock extends Model
 
     protected $relationships = [];
 
-    protected $hidden = [];
-
     public function opname_vouchers()
     {
         return $this->hasMany('App\Models\Warehouse\OpnameVoucher');

@@ -28,7 +28,7 @@ class IncomingGoods extends ApiController
                 break;
 
             default:
-                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->collect();
+                $incoming_goods = IncomingGood::with(['user_by','customer'])->filter($filters)->latest()->collect();
                 $incoming_goods->getCollection()->transform(function($item) {
                     $item->append(['is_relationship']);
                     return $item;

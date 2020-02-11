@@ -24,8 +24,6 @@ class IncomingGood extends Model
         'request_order.delivery_orders' => 'delivery_orders'
     ];
 
-    protected $hidden = [];
-
     public function incoming_good_items()
     {
         return $this->hasMany('App\Models\Warehouse\IncomingGoodItem')->withTrashed();
