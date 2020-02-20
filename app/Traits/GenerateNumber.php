@@ -90,7 +90,10 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Factory\Packing::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Factory\Packing::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -108,7 +111,9 @@ trait GenerateNumber
 
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Factory\WorkProduction::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Factory\WorkProduction::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -124,7 +129,9 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Factory\WorkOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Factory\WorkOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -170,14 +177,14 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextOpnameStockNumber($date = null)
+    public function getNextOpnameVoucherNumber($date = null)
     {
-        $modul = 'opname_stock';
+        $modul = 'opname_voucher';
         $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul);
+        $prefix = $this->prefixParser($modul, "VSO", "{Y}");
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Warehouse\OpnameStock::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Warehouse\OpnameVoucher::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -190,7 +197,7 @@ trait GenerateNumber
     {
         $modul = 'opname_stock';
         $digit = (int) setting()->get("$modul.number_digit", 2);
-        $prefix = $this->prefixParser($modul);
+        $prefix = $this->prefixParser($modul, "STO", "{Y}");
         $prefix = $this->dateParser($prefix, $date);
 
         $next = \App\Models\Warehouse\Opname::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
@@ -262,28 +269,5 @@ trait GenerateNumber
         }
 
         return $str ?? '';
-    }
-
-    public function toAlpha($num, $code = '')
-    {
-        $alphabets = array('', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z');
-
-        $division = floor($num / 26);
-        $remainder = $num % 26;
-
-        if($remainder == 0)
-        {
-            $division = $division - 1;
-            $code .= 'z';
-        }
-        else
-            $code .= $alphabets[$remainder];
-
-        if($division > 26)
-            return number_to_alpha($division, $code);
-        else
-            $code .= $alphabets[$division];
-
-        return strrev($code);
     }
 }
