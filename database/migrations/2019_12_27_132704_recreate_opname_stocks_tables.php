@@ -52,7 +52,7 @@ class RecreateOpnameStocksTables extends Migration
 
         Schema::create('opname_vouchers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('number', 10);
+            $table->string('number');
             $table->integer('item_id');
             $table->string('stockist');
             $table->decimal('quantity');

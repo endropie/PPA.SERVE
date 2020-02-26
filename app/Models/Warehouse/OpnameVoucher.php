@@ -15,6 +15,8 @@ class OpnameVoucher extends Model
         'number', 'item_id', 'stockist', 'quantity', 'unit_id', 'unit_rate'
     ];
 
+    protected $appends = ['opname_number'];
+
     protected $relationships = ['opname_stock'];
 
     protected $casts = [

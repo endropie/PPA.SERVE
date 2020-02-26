@@ -13,6 +13,7 @@
         "barryvdh/laravel-cors": "^0.11.2",
         "beyondcode/laravel-websockets": "^1.1",
         "bkwld/cloner": "^3.5",
+        "dingo/api": "^2.4",
         "doctrine/dbal": "^2.9",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.8.*",

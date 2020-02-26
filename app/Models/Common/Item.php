@@ -66,6 +66,11 @@ class Item extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
     }
 
+    public function units()
+    {
+        return $this->belongsToMany('App\Models\Reference\Unit', 'item_units');
+    }
+
     public function item_prelines()
     {
         return $this->hasMany('App\Models\Common\ItemPreline');
@@ -121,6 +126,16 @@ class Item extends Model
         return $this->belongsTo(\App\Models\Reference\Size::class);
     }
 
+    public function getUnitConvertionsAttribute()
+    {
+        $units = collect([]);
+        $units->push(array_merge($this->unit->toArray(), ['rate' => 1]));
+
+        foreach ($this->item_units as $item) {
+            $units->push(array_merge($item->unit->toArray(), ['rate' => (double) $item->rate]));
+        }
+        return $units;
+    }
 
     public function getTotalsAttribute()
     {

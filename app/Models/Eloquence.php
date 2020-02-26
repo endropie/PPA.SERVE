@@ -29,15 +29,31 @@ use Route;
 
 trait Eloquence
 {
-    protected $filterableClass = null;
 
     public function scopeCollect($query, $map = false)
     {
         $request = request();
-        $limit = (int) $request->get('limit', 50);
+        $limit = (int) $request->get('limit', 10);
         if($limit == 0) $limit = $query->count();
         $query = $query->paginate($limit);
         return $query;
+    }
+
+    public function scopePagination($query, $map = false)
+    {
+        $request = request();
+        $limit = (int) $request->get('limit', 10);
+        if($limit == 0) $limit = $query->count();
+
+        return $query->paginate($limit);
+    }
+
+    public function scopeLimitation($query, $map = false)
+    {
+        $request = request();
+        $limit = (int) $request->get('limit', 25);
+
+        return $query->limit($limit)->get();
     }
 
     public function scopeAll($query, $map = false)
@@ -49,5 +65,4 @@ trait Eloquence
         }
         return $query->get();
     }
-
 }
