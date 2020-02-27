@@ -38,7 +38,7 @@ class Employee extends Model
     }
 
     public function work_productions() {
-        return $this->hasMany('App\Models\Factory\WorkProduction', 'operator_id');
+        return $this->hasMany('App\Models\Factory\WorkProduction', 'created_at');
     }
 
     public function packings() {
@@ -46,7 +46,7 @@ class Employee extends Model
     }
 
     public function outgoing_goods() {
-        return $this->hasMany('App\Models\Warehouse\OutgoingGood', 'operator_id');
+        return $this->hasMany('App\Models\Warehouse\OutgoingGood', 'created_at');
     }
 
 }
