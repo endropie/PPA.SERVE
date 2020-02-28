@@ -112,6 +112,10 @@ class Filter
 
         $tableName = $this->builder->getQuery()->from;
         $fields = \Schema::getColumnListing($tableName);
+
+        $except = [$this->builder->getModel()->getKeyName()];
+        $fields = array_diff_key($fields, $except);
+
         $separator = substr_count($value, '|') > 0 ? '|' : ' ';
         $keywords = explode($separator, $value);
 
