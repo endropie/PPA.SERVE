@@ -17,7 +17,7 @@ class CreateRequestOrdersTables extends Migration
             $table->increments('id');
             $table->string('number');
             $table->date('date');
-
+            $table->date('actived_date')->nullable();
             $table->integer('customer_id')->unsigned();
             $table->string('reference_number')->nullable();
 
@@ -40,12 +40,12 @@ class CreateRequestOrdersTables extends Migration
 
             $table->integer('item_id')->unsigned();
             $table->integer('unit_id')->unsigned();
-            $table->float('unit_rate')->default(1);
-            $table->float('quantity');
-            $table->float('price');
-            $table->string('note')->nullable();
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
+            $table->decimal('price', 24,4);
+            $table->decimal('amount_delivery',24,4)->default(0);
 
-            // $table->integer('outgoing_good_id')->nullable();
+            $table->string('note')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -32,9 +32,9 @@ class CreateCustomersTable extends Migration
 
             $table->boolean('with_tax')->default(0);
             $table->boolean('with_pph')->default(0);
-            $table->double('tax')->default(0);
-            $table->double('pph_service')->default(0);
-            $table->double('pph_material')->default(0);
+            $table->decimal('tax', 10, 2)->default(0);
+            $table->decimal('pph_service', 10, 2)->default(0);
+            $table->decimal('pph_material', 10, 2)->default(0);
 
             $table->string('invoice_mode')->nullable();
             $table->string('delivery_mode')->nullable();

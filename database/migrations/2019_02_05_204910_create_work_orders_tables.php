@@ -40,13 +40,14 @@ class CreateWorkOrdersTables extends Migration
             $table->integer('work_order_id');
 
             $table->integer('item_id');
-            $table->float('quantity')->default(0);
-            $table->float('target')->default(0);
             $table->integer('unit_id');
-            $table->float('unit_rate')->default(1);
-            $table->float('ngratio')->default(0);
-            $table->float('amount_process')->default(0);
-            $table->float('amount_packing')->default(0);
+
+            $table->decimal('quantity', 10, 2)->default(0);
+            $table->decimal('target', 10, 2)->default(0);
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('ngratio', 10, 2)->default(0);
+            $table->decimal('amount_process', 24, 4)->default(0);
+            $table->decimal('amount_packing', 24, 4)->default(0);
 
             $table->text('note')->nullable();
 
@@ -60,7 +61,7 @@ class CreateWorkOrdersTables extends Migration
 
             $table->integer('line_id')->unsigned();
             $table->boolean('ismain')->nullable();
-            $table->float('amount_line')->default(0);
+            $table->decimal('amount_line', 24, 4)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

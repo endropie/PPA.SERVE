@@ -35,9 +35,9 @@ class CreatePackingsTables extends Migration
             $table->integer('packing_id');
             $table->integer('item_id');
             $table->integer('unit_id');
-            $table->float('unit_rate');
-            $table->float('quantity');
-            $table->float('amount_faulty')->default(0);
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
+            $table->decimal('amount_faulty', 24, 4)->default(0);
             $table->integer('type_fault_id')->nullable();
             $table->integer('work_order_item_id');
 
@@ -50,7 +50,7 @@ class CreatePackingsTables extends Migration
             $table->integer('packing_item_id');
 
             $table->integer('fault_id');
-            $table->float('quantity');
+            $table->decimal('quantity', 10, 2);
 
             $table->timestamps();
             $table->softDeletes();

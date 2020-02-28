@@ -428,9 +428,9 @@ class WorkOrders extends ApiController
                 $packing_item = $packing_item->fresh();
 
                 $packing_item->item->transfer($packing_item, $packing_item->unit_total, 'FG', 'WIP');
-                $NG = (double) $packing_item->packing_item_faults()->sum('quantity');
-                if ($NG > 0) $packing_item->item->transfer($packing_item, $NG, 'NG', 'WIP');
-                $packing_item->amount_faulty = $NG * $packing_item->unit_rate;
+                $NC = (double) $packing_item->packing_item_faults()->sum('quantity');
+                if ($NC > 0) $packing_item->item->transfer($packing_item, $NC, 'NC', 'WIP');
+                $packing_item->amount_faulty = $NC * $packing_item->unit_rate;
                 $packing_item->save();
 
                 $packing_item->work_order_item()->associate($detail);

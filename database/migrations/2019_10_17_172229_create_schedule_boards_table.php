@@ -27,7 +27,6 @@ class CreateScheduleBoardsTable extends Migration
             $table->integer('operator_id')->nullable();
             $table->date('date')->nullable();
             $table->time('time')->nullable();
-            $table->string('destination');
             $table->string('status')->default('OPEN');
 
             $table->dateTime('departed_at')->nullable();
@@ -39,8 +38,6 @@ class CreateScheduleBoardsTable extends Migration
 
         Schema::table('vehicles', function (Blueprint $table) {
             $table->boolean('is_scheduled')->default(0)->after('description');
-            // [Fix:Bug] null is allowed!
-            $table->integer('department_id')->nullable()->change();
         });
 
         // Create Setting

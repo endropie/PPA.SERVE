@@ -24,7 +24,7 @@ class Item extends Filter
         if(!strlen($value)) return $this->builder;
 
         $value = explode(',',strtoupper($value));
-        if(in_array('ALL', $value)) $value = ['FM','WO','WIP','FG','NG', 'RET'];
+        if(in_array('ALL', $value)) $value = ['FM','WO','WIP','FG','NC', 'NCR'];
 
         return $this->builder->whereHas('item_stocks', function($q) use($value){
             if(count($value) > 0) $q->whereIn('stockist', $value);
@@ -39,7 +39,7 @@ class Item extends Filter
     }
 
     public function sort_ALL($order = '') {
-        $stockists = '"FM", "WO", "WIP", "FG", "NG", "RET"';
+        $stockists = '"FM", "WO", "WIP", "FG", "NC", "NCR"';
         return $this->builder->select('items.*',
             \DB::raw("(SELECT SUM(total) FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist IN ($stockists)) as fieldsort"))
         ->orderBy('fieldsort', $order);
@@ -73,15 +73,15 @@ class Item extends Filter
         ->orderBy('fieldsort', $order);
     }
 
-    public function sort_NG($order = '') {
-        $stockist = 'NG';
+    public function sort_NC($order = '') {
+        $stockist = 'NC';
         return $this->builder->select('items.*',
             \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort"))
         ->orderBy('fieldsort', $order);
     }
 
-    public function sort_RET($order = '') {
-        $stockist = 'RET';
+    public function sort_NCR($order = '') {
+        $stockist = 'NCR';
         return $this->builder->select('items.*',
             \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort"))
         ->orderBy('fieldsort', $order);

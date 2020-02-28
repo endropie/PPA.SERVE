@@ -47,11 +47,11 @@ class CreateIncomingGoodsTables extends Migration
             $table->integer('incoming_good_id');
 
             $table->integer('item_id');
-            $table->float('quantity');
-            $table->float('valid')->nullable();
-
             $table->integer('unit_id');
-            $table->float('unit_rate')->default(1);
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
+            $table->decimal('valid', 10, 2)->nullable();
+
 
             $table->integer('request_order_item_id')->nullable();
 

@@ -229,7 +229,7 @@ class IncomingGoods extends ApiController
 
         foreach ($incoming_good->incoming_good_items as $detail) {
             // Calculate stock on "validation" Incoming Goods!
-            $to = $incoming_good->transaction == 'RETURN' ? 'RET' : 'FM';
+            $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
             $detail->item->transfer($detail, $detail->unit_valid, $to);
         }
 
@@ -278,7 +278,7 @@ class IncomingGoods extends ApiController
                 $detail->save();
             }
 
-            $to = $incoming_good->transaction == 'RETURN' ? 'RET' : 'FM';
+            $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
             $detail->item->transfer($detail, $detail->unit_valid, $to);
         }
 

@@ -10,8 +10,8 @@ class ItemStock extends Model
         'WO' => 'Work Order',
         'WIP' => 'Work In Process',
         'FG' => 'Finish Good',
-        'NG' => 'Not Good',
-        'RET' => 'Not Good Return',
+        'NC' => 'Not Complete',
+        'NCR' => 'Not Complete Return',
         'VDO' => 'Verification-DO amounable',
         'PDO.REG' => 'REGULER-PDO amounable', // REGDO
         'PDO.RET' => 'RETURN-PDO amounable', // RETDO

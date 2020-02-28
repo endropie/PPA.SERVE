@@ -19,10 +19,6 @@ class CreateScheduleBoardCustomersTable extends Migration
             $table->integer('customer_id');
             $table->timestamps();
         });
-
-        Schema::table('schedule_boards', function (Blueprint $table) {
-            $table->dropColumn('destination');
-        });
     }
 
     /**

@@ -42,9 +42,11 @@ class CreatePreDeliveriesTables extends Migration
             $table->unsignedInteger('pre_delivery_id');
             $table->unsignedInteger('item_id');
             $table->unsignedInteger('unit_id');
-            $table->float('unit_rate')->default(1);
-            $table->float('quantity');
-            $table->float('amount_verification')->default(0);
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
+            $table->decimal('amount_verification', 24, 4)->default(0);
+
+            $table->string('encasement')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -18,16 +18,15 @@ class CreateDeliveryOrdersTables extends Migration
             $table->string('number');
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->date('date')->nullable();
-            $table->date('due_date')->nullable();
 
             $table->unsignedInteger('customer_id');
             $table->string('customer_name')->nullable();
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
+            $table->string('customer_note')->nullable();
 
             $table->string('vehicle_id')->nullable();
-            $table->tinyInteger('transport_rate')->nullable();
-            $table->unsignedInteger('operator_id')->nullable();
+            $table->tinyInteger('rit')->nullable();
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
@@ -47,8 +46,9 @@ class CreateDeliveryOrdersTables extends Migration
 
             $table->unsignedInteger('item_id');
             $table->unsignedInteger('unit_id');
-            $table->float('unit_rate')->default(1);
-            $table->float('quantity');
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
+            $table->string('encasement')->nullable();
 
             $table->unsignedInteger('request_order_item_id')->nullable();
 

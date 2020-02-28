@@ -143,7 +143,7 @@ class Item extends Model
         $all = 0;
         foreach (ItemStock::getStockists() as $key => $value) {
             $stocks[$key] = (double) $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
-            if (array_search($key, ['FM','WO','WIP','FG','NG','RET']) > -1) $all += $stocks[$key];
+            if (array_search($key, ['FM','WO','WIP','FG','NC','NCR']) > -1) $all += $stocks[$key];
         }
         return array_merge($stocks, ['*' => $all]);
     }

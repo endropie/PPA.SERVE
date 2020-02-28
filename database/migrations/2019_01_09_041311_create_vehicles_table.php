@@ -17,7 +17,7 @@ class CreateVehiclesTable extends Migration
             $table->increments('id');
             $table->string('number');
             $table->string('type',25);
-            $table->integer('department_id');
+            $table->integer('department_id')->nullable();
             $table->string('owner')->nullable();
             $table->string('description')->nullable();
             $table->timestamps();

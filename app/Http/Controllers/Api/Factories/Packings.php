@@ -146,12 +146,12 @@ class Packings extends ApiController
                     }
                 }
 
-                // Calculate "NG" stock on after the Item Faults Created!
-                $NG = (double) $detail->packing_item_faults()->sum('quantity');
-                if ($NG > 0) {
-                    $detail->item->transfer($detail, $NG, 'NG', 'WIP');
+                // Calculate "NC" stock on after the Item Faults Created!
+                $NC = (double) $detail->packing_item_faults()->sum('quantity');
+                if ($NC > 0) {
+                    $detail->item->transfer($detail, $NC, 'NC', 'WIP');
                 }
-                $detail->amount_faulty = $NG * $detail->unit_rate;
+                $detail->amount_faulty = $NC * $detail->unit_rate;
                 $detail->save();
 
                 $detail->work_order_item->calculate();
@@ -194,12 +194,12 @@ class Packings extends ApiController
                 }
             }
 
-            // Calculate "NG" stock on after the Item Faults Created!
-            $NG = (double) $detail->packing_item_faults()->sum('quantity');
-            if ($NG > 0) {
-                $detail->item->transfer($detail, $NG, 'NG', 'WIP');
+            // Calculate "NC" stock on after the Item Faults Created!
+            $NC = (double) $detail->packing_item_faults()->sum('quantity');
+            if ($NC > 0) {
+                $detail->item->transfer($detail, $NC, 'NC', 'WIP');
             }
-            $detail->amount_faulty = $NG * $detail->unit_rate;
+            $detail->amount_faulty = $NC * $detail->unit_rate;
             $detail->save();
 
             $detail->work_order_item->calculate();
@@ -269,11 +269,11 @@ class Packings extends ApiController
                 }
             }
 
-            // Calculate stock on after the NG items updated!
-            $NG = (double) $packing->packing_items->packing_item_faults()->sum('quantity') * $newDetail->unit_rate;
-            if ($NG > 0) $newDetail->item->transfer($newDetail, $NG, 'NG', 'WIP');
+            // Calculate stock on after the NC items updated!
+            $NC = (double) $packing->packing_items->packing_item_faults()->sum('quantity') * $newDetail->unit_rate;
+            if ($NC > 0) $newDetail->item->transfer($newDetail, $NC, 'NC', 'WIP');
 
-            $newDetail->amount_faulty = $NG ;
+            $newDetail->amount_faulty = $NC ;
             $newDetail->save();
 
             $newDetail->work_order_item->calculate();

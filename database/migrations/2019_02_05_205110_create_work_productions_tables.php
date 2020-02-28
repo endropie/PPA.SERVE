@@ -39,8 +39,9 @@ class CreateWorkProductionsTables extends Migration
             $table->integer('work_production_id');
             $table->integer('item_id');
             $table->integer('unit_id');
-            $table->float('unit_rate')->default(1);
-            $table->float('quantity');
+            $table->string('stockist')->nullable();
+            $table->decimal('unit_rate', 10, 5)->default(1);
+            $table->decimal('quantity', 10, 2);
 
             $table->integer('work_order_item_line_id')->nullable();
             $table->timestamps();

@@ -28,10 +28,10 @@ class CreateItemsTable extends Migration
             $table->string('load_type')->nullable();
             $table->integer('load_capacity')->nullable()->default(0);
             $table->integer('packing_duration')->nullable()->default(0);
-            $table->float('sa_dm')->nullable()->default(0);
-            $table->float('weight',20,2)->nullable()->default(0);
+            $table->decimal('sa_dm')->nullable()->default(0);
+            $table->decimal('weight')->nullable()->default(0);
 
-            $table->float('price', 20, 2)->default(0);
+            $table->decimal('price', 20, 2)->default(0);
 
             $table->integer('category_item_id')->nullable();
             $table->integer('type_item_id')->nullable();
@@ -58,7 +58,7 @@ class CreateItemsTable extends Migration
             $table->increments('id');
             $table->integer('item_id');
             $table->integer('unit_id');
-            $table->float('rate')->default(1);
+            $table->decimal('rate', 10, 5)->default(1);
             $table->timestamps();
         });
 
@@ -66,7 +66,7 @@ class CreateItemsTable extends Migration
             $table->increments('id');
             $table->integer('item_id');
             $table->string('stockist', 10);
-            $table->float('total')->default(0);
+            $table->decimal('total', 24, 4)->default(0);
             $table->timestamps();
 
             $table->unique(['item_id','stockist']);
@@ -77,7 +77,7 @@ class CreateItemsTable extends Migration
             $table->morphs('base');
             $table->integer('item_id');
             $table->string('stockist', 10);
-            $table->float('unit_amount')->default(0);
+            $table->decimal('unit_amount', 24, 4)->default(0);
             $table->timestamps();
 
             // $table->unique(['item_id','stockist']);
