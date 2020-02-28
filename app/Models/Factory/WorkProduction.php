@@ -39,7 +39,7 @@ class WorkProduction extends Model
 
     public function getFullnumberAttribute()
     {
-        if ($this->revise_number) return $this->number ." REV.". (int) $this->revise_number;
+        if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;
 
         return $this->number;
     }
