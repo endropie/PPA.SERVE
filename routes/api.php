@@ -27,7 +27,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::name('register')->post('register', 'Auth\Authentication@register');
 
     Route::middleware([
-        // 'auth:api',
+        'auth:api',
         ])->group( function(){
 
         Route::prefix('auth')->name('auth.')->group(function () {
