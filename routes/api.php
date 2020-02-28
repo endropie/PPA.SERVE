@@ -13,48 +13,6 @@ use Illuminate\Http\Request;
 |
 */
 
-$api = app('Dingo\Api\Routing\Router');
-$api->version('v1', function ($api) {
-    $api->GET('/', function() {
-        return response()->json([
-            'app' => env('APP_NAME'),
-            'prefix' => env('API_PREFIX'),
-            'version' => env('API_VERSION'),
-        ]);
-    });
-    $api->group(['namespace' => 'App\Api\Controllers'], function ($api) {
-        ## Guest Access Route
-        $api->group(['middleware' => 'api'], function ($api) {
-            $api->group(['prefix' => 'auth'], function ($api) {
-                $api->post('/login', 'Auth\Login@store');
-                // $api->post("register", 'Auth\RegisterController@register');
-                // $api->get("register/{token}", 'Auth\RegisterController@registerActivate');
-                // $api->post("password/email", 'Auth\PasswordResetController@createToken');
-                // $api->get("password/reset/{token}", 'Auth\PasswordResetController@findToken');
-                // $api->post("password/reset", 'Auth\PasswordResetController@reset');
-            });
-        });
-
-        $api->resource('opname-vouchers', 'Warehouses\OpnameVouchers');
-
-        ## User Access Route
-        $api->group(['middleware' => 'auth:api'], function ($api) {
-            $api->get('profile', 'Auth\Profile@show');
-            ## Auth Routes
-            $api->group(['prefix' => 'auth'], function ($api) {
-                $api->get('logout', 'Auth\Login@logout');
-            });
-            ## Common Routes
-            $api->group(['prefix' => 'common'], function ($api) {
-                $api->resource('items', 'Common\Items');
-            });
-            ## Warehouse Routes
-            $api->group(['prefix' => 'warehouses'], function ($api) {
-                $api->resource('opname-vouchers', 'Warehouses\OpnameVouchers');
-            });
-        });
-    });
-});
 
 Route::prefix('v1')->namespace('Api')->group(function() {
     Route::name('app')->get('app', function() {
@@ -69,7 +27,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::name('register')->post('register', 'Auth\Authentication@register');
 
     Route::middleware([
-        'auth:api',
+        // 'auth:api',
         ])->group( function(){
 
         Route::prefix('auth')->name('auth.')->group(function () {
@@ -144,3 +102,47 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
     });
 });
+
+$api = app('Dingo\Api\Routing\Router');
+$api->version('v1', function ($api) {
+    $api->GET('/', function() {
+        return response()->json([
+            'app' => env('APP_NAME'),
+            'prefix' => env('API_PREFIX'),
+            'version' => env('API_VERSION'),
+        ]);
+    });
+    $api->group(['namespace' => 'App\Api\Controllers'], function ($api) {
+        ## Guest Access Route
+        $api->group(['middleware' => 'api'], function ($api) {
+            $api->group(['prefix' => 'auth'], function ($api) {
+                $api->post('/login', 'Auth\Login@store');
+                // $api->post("register", 'Auth\RegisterController@register');
+                // $api->get("register/{token}", 'Auth\RegisterController@registerActivate');
+                // $api->post("password/email", 'Auth\PasswordResetController@createToken');
+                // $api->get("password/reset/{token}", 'Auth\PasswordResetController@findToken');
+                // $api->post("password/reset", 'Auth\PasswordResetController@reset');
+            });
+        });
+
+        $api->resource('opname-vouchers', 'Warehouses\OpnameVouchers');
+
+        ## User Access Route
+        $api->group(['middleware' => 'auth:api'], function ($api) {
+            $api->get('profile', 'Auth\Profile@show');
+            ## Auth Routes
+            $api->group(['prefix' => 'auth'], function ($api) {
+                $api->get('logout', 'Auth\Login@logout');
+            });
+            ## Common Routes
+            $api->group(['prefix' => 'common'], function ($api) {
+                $api->resource('items', 'Common\Items');
+            });
+            ## Warehouse Routes
+            $api->group(['prefix' => 'warehouses'], function ($api) {
+                $api->resource('opname-vouchers', 'Warehouses\OpnameVouchers');
+            });
+        });
+    });
+});
+
