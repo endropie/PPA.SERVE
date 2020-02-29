@@ -23,6 +23,7 @@ class CreateScheduleBoardsTable extends Migration
             $table->bigIncrements('id');
 
             $table->string('number');
+            $table->integer('customer_id');
             $table->integer('vehicle_id');
             $table->integer('operator_id')->nullable();
             $table->date('date')->nullable();
