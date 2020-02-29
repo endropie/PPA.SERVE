@@ -74,7 +74,10 @@ class WorkProductions extends ApiController
 
                     $line->calculate();
                     if ($line->ismain) {
-                        $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                        // $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                        $FROM = $line->work_order_item->work_order->stockist_from;
+                        $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
+                        $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');
                         $line->work_order_item->calculate();
                     }
                 }
@@ -146,7 +149,10 @@ class WorkProductions extends ApiController
 
                 $line->calculate();
                 if ($line->ismain) {
-                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                    // $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
+                    $FROM = $line->work_order_item->work_order->stockist_from;
+                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
+                    $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');
                     $line->work_order_item->calculate();
                 }
             }

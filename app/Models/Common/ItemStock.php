@@ -7,15 +7,16 @@ class ItemStock extends Model
 {
     static $stockists = [
         'FM' => 'Fresh',
-        'WO' => 'Work Order',
         'WIP' => 'Work In Process',
         'FG' => 'Finish Good',
         'NC' => 'No-Common',
         'NCR' => 'No-Common Return',
         'NG' => 'No-Good',
+
+        'WO' => 'WO amounable',
         'VDO' => 'VERIFY amounable',
-        'PDO.REG' => 'REGULER-PDO amounable', // REGDO
-        'PDO.RET' => 'RETURN-PDO amounable', // RETDO
+        'PDO.REG' => 'REGULER-PDO amounable',
+        'PDO.RET' => 'RETURN-PDO amounable',
         // 'RDO.REG' => 'REGULER Request-DO amounable',
         // 'RDO.RET' => 'RETURN Request-DO amounable',
     ];

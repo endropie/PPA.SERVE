@@ -92,7 +92,8 @@ class WorkOrders extends ApiController
             $detail = $work_order->work_order_items()->create($row);
             // Calculate stock on after the Work Orders updated!
             $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
 
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
@@ -141,7 +142,7 @@ class WorkOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') == 'revision') return $this->revision($request, $id);
+        if(request('mode') == 'revision') return $this->error('NOT SUPPORTED'); //$this->revision($request, $id);
         if(request('mode') == 'producted') return $this->producted($request, $id);
         if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
@@ -173,6 +174,7 @@ class WorkOrders extends ApiController
             // Calculate stock on after Detail item updated!
             $FROM = $work_order->stockist_from;
             $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
 
 
             $row_lines = $row['work_order_item_lines'];
@@ -290,7 +292,8 @@ class WorkOrders extends ApiController
         $FROM = $work_order->stockist_from;
         $work_order->work_order_items->each(function($detail) use ($FROM) {
             $detail->item->distransfer($detail);
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
         });
 
         $work_order->stateable()->delete();
@@ -484,7 +487,8 @@ class WorkOrders extends ApiController
             if ($amount_process < $unit_amount) {
                 $FROM = $work_order->stockist_from;
                 $OVER = ($unit_amount - $amount_process);
-                $detail->item->transfer($detail, $OVER, $FROM, 'WO');
+                // $detail->item->transfer($detail, $OVER, $FROM, 'WO');
+                $detail->item->transfer($detail, $OVER, 'WO');
             }
         }
     }
