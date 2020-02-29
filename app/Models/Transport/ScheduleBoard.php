@@ -14,7 +14,7 @@ class ScheduleBoard extends Model
     use Filterable, SoftDeletes, WithUserBy, Recurring, GenerateNumber, Cloneable;
 
     protected $fillable = [
-        'number', 'vehicle_id', 'operator_id', 'date', 'time',
+        'number', 'vehicle_id', 'operator_id', 'date', 'time', 'customer_id'
     ];
 
     protected $relationships = [];
@@ -23,9 +23,13 @@ class ScheduleBoard extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    public function customers()
-    {
-        return $this->belongsToMany('App\Models\Income\Customer', 'schedule_board_customers')->using('App\Models\Transport\ScheduleBoardCustomer');
+    // public function customers()
+    // {
+    //     return $this->belongsToMany('App\Models\Income\Customer', 'schedule_board_customers')->using('App\Models\Transport\ScheduleBoardCustomer');
+    // }
+
+    public function customer() {
+        return $this->belongsTo('App\Models\Income\Customer');
     }
 
     public function vehicle() {

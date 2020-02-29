@@ -29,7 +29,8 @@ class ScheduleBoard extends Request
             'operator_id' => 'required',
             'date' => 'required',
             'time' => 'required',
-            'customers' => 'required',
+            'customer_id' => 'required',
+            // 'customers' => 'required',
         ];
     }
 }

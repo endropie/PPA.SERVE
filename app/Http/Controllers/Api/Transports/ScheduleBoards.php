@@ -21,11 +21,11 @@ class ScheduleBoards extends ApiController
                 break;
 
             case 'datagrid':
-                $schedule_boards = ScheduleBoard::with(['customers', 'vehicle', 'operator'])->filter($filters)->latest()->get();
+                $schedule_boards = ScheduleBoard::with(['customer', 'vehicle', 'operator'])->filter($filters)->latest()->get();
                 break;
 
             default:
-                $schedule_boards = ScheduleBoard::with(['customers', 'vehicle', 'operator'])->filter($filters)->latest()->collect();
+                $schedule_boards = ScheduleBoard::with(['customer', 'vehicle', 'operator'])->filter($filters)->latest()->collect();
                 break;
         }
 
@@ -50,19 +50,19 @@ class ScheduleBoards extends ApiController
 
     public function store(Request $request)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         if(!$request->number) $request->merge(['number'=> $this->getNextScheduleBoardNumber()]);
 
         $schedule_board = ScheduleBoard::create($request->all());
 
-        $customers = collect($request->input('customers', []))->pluck('id');
-        $schedule_board->customers()->sync($customers);
+        // $customers = collect($request->input('customers', []))->pluck('id');
+        // $schedule_board->customers()->sync($customers);
 
         if ($request->recurring) $schedule_board->createRecurring(['started_at'=> $request->input('date')]);
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
@@ -71,7 +71,8 @@ class ScheduleBoards extends ApiController
     {
         $schedule_board = ScheduleBoard::with([
             'recurring',
-            'customers',
+            // 'customers',
+            'customer',
             'vehicle',
             'operator'
         ])->withTrashed()->findOrFail($id);
@@ -89,26 +90,26 @@ class ScheduleBoards extends ApiController
         if (strtoupper($mode) == 'ARRIVED') return $this->arrived($request, $id);
         if (strtoupper($mode) == 'CLOSED') return $this->closed($request, $id);
 
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
 
         $schedule_board->update($request->input());
 
-        $customers = collect($request->input('customers', []))->pluck('id');
-        $schedule_board->customers()->sync($customers);
+        // $customers = collect($request->input('customers', []))->pluck('id');
+        // $schedule_board->customers()->sync($customers);
 
         if ($request->recurring) $schedule_board->updateRecurring(['started_at'=> $request->input('date')]);
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
 
     public function destroy($id)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
@@ -127,14 +128,14 @@ class ScheduleBoards extends ApiController
 
         $schedule_board->delete();
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json(['messagge' => "$mode Schedule [$schedule_board->number] successfully."]);
     }
 
     public function scheduled(Request $request, $id)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
@@ -147,14 +148,14 @@ class ScheduleBoards extends ApiController
         $schedule_board->departed_at = now();
         $schedule_board->save();
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
 
     public function departed(Request $request, $id)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
@@ -167,14 +168,14 @@ class ScheduleBoards extends ApiController
         $schedule_board->departed_at = now();
         $schedule_board->save();
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
 
     public function arrived(Request $request, $id)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
@@ -187,14 +188,14 @@ class ScheduleBoards extends ApiController
         $schedule_board->departed_at = now();
         $schedule_board->save();
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
 
     public function closed(Request $request, $id)
     {
-        // DB::beginTransaction => Before the function process!
+        ## DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $schedule_board = ScheduleBoard::findOrFail($id);
@@ -206,7 +207,7 @@ class ScheduleBoards extends ApiController
         $schedule_board->status = 'CLOSED';
         $schedule_board->save();
 
-        // DB::Commit => Before return function!
+        ## DB::Commit => Before return function!
         $this->DATABASE::commit();
         return response()->json($schedule_board);
     }
