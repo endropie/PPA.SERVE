@@ -55,7 +55,7 @@ class WorkProductions extends ApiController
             $rows = $request->work_production_items;
             for ($i=0; $i < count($rows); $i++) {
                 $row = $rows[$i];
-                // create Part item on the WIP Created!
+                ## create Part item on the WIP Created!
                 $detail = $work_production->work_production_items()->create($row);
 
                 if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
@@ -74,7 +74,6 @@ class WorkProductions extends ApiController
 
                     $line->calculate();
                     if ($line->ismain) {
-                        // $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
                         $FROM = $line->work_order_item->work_order->stockist_from;
                         $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                         $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');
@@ -130,7 +129,7 @@ class WorkProductions extends ApiController
         $rows = $request->work_production_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            // create Part item on the WIP Created!
+            ## create Part item on the WIP Created!
             $detail = $work_production->work_production_items()->create($row);
 
             if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
@@ -149,7 +148,6 @@ class WorkProductions extends ApiController
 
                 $line->calculate();
                 if ($line->ismain) {
-                    // $detail->item->transfer($detail, $detail->unit_amount,'WIP', 'WO');
                     $FROM = $line->work_order_item->work_order->stockist_from;
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                     $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');

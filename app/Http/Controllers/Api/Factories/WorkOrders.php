@@ -62,13 +62,9 @@ class WorkOrders extends ApiController
             default:
                 $work_order_items = WorkOrderItemLine::with(['line', 'work_order_item.work_order.shift', 'work_order_item.item', 'work_order_item.unit'])
                   ->filter($filter_item_line)
-                //   ->whereHas('work_order', function($q) use($filter) {
-                //     return $q->filter($filter);
-                //   })
                   ->latest()->collect();
 
                 $work_order_items->getCollection()->transform(function($row) {
-                    // $row->append(['unit']);
                     return $row;
                 });
 
@@ -88,11 +84,9 @@ class WorkOrders extends ApiController
         $rows = $request->work_order_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            // create item row on the Work Orders updated!
+            ## create item row on the Work Orders updated!
             $detail = $work_order->work_order_items()->create($row);
-            // Calculate stock on after the Work Orders updated!
-            $FROM = $work_order->stockist_from;
-            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            ## Calculate stock on after the Work Orders updated!
             $detail->item->transfer($detail, $detail->unit_amount, 'WO');
 
             $row_lines = $row['work_order_item_lines'];
@@ -161,7 +155,6 @@ class WorkOrders extends ApiController
 
         foreach ($work_order->work_order_items as $detail) {
             $detail->item->distransfer($detail);
-            // $this->error($detail->stockable);
 
             $detail->work_order_item_lines()->forceDelete();
             $detail->forceDelete();
@@ -169,14 +162,10 @@ class WorkOrders extends ApiController
 
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            // $oldDetail = $work_order->work_order_items()->find($row['id']);
 
             $detail = $work_order->work_order_items()->create($row);
-            // Calculate stock on after Detail item updated!
-            // $FROM = $work_order->stockist_from;
-            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            ## Calculate stock on after Detail item updated!
             $detail->item->transfer($detail, $detail->unit_amount, 'WO');
-
 
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
@@ -257,11 +246,10 @@ class WorkOrders extends ApiController
 
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            // $oldDetail = $work_order->work_order_items()->find($row['id']);
 
             $detail = $work_order->work_order_items()->create($row);
 
-            // Calculate stock on after Detail item updated!
+            ## Calculate stock on after Detail item updated!
             $FROM = $work_order->stockist_from;
             $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
 
@@ -293,7 +281,6 @@ class WorkOrders extends ApiController
         $FROM = $work_order->stockist_from;
         $work_order->work_order_items->each(function($detail) use ($FROM) {
             $detail->item->distransfer($detail);
-            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
             $detail->item->transfer($detail, $detail->unit_amount, 'WO');
         });
 
@@ -401,12 +388,11 @@ class WorkOrders extends ApiController
 
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            // $oldDetail = $work_order->work_order_items()->find($row['id']);
 
             $detail = $work_order->work_order_items()->create($row);
             $detail->process = $row['process'];
             $detail->save();
-            // Calculate stock on after Detail item updated!
+            ## Calculate stock on after Detail item updated!
             $FROM = $work_order->stockist_from;
             $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
 
@@ -444,7 +430,7 @@ class WorkOrders extends ApiController
             $detail->calculate();
         }
 
-        // Delete [soft] relation when nnnnot has relation!
+        ## Delete [soft] relation when nnnnot has relation!
         $revise->work_order_items->each(function($detail) {
             $detail->work_order_item_lines->each(function($work_order_item_line) {
                 $work_order_item_line->work_production_items->each(function($work_production_item) {
@@ -482,13 +468,11 @@ class WorkOrders extends ApiController
 
     protected function stockRestore($work_order) {
         foreach ($work_order->work_order_items as  $detail) {
-            // Calculate Over Stock Quantity at item processed!
+            ## Calculate Over Stock Quantity at item processed!
             $amount_process = round($detail->amount_process);
             $unit_amount = round($detail->unit_amount);
             if ($amount_process < $unit_amount) {
-                $FROM = $work_order->stockist_from;
                 $OVER = ($unit_amount - $amount_process);
-                // $detail->item->transfer($detail, $OVER, $FROM, 'WO');
                 $detail->item->transfer($detail, $OVER, null, 'WO');
             }
         }
