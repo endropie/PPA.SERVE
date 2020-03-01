@@ -361,7 +361,7 @@ class IncomingGoods extends ApiController
                 'number'        => $number,
                 'date'          => $incoming_good->date,
                 'customer_id'   => $incoming_good->customer_id,
-                // 'reference_number' => $incoming_good->reference_number,
+                'reference_number' => $incoming_good->reference_number,
                 'transaction'    => $incoming_good->transaction,
                 'order_mode'    => $incoming_good->order_mode,
                 'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING"
