@@ -161,6 +161,7 @@ class WorkOrders extends ApiController
 
         foreach ($work_order->work_order_items as $detail) {
             $detail->item->distransfer($detail);
+            // $this->error($detail->stockable);
 
             $detail->work_order_item_lines()->forceDelete();
             $detail->forceDelete();
@@ -172,8 +173,8 @@ class WorkOrders extends ApiController
 
             $detail = $work_order->work_order_items()->create($row);
             // Calculate stock on after Detail item updated!
-            $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
+            // $FROM = $work_order->stockist_from;
+            // $detail->item->transfer($detail, $detail->unit_amount, 'WO', $FROM);
             $detail->item->transfer($detail, $detail->unit_amount, 'WO');
 
 
