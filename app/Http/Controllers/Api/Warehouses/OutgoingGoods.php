@@ -86,11 +86,6 @@ class OutgoingGoods extends ApiController
             $this->storeDeliveryOrder($outgoing_good->fresh());
         }
 
-        $this->error($outgoing_good->delivery_orders->map(function($x) {
-            return ['number' => $x['number'], 'SO' => $x['request_order']['number']];
-        }));
-
-
         OutgoingGoodVerification::whereNull('validated_at')
             ->whereHas('item', function ($query) use ($outgoing_good) {
                 return $query->where('customer_id', $outgoing_good->customer_id);
