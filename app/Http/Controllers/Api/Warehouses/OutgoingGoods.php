@@ -86,6 +86,11 @@ class OutgoingGoods extends ApiController
             $this->storeDeliveryOrder($outgoing_good->fresh());
         }
 
+        $this->error($outgoing_good->delivery_orders->map(function($x) {
+            return ['number' => $x['number'], 'SO' => $x['request_order']['number']];
+        }));
+
+
         OutgoingGoodVerification::whereNull('validated_at')
             ->whereHas('item', function ($query) use ($outgoing_good) {
                 return $query->where('customer_id', $outgoing_good->customer_id);
@@ -198,10 +203,10 @@ class OutgoingGoods extends ApiController
                 return $x->request_order->actived_date >= $outgoing_good->date;
             })
             ->map(function ($detail) {
-                $detail->sort_date = $detail->request_order->date;
+                $detail->sortin = $detail->request_order->date ." ". $detail->request_order->created_at;
                 return $detail;
             })
-            ->sortBy('sort_date');
+            ->sortBy('sortin');
 
         $outer = $outgoing_good->outgoing_good_items
             ->groupBy('item_id')
