@@ -87,7 +87,8 @@ class WorkOrders extends ApiController
             ## create item row on the Work Orders updated!
             $detail = $work_order->work_order_items()->create($row);
             ## Calculate stock on after the Work Orders updated!
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
+            $FROM = $work_order->stockist_from;
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
 
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
@@ -165,7 +166,8 @@ class WorkOrders extends ApiController
 
             $detail = $work_order->work_order_items()->create($row);
             ## Calculate stock on after Detail item updated!
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
+            $FROM = $work_order->stockist_from;
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
 
             $row_lines = $row['work_order_item_lines'];
             if($row_lines) {
@@ -281,7 +283,7 @@ class WorkOrders extends ApiController
         $FROM = $work_order->stockist_from;
         $work_order->work_order_items->each(function($detail) use ($FROM) {
             $detail->item->distransfer($detail);
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO');
+            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
         });
 
         $work_order->stateable()->delete();
@@ -471,9 +473,10 @@ class WorkOrders extends ApiController
             ## Calculate Over Stock Quantity at item processed!
             $amount_process = round($detail->amount_process);
             $unit_amount = round($detail->unit_amount);
+            $FROM = $work_order->stockist_from;
             if ($amount_process < $unit_amount) {
                 $OVER = ($unit_amount - $amount_process);
-                $detail->item->transfer($detail, $OVER, null, 'WO');
+                $detail->item->transfer($detail, $OVER, null, 'WO'.$FROM);
             }
         }
     }

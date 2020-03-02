@@ -14,6 +14,10 @@ class ItemStock extends Model
         'NG' => 'No-Good',
 
         'WO' => 'WO amounable',
+
+        'WOFM' => 'WOFM amounable',
+        'WONC' => 'WONC amounable',
+        'WONCR' => 'WONCR amounable',
         'VDO' => 'VERIFY amounable',
         'PDO.REG' => 'REGULER-PDO amounable',
         'PDO.RET' => 'RETURN-PDO amounable',

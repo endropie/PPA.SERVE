@@ -76,7 +76,7 @@ class WorkProductions extends ApiController
                     if ($line->ismain) {
                         $FROM = $line->work_order_item->work_order->stockist_from;
                         $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
-                        $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');
+                        $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
                         $line->work_order_item->calculate();
                     }
                 }
@@ -150,7 +150,7 @@ class WorkProductions extends ApiController
                 if ($line->ismain) {
                     $FROM = $line->work_order_item->work_order->stockist_from;
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
-                    $detail->item->transfer($detail, $detail->unit_amount, null, 'WO');
+                    $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
                     $line->work_order_item->calculate();
                 }
             }
