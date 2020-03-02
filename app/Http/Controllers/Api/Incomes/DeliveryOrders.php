@@ -123,32 +123,31 @@ class DeliveryOrders extends ApiController
 
         if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
 
-        if($revise) {
-            $revise->delivery_order_items->each(function($detail) use($revise) {
-                if (!$revise->is_internal) {
-                    if($revise->request_order->order_mode == 'ACCUMULATE') {
-                        $request_order_item = $detail->request_order_item;
-                        $request_order_item->item->distransfer($request_order_item);
-                        $request_order_item->forceDelete();
-                        $request_order_item->calculate();
-                    }
-                    else {
-                        $detail->request_order_item()->associate(null);
-                    }
+        ## Remove detail of revision
+        foreach ($revise->delivery_order_items as $detail) {
+            if (!$revise->is_internal) {
+                if($revise->request_order->order_mode == 'ACCUMULATE') {
+                    $request_order_item = $detail->request_order_item;
+                    $request_order_item->item->distransfer($request_order_item);
+                    $request_order_item->forceDelete();
+                    $request_order_item->calculate();
                 }
-                $detail->item->distransfer($detail);
-                $detail->save();
-                $detail->delete();
-            });
+                else {
+                    $request_order_item = $detail->request_order_item;
+                    $detail->request_order_item()->associate(null);
+                    $detail->save();
+                    $request_order_item->calculate();
+                }
+            }
+            $detail->item->distransfer($detail);
+            $detail->delete();
         }
 
-        // Auto generate number of revision
+        ## Auto generate number of revision
         if ($request->number) {
             $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
             $request->merge(['revise_number'=> ($max + 1)]);
         }
-
-        // $this->error($request->toArray());
 
         $delivery_order = DeliveryOrder::create($request->all());
 
@@ -192,9 +191,9 @@ class DeliveryOrders extends ApiController
         }
 
         if (!$revise->is_internal) $delivery_order->request_order_id = $request->request_order_id;
-        $delivery_order->outgoing_good_id = $request->outgoing_good_id;
 
-        $delivery_order->status = 'CONFIRMED';
+        $delivery_order->outgoing_good_id = $request->outgoing_good_id;
+        // $delivery_order->status = 'CONFIRMED';
         $delivery_order->save();
 
         $revise->revise_id = $delivery_order->id;
