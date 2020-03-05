@@ -130,7 +130,6 @@ class DeliveryOrders extends ApiController
                     $request_order_item = $detail->request_order_item;
                     $request_order_item->item->distransfer($request_order_item);
                     $request_order_item->forceDelete();
-                    $request_order_item->calculate();
                 }
                 else {
                     $request_order_item = $detail->request_order_item;
@@ -143,6 +142,7 @@ class DeliveryOrders extends ApiController
             $detail->delete();
         }
 
+        // $this->error('OK');
         ## Auto generate number of revision
         if ($request->number) {
             $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
