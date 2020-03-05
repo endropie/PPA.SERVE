@@ -71,21 +71,28 @@ class DeliveryOrders extends ApiController
         if($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $delivery_order->status != "OPEN") $this->error("The data $delivery_order->status state, is not allowed to be $mode!");
 
-        $delivery_order->status = $mode;
-        $delivery_order->save();
-
         foreach ($delivery_order->delivery_order_items as $detail) {
             $request_order_item = $detail->request_order_item;
             $reconcile_item = $detail->reconcile_item;
 
-            $delivery_order_item = $detail;
             $detail->item->distransfer($detail);
-            $detail->delete();
 
-            $delivery_order_item->calculate();
-            if ($request_order_item) $request_order_item->calculate();
+            $detail->request_order_item()->dissociate();
+            $detail->save();
+
+
             if ($reconcile_item) $reconcile_item->calculate();
+            if ($request_order_item) $request_order_item->calculate();
+            if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
+                $request_order_item->forceDelete();
+            }
+
+            $detail->delete();
         }
+
+        $delivery_order->status = $mode;
+        $delivery_order->request_order()->dissociate();
+        $delivery_order->save();
 
         $delivery_order->delete();
 
@@ -133,12 +140,14 @@ class DeliveryOrders extends ApiController
                 }
                 else {
                     $request_order_item = $detail->request_order_item;
-                    $detail->request_order_item()->associate(null);
                     $detail->save();
                     $request_order_item->calculate();
                 }
             }
+
             $detail->item->distransfer($detail);
+            $detail->request_order_item()->dissociate();
+            $detail->save();
             $detail->delete();
         }
 
