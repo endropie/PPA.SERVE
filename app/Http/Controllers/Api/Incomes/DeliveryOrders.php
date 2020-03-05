@@ -151,7 +151,6 @@ class DeliveryOrders extends ApiController
             $detail->delete();
         }
 
-        // $this->error('OK');
         ## Auto generate number of revision
         if ($request->number) {
             $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
@@ -165,7 +164,7 @@ class DeliveryOrders extends ApiController
             $row = $rows[$i];
 
             if (!$revise->is_internal) {
-                // IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
+                ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
                 if($request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
                 }
@@ -174,7 +173,7 @@ class DeliveryOrders extends ApiController
                 }
             }
 
-            // create DeliveryOrder items on the Delivery order revision!
+            ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
             $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
@@ -202,9 +201,9 @@ class DeliveryOrders extends ApiController
         if (!$revise->is_internal) $delivery_order->request_order_id = $request->request_order_id;
 
         $delivery_order->outgoing_good_id = $request->outgoing_good_id;
-        // $delivery_order->status = 'CONFIRMED';
         $delivery_order->save();
 
+        $revise->request_order()->dissociate();
         $revise->revise_id = $delivery_order->id;
         $revise->status = 'REVISED';
         $revise->save();
@@ -227,7 +226,7 @@ class DeliveryOrders extends ApiController
         $reconcile = DeliveryOrder::findOrFail($id);
         $request_order = RequestOrder::find($request->request_order["id"]);
 
-        // Auto generate number of reconciliation
+        ## Auto generate number of reconciliation
         $request->merge(['number'=> $this->getNextSJDeliveryNumber()]);
 
         $delivery_order = DeliveryOrder::create($request->all());
@@ -236,7 +235,7 @@ class DeliveryOrders extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            // create DeliveryOrder items on the Delivery order revision!
+            ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
             if ($request_order_item = RequestOrderItem::find($row['request_order_item_id'])) {
@@ -253,7 +252,6 @@ class DeliveryOrders extends ApiController
             $detail->request_order_item->calculate();
         }
 
-        // $delivery_order->outgoing_good_id = $reconcile->outgoing_good_id;
         $delivery_order->request_order_id = $request_order->id;
         $delivery_order->reconcile_id = $reconcile->id;
         $delivery_order->status = $reconcile->status;
