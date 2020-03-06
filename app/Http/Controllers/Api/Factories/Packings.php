@@ -56,7 +56,7 @@ class Packings extends ApiController
 
     public function multistore(Request $request)
     {
-        $this->error('SORY, SYSTEM IN MAINTENACE. PLEASE, REFRESH & TRY LATER!');
+        $this->error('SORY, PLEASE, REFRESH & TRY LATER!');
 
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
@@ -167,8 +167,6 @@ class Packings extends ApiController
 
     public function store(Request $request)
     {
-        $this->error('SORY, SYSTEM IN MAINTENACE. TRY LATER!');
-
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
 
