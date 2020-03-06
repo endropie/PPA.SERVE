@@ -135,7 +135,7 @@ class PackingItem extends Model
             ]);
         }
 
-        if (($finish + $faulty) != 0) abort(501, "TOTAL [$finish + $faulty] PACKING ORDER INVALID");
+        if ((round($finish) + round($faulty)) != 0) abort(501, "TOTAL [$finish + $faulty] PACKING ORDER INVALID");
 
         $created = $this->packing_item_orders()->createMany($collection->toArray());
         foreach ($created as $item) {
