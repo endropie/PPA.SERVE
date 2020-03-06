@@ -9,6 +9,8 @@ class PackingItem extends Model
 {
     use SoftDeletes;
 
+    protected $touches = ['packing'];
+
     protected $fillable = [
         'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id', 'work_order_item_id'
     ];
@@ -19,7 +21,7 @@ class PackingItem extends Model
 
     protected $casts = [
         'unit_rate' => 'double',
-        'quantity' => 'double'
+        'quantity' => 'double',
     ];
 
     public function packing_item_faults()
@@ -27,15 +29,20 @@ class PackingItem extends Model
         return $this->hasMany('App\Models\Factory\PackingItemFault')->withTrashed();
     }
 
+    public function packing_item_orders()
+    {
+        return $this->hasMany('App\Models\Factory\PackingItemOrder')->withTrashed();
+    }
+
     public function packing()
     {
         return $this->belongsTo('App\Models\Factory\Packing');
     }
 
-    public function work_order_item()
-    {
-        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
-    }
+    // public function work_order_item()
+    // {
+    //     return $this->belongsTo('App\Models\Factory\WorkOrderItem');
+    // }
 
     public function item()
     {
@@ -52,20 +59,92 @@ class PackingItem extends Model
        return $this->belongsTo('App\Models\Reference\Unit');
     }
 
+    ## return Amount of Quantity
     public function getUnitAmountAttribute() {
-      // return false when rate is not valid
-      if($this->unit_rate <= 0) return false;
-
-      return (double) $this->quantity * $this->unit_rate;
+        return (double) $this->quantity * ($this->unit_rate ?? 1);
     }
 
+    ## return Amount of Faulty
+    public function getUnitFaultyAttribute() {
+        return (double) $this->packing_item_faults->sum('quantity') * ($this->unit_rate ?? 1);
+    }
+
+    ## return Amount of Quantity + Faulty
     public function getUnitTotalAttribute() {
-      // return false when rate is not valid
-      if($this->unit_rate <= 0) return false;
+        return $this->unit_amount + $this->unit_faulty;
+    }
 
-      $faults = (double) $this->packing_item_faults->sum('quantity') * $this->unit_rate;
+    ## Function Generate Packing item order.
+    public function setPackingItemOrder($mode = null) {
+        $collection = collect([]);
 
-      return $this->unit_amount + $faults;
+        foreach ($this->packing_item_orders as $item)  {
+            if ($work_order_item = $item->work_order_item) {
+                print("$item->id => $work_order_item->id => ". $work_order_item->work_order->id ."\n");
+                if ($work_order_item->work_order_packed) abort(501, "INVALID. Packing has Relationship.");
+                $item->forceDelete();
+                $work_order_item->calculate();
+            }
+        }
 
+        $packing_item_orders = $this->packing_item_orders->fresh();
+
+        $oldFinish = (double) $packing_item_orders->sum('amount_finish');
+        $oldFaulty = (double) $packing_item_orders->sum('amount_faulty');
+
+        $finish = $this->unit_amount - $oldFinish;
+        $faulty = $this->unit_faulty - $oldFaulty;
+
+        $work_order_items = WorkOrderItem::where('item_id', $this->item_id)
+            ->whereRaw('amount_process > amount_packing')
+            ->whereHas('work_order', function($q) use ($mode) {
+                return ($mode == "RESET") ? $q : $q->stateHasNot('PACKED');
+            })
+            ->get()
+            ->sortBy(function($item) {
+                return $item->work_order->date ." ". $item->work_order->created_at;
+            })->values();
+
+        foreach ($work_order_items as $work_order_item) {
+            $ava = (double) ($work_order_item->amount_process - $work_order_item->amount_packing);
+            $total = (double) ($finish + $faulty);
+            $vFinish = 0; $vFaulty = 0;
+
+            if (round($total) <= 0) break;
+
+            if (round($ava) >= round($total)) {
+                $vFinish = $finish;
+                $vFaulty = $faulty;
+            }
+            else if (round($ava) > round($finish)) {
+                $vFinish = $finish;
+                $vFaulty = $ava - $finish;
+            }
+            else {
+                $vFinish = $ava;
+                $vFaulty = 0;
+            }
+
+            $finish -= $vFinish;
+            $faulty -= $vFaulty;
+
+            $collection->push([
+                'work_order_item_id' => $work_order_item->id,
+                'amount_finish' => $vFinish,
+                'amount_faulty' => $vFaulty,
+            ]);
+        }
+
+        if (($finish + $faulty) != 0) abort(501, "TOTAL [$finish + $faulty] PACKING ORDER INVALID");
+
+        $created = $this->packing_item_orders()->createMany($collection->toArray());
+        foreach ($created as $item) {
+            // print_r($item->toArray());
+            // print("\n");
+            // print("CALCULATE [$item->id] \n");
+            $item->work_order_item->calculate();
+        }
+
+        return $created;
     }
 }

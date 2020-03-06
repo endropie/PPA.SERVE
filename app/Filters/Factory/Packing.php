@@ -14,11 +14,9 @@ class Packing extends Filter
         parent::__construct($request);
     }
 
-    public function begin_date($value) {
-        return $this->builder->where('date', '>=',  $value);
-    }
-
-    public function until_date($value) {
-        return $this->builder->where('date', '<=',  $value);
+    public function item_id($value) {
+        return $this->builder->whereHas('packing_items', function($item) use ($value) {
+            return $item->where('item_id',  $value);
+        });
     }
 }

@@ -40,7 +40,7 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_orders = WorkOrder::with(['line', 'shift', 'work_order_items.item.unit'])->filter($filter)->latest()->collect();
+                $work_orders = WorkOrder::with(['user_by', 'line', 'shift'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
                     $row->append(['is_relationship', 'total_production', 'total_packing', 'total_amount', 'has_producted', 'has_packed']);
                     return $row;
@@ -116,7 +116,8 @@ class WorkOrders extends ApiController
                     'work_order_items.work_order_item_lines.line',
                     'work_order_items.work_order_item_lines.work_production_items.work_production',
                     'work_order_items.work_order_item_lines',
-                    'work_order_items.packing_items.packing',
+                    // 'work_order_items.packing_items.packing',
+                    'work_order_items.packing_item_orders.packing_item.packing',
                 ];
                 break;
         }
@@ -422,7 +423,7 @@ class WorkOrders extends ApiController
                 $packing_item->item->transfer($packing_item, $packing_item->unit_total, 'FG', 'WIP');
                 $NC = (double) $packing_item->packing_item_faults()->sum('quantity');
                 if ($NC > 0) $packing_item->item->transfer($packing_item, $NC, 'NC', 'WIP');
-                $packing_item->amount_faulty = $NC * $packing_item->unit_rate;
+                $packing_item->unit_faulty = $NC * $packing_item->unit_rate;
                 $packing_item->save();
 
                 $packing_item->work_order_item()->associate($detail);

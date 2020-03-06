@@ -25,7 +25,7 @@ class WorkProductions extends ApiController
                 break;
 
             default:
-                $work_productions = WorkProduction::with(['line', 'shift'])
+                $work_productions = WorkProduction::with(['user_by', 'line', 'shift'])
                     ->filter($filter)->latest()->collect();
 
                 $work_productions->getCollection()->transform(function($row) {

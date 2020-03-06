@@ -14,6 +14,8 @@ class WorkOrderItemLine extends Model
         'line_id', 'ismain'
     ];
 
+    protected $touches = ['work_order_item'];
+
     protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];

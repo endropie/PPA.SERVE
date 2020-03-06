@@ -41,6 +41,14 @@ class PreDelivery extends Model
         return $this->belongsTo('App\Models\Income\Customer');
     }
 
+    public function getTotalAmountAttribute() {
+        return (double) $this->hasMany('App\Models\Income\PreDeliveryItem')->get()->sum('unit_amount');
+    }
+
+    public function getTotalVerificationAttribute() {
+        return (double) $this->hasMany('App\Models\Income\PreDeliveryItem')->sum('amount_verification');
+    }
+
     public function getFullnumberAttribute()
     {
         if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;

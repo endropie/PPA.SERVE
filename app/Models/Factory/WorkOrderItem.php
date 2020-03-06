@@ -14,6 +14,8 @@ class WorkOrderItem extends Model
         'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'
     ];
 
+    protected $touches = ['work_order'];
+
     protected $appends = ['unit_amount'];
 
     protected $hidden = ['created_at', 'updated_at'];
@@ -32,6 +34,16 @@ class WorkOrderItem extends Model
     public function work_order_item_lines()
     {
         return $this->hasMany('App\Models\Factory\WorkOrderItemLine')->withTrashed();
+    }
+
+    public function packing_items()
+    {
+        return $this->belongsToMany('App\Models\Factory\PackingItem', 'packing_item_orders');
+    }
+
+    public function packing_item_orders()
+    {
+        return $this->hasMany('App\Models\Factory\PackingItemOrder');
     }
 
     public function work_order()
@@ -56,11 +68,6 @@ class WorkOrderItem extends Model
     public function work_order_closed()
     {
         return $this->belongsTo('App\Models\Factory\WorkOrder', 'work_order_id')->where('status', 'CLOSED');
-    }
-
-    public function packing_items()
-    {
-        return $this->hasMany('App\Models\Factory\PackingItem');
     }
 
     public function item()
@@ -119,13 +126,17 @@ class WorkOrderItem extends Model
             }
         }
         if(!$param || $param == 'packing') {
-            // UPDATE AMOUNT PACKING
-            $this->amount_packing = $this->packing_items->sum('unit_amount') + $this->packing_items->sum('amount_faulty');
-            // abort(501, 'PACKING: unit_amount->'. $this->packing_items->sum('unit_amount') .' amount_foulty->'.$this->packing_items->sum('amount_faulty'));
+
+            ## UPDATE AMOUNT PACKING
+            $finsih = (double) $this->packing_item_orders->sum('amount_finish');
+            $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
+
+            $this->amount_packing = $finsih + $faulty;
             $this->save();
 
-            if(round($this->unit_amount) < round($this->amount_packing)) {
+            if(round($this->amount_process) < round($this->amount_packing)) {
                 abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
+                abort(501, "PROCESS [$this->unit_process] PACKING [$this->amount_packing");
             }
         }
     }

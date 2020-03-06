@@ -19,11 +19,11 @@ class WorkOrder extends Model
     protected $appends = ['fullnumber'];
 
     protected $relationships = [
-        'work_order_items.packing_items',
+        'work_order_items.packing_item_orders',
         'work_order_items.work_order_item_lines.work_production_items',
     ];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['updated_at'];
 
     public function work_order_items() {
         return $this->hasMany('App\Models\Factory\WorkOrderItem')->withTrashed();

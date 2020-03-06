@@ -15,7 +15,7 @@ class WorkProduction extends Model
 
     protected $appends = ['fullnumber'];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['updated_at'];
 
     protected $relationships = [
         'work_production_items.work_order_item_line.work_order_item.work_order_closed',
