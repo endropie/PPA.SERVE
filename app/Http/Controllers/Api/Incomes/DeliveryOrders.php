@@ -42,7 +42,9 @@ class DeliveryOrders extends ApiController
     {
 
         $delivery_order = DeliveryOrder::with([
+            'user_by',
             'customer',
+            'vehicle',
             'request_order',
             'delivery_order_items.item.unit',
             'delivery_order_items.unit',

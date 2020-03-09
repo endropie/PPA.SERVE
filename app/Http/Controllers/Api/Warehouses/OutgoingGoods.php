@@ -146,10 +146,11 @@ class OutgoingGoods extends ApiController
             'customer_name' => $outgoing_good->customer_name,
             'customer_phone' => $outgoing_good->customer_phone,
             'customer_address' => $outgoing_good->customer_address,
+            'description' => $outgoing_good->description,
             'customer_note' => $outgoing_good->customer_note,
             'date' => $outgoing_good->date,
             'vehicle_id' => $outgoing_good->vehicle_id,
-            'transfer_rate' => $outgoing_good->transfer_rate,
+            'rit' => $outgoing_good->rit,
         ]);
 
         $rows = $outgoing_good->outgoing_good_items
@@ -258,9 +259,10 @@ class OutgoingGoods extends ApiController
                 'customer_phone' => $outgoing_good->customer_phone,
                 'customer_address' => $outgoing_good->customer_address,
                 'customer_note' => $outgoing_good->customer_note,
+                'description' => $outgoing_good->description,
                 'date' => $outgoing_good->date,
                 'vehicle_id' => $outgoing_good->vehicle_id,
-                'transfer_rate' => $outgoing_good->transfer_rate,
+                'rit' => $outgoing_good->rit,
                 'is_internal' => true,
             ]);
 
@@ -295,7 +297,7 @@ class OutgoingGoods extends ApiController
                 'customer_note' => $outgoing_good->customer_note,
                 'date' => $outgoing_good->date,
                 'vehicle_id' => $outgoing_good->vehicle_id,
-                'transfer_rate' => $outgoing_good->transfer_rate,
+                'rit' => $outgoing_good->rit,
             ]);
 
             foreach ($rows as $DTL => $row) {

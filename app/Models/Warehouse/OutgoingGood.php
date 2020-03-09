@@ -12,7 +12,7 @@ class OutgoingGood extends Model
 
     protected $fillable = [
         'number', 'customer_id', 'customer_name', 'customer_phone', 'customer_address', 'customer_note', 'description',
-        'transaction', 'date', 'vehicle_id', 'transport_rate'
+        'transaction', 'date', 'vehicle_id', 'rit'
     ];
 
     protected $relationships = [

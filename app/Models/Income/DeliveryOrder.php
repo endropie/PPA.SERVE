@@ -13,7 +13,7 @@ class DeliveryOrder extends Model
 
     protected $fillable = [
         'number', 'revise_number', 'customer_id', 'description', 'is_internal',
-        'transaction', 'date', 'vehicle_id', 'transport_rate',
+        'transaction', 'date', 'vehicle_id', 'rit',
         'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
 
