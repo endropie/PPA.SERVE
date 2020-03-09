@@ -6,6 +6,7 @@ use App\Filters\Income\DeliveryOrder as Filters;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\DeliveryOrder;
+use App\Models\Income\DeliveryOrderItem;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
@@ -60,6 +61,7 @@ class DeliveryOrders extends ApiController
         if (request('mode') == 'confirmation') return $this->confirmation($id);
         else if (request('mode') == 'revision') return $this->revision($request, $id);
         else if (request('mode') == 'reconciliation') return $this->reconciliation($request, $id);
+        else if (request('mode') == 'item-encasement') return $this->encasement($request, $id);
         else return abort(404);
     }
 
@@ -100,6 +102,24 @@ class DeliveryOrders extends ApiController
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
+    }
+
+    public function encasement($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_order = DeliveryOrder::findOrFail($id);
+
+        if ($delivery_order->status != "OPEN") $this->error("SJDO[$delivery_order->number] has not OPEN state. Update not allowed!");
+
+        $request->validate(['id' => 'required']);
+
+        $delivery_order_item = DeliveryOrderItem::findOrFail($request->id);
+
+        $delivery_order_item->update($request->input());
+
+        $this->DATABASE::commit();
+        return $this->show($delivery_order->id);
     }
 
     public function confirmation($id)
