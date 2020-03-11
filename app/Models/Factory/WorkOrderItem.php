@@ -118,7 +118,7 @@ class WorkOrderItem extends Model
                   })
             )->sum();
 
-            $this->amount_process = $total * $this->unit_rate;
+            $this->amount_process = $total;
             $this->save();
 
             if(round($this->unit_amount) < round($this->amount_process)) {

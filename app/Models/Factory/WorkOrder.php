@@ -42,6 +42,22 @@ class WorkOrder extends Model
         return $this->belongsTo('App\Models\Reference\Shift');
     }
 
+    public function getSummaryItemsAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('quantity');
+    }
+
+    public function getSummaryProductionsAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum(function($item) {
+            return (double) ($item->amount_process / ($item->unit_rate?? 1));
+        });
+    }
+
+    public function getSummaryPackingsAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum(function($item) {
+            return (double) ($item->amount_packing / ($item->unit_rate?? 1));
+        });
+    }
+
     public function getTotalAmountAttribute() {
         return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('unit_amount');
     }
