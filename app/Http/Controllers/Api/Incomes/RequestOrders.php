@@ -84,10 +84,6 @@ class RequestOrders extends ApiController
 
         $request_order = RequestOrder::findOrFail($id);
 
-        if (request('mode') !== 'referenced' && $request_order->is_relationship == true) {
-            $this->error('The data has relationships, Not allowed to be changed');
-        }
-
         if ($request_order->status !== 'OPEN') {
             $this->error('The data has not OPEN state, Not allowed to be changed');
         }
@@ -101,19 +97,31 @@ class RequestOrders extends ApiController
 
         // Delete old incoming goods items when $request detail rows has not ID
         if($request_order->request_order_items) {
-          foreach ($request_order->request_order_items as $detail) {
-            // Delete detail of "Request Order"
-            $detail->item->distransfer($detail);
-            $detail->forceDelete();
-          }
+            $rows = collect($request->request_order_items);
+            foreach ($request_order->request_order_items as $detail) {
+                $detail->item->distransfer($detail);
+
+                ## Find except row from old Details.
+                if (!$rows->contains('id', $detail->id)) {
+                    $name = ($detail->item->part_name) ?? ('#'.$detail->id);
+                    if ($detail->amount_delivery > 0) $this->error("Part [$name] is not allowed to removed!");
+                    $detail->forceDelete();
+                }
+            }
         }
 
         $rows = $request->request_order_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
+            $old = $request_order->request_order_items()->find($row['id']);
+            $detail = $request_order->request_order_items()->updateOrCreate(['id' => $row['id']], $row);
 
-            // abort(501, json_encode($fields));
-            $detail = $request_order->request_order_items()->create($row);
+            if ($old && $old->delivery_order_items->count()) {
+                $request->validate(["request_order_items.$i.item_id" => "in:".$old['item_id']]);
+            }
+            if (round($detail->amount_delivery) > round($detail->unit_amount)) {
+                $request->validate(["request_order_items.$i.quantity" => "not_in:".$row['quantity']]);
+            }
         }
 
         // DB::Commit => Before return function!
