@@ -49,23 +49,23 @@ class PreDeliveryItem extends Model
 
     public function getUnitAmountAttribute() {
         // return false when rate is not valid
-        if($this->unit_rate <= 0) return false;
+        $unit_rate = (double) ($this->unit_rate ?? 1);
 
-        return (double) $this->quantity * $this->unit_rate;
+        return (double) ($this->quantity * $unit_rate);
     }
 
-    public function getTotalVerificationAttribute() {
-        // return false when rate is not valid
-        if($this->unit_rate <= 0) return false;
-        $total = $this->outgoing_verifications->sum('unit_amount');
-        return (double) $total * $this->unit_rate;
-    }
+    // public function getTotalVerificationAttribute() {
+    //     // return false when rate is not valid
+    //     if($this->unit_rate <= 0) return false;
+    //     $total = $this->outgoing_verifications->sum('unit_amount');
+    //     return (double) $total * $this->unit_rate;
+    // }
 
     public function calculate()
     {
         // UPDATE AMOUNT PACKING
         $total = (double) $this->outgoing_verifications->sum('unit_amount');
-        $this->amount_verification = $total * $this->unit_rate;
+        $this->amount_verification = $total;
         $this->save();
     }
 }

@@ -27,7 +27,7 @@ class PreDeliveries extends ApiController
             default:
                 $pre_deliveries = PreDelivery::with(['user_by','customer'])->filter($filter)->latest()->collect();
                 $pre_deliveries->getCollection()->transform(function($item) {
-                    $item->append(['is_relationship','total_amount','total_verification']);
+                    $item->append(['is_relationship','summary_items','summary_verifications']);
                     return $item;
                 });
                 break;
