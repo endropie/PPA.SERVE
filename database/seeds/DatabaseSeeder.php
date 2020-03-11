@@ -11,12 +11,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        if(app()->runningInConsole()) {
-			\Artisan::call('passport:install');
-		}
+        if(app()->runningInConsole()) \Artisan::call('passport:install');
+
         $this->call(RolePermission::class);
-        $this->call(Basic::class);
-        $this->call(ImportDB::class);
         $this->call(Settings::class);
+        $this->call(Basic::class);
     }
 }

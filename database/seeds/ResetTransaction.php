@@ -4,7 +4,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class Reset extends Seeder
+class ResetTransaction extends Seeder
 {
 	public function run()
     {
