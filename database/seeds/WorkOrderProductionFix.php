@@ -5,7 +5,7 @@ use App\Models\Factory\WorkProductionItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class WorkOrderFix extends Seeder
+class WorkOrderProductionFix extends Seeder
 {
 	public function run()
     {
