@@ -70,6 +70,16 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Common\Employee');
     }
 
+    public function getSummaryItemsAttribute() {
+        return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
+    }
+
+    public function getSummaryReconcilesAttribute() {
+        return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum(function($item) {
+            return (double) ($item->amount_reconcile / ($item->unit_rate?? 1));
+        });
+    }
+
     public function getHasRevisionAttribute()
     {
         return $this->hasMany(get_class($this),'id')->where('number', $this->number)->where('id', '!=', $this->id);

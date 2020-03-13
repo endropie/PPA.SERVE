@@ -30,7 +30,7 @@ class DeliveryOrders extends ApiController
             default:
                 $delivery_orders = DeliveryOrder::with(['user_by','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
-                    $item->append(['reconcile_number','is_relationship']);
+                    $item->append(['reconcile_number','is_relationship', 'summary_items', 'summary_reconciles']);
                     return $item;
                 });
                 break;
@@ -267,7 +267,7 @@ class DeliveryOrders extends ApiController
             if ($reconcile_item = $detail->getReconcileItem($reconcile)) {
                 $detail->reconcile_item_id = $reconcile_item->id;
             }
-            else $this->error('Reconcile Item Undefined!');
+            else $this->error("Reconcile [". ($detail->item->part_name ?? "#$detail->id") ."] Failed!");
 
             $detail->save();
             $detail->reconcile_item->calculate();

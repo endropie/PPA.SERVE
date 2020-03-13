@@ -18,4 +18,23 @@ class DeliveryOrder extends Filter
         return $this->builder->where('customer_id', $value);
     }
 
+    public function status ($value) {
+        switch (strtoupper($value)) {
+            case 'RECONCILIATION':
+                return $this->builder->where('is_internal', 1)
+                    ->whereHas('delivery_order_items', function($q) {
+                        $q->whereRaw('amount_reconcile < (quantity * unit_rate)');
+                    });
+                break;
+            case 'RECONCILED':
+                return $this->builder->where('is_internal', 1)
+                    ->whereHas('delivery_order_items', function($q) {
+                        $q->whereRaw('ROUND(amount_reconcile) = ROUND(quantity * unit_rate)');
+                    });
+            default:
+                return $this->builder->where('status', $value);
+                break;
+        }
+    }
+
 }
