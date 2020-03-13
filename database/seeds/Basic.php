@@ -48,9 +48,9 @@ class Basic extends Seeder
 
 	public function shifts()
     {
-		Shift::updateOrCreate(['id'=> 1],['name'=>'1','description'=>'The description for Shifting 1']);
-		Shift::updateOrCreate(['id'=> 2],['name'=>'2','description'=>'The description for Shifting 2']);
-		Shift::updateOrCreate(['id'=> 3],['name'=>'3','description'=>'The description for Shifting 3']);
+		Shift::updateOrCreate(['id'=> 1],['name'=>'SHIFT 1','description'=>'The description for Shifting 1']);
+		Shift::updateOrCreate(['id'=> 2],['name'=>'SHIFT 2','description'=>'The description for Shifting 2']);
+		Shift::updateOrCreate(['id'=> 3],['name'=>'SHIFT 3','description'=>'The description for Shifting 3']);
 	}
 
 	public function sizes()
