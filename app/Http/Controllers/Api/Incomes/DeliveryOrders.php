@@ -86,9 +86,11 @@ class DeliveryOrders extends ApiController
 
 
             if ($reconcile_item) $reconcile_item->calculate();
-            if ($request_order_item) $request_order_item->calculate();
-            if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
-                $request_order_item->forceDelete();
+            if ($request_order_item) {
+                $request_order_item->calculate();
+                if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
+                    $request_order_item->forceDelete();
+                }
             }
 
             $detail->delete();
