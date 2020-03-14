@@ -77,6 +77,7 @@ class RequestOrders extends ApiController
 
     public function update(Request $request, $id)
     {
+        if(request('mode') === 'calculate') return $this->calculate($request, $id);
         if(request('mode') === 'close') return $this->close($request, $id);
 
         // DB::beginTransaction => Before the function process!
@@ -192,6 +193,18 @@ class RequestOrders extends ApiController
 
         $request_order->status = 'CLOSED';
         $request_order->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order);
+    }
+
+    public function calculate($request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+
+        $request_order->request_order_items->each->calculate();
 
         $this->DATABASE::commit();
         return response()->json($request_order);
