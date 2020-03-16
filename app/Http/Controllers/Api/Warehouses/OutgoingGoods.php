@@ -12,7 +12,6 @@ use App\Models\Warehouse\OutgoingGoodVerification;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
-use Illuminate\Validation\Validator;
 
 // use function Safe\substr;
 
@@ -73,9 +72,9 @@ class OutgoingGoods extends ApiController
             // create item row on the incoming Goods updated!
             $detail = $outgoing_good->outgoing_good_items()->create($row);
 
-            // $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-            // $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
-            // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+            $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+            $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
+            $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
         }
 
         if ($outgoing_good->transaction == "REGULER" && $outgoing_good->customer->order_mode == "ACCUMULATE")
@@ -171,9 +170,9 @@ class OutgoingGoods extends ApiController
 
             $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
 
-            $TransDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-            $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, $TransDO);
-            $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'VDO');
+            // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+            // $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, $PDO);
+            // $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'VDO');
 
             $delivery_order_item->request_order_item()->associate($detail);
             $delivery_order_item->save();
@@ -277,9 +276,10 @@ class OutgoingGoods extends ApiController
                     'unit_rate' => 1
                 ]);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
-                $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
-                $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+
+                // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+                // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
+                // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->save();
             }
         }
@@ -295,6 +295,7 @@ class OutgoingGoods extends ApiController
                 'customer_phone' => $outgoing_good->customer_phone,
                 'customer_address' => $outgoing_good->customer_address,
                 'customer_note' => $outgoing_good->customer_note,
+                'description' => $outgoing_good->description,
                 'date' => $outgoing_good->date,
                 'vehicle_id' => $outgoing_good->vehicle_id,
                 'rit' => $outgoing_good->rit,
@@ -305,9 +306,9 @@ class OutgoingGoods extends ApiController
                 $detail = $delivery_order->delivery_order_items()->create($row);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-                $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
-                $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+                // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+                // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
+                // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
                 $request_order_item->calculate();

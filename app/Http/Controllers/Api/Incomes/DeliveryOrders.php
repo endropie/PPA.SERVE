@@ -201,9 +201,9 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->create($row);
             $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-            $TransDO = $delivery_order->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-            $detail->item->transfer($detail, $detail->unit_amount, null, $TransDO);
-            $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
+            // $PDO = $delivery_order->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
+            // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
+            // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
 
             if (!$revise->is_internal) {
                 $detail->request_order_item()->associate($request_order_item);
