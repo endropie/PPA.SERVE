@@ -170,12 +170,9 @@ class OutgoingGoods extends ApiController
 
             $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
 
-            // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-            // $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, $PDO);
-            // $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'VDO');
-
             $delivery_order_item->request_order_item()->associate($detail);
             $delivery_order_item->save();
+            $delivery_order_item->calculate();
         }
 
         $delivery_order->request_order()->associate($request_order);
@@ -276,10 +273,6 @@ class OutgoingGoods extends ApiController
                     'unit_rate' => 1
                 ]);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
-
-                // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
-                // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->save();
             }
         }
@@ -306,9 +299,6 @@ class OutgoingGoods extends ApiController
                 $detail = $delivery_order->delivery_order_items()->create($row);
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-                // $PDO = $outgoing_good->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-                // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
-                // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
                 $request_order_item->calculate();
