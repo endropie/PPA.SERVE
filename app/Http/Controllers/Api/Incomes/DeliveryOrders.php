@@ -179,6 +179,7 @@ class DeliveryOrders extends ApiController
 
         $request->validate([
             'partitions' => 'required',
+            'partitions.*.request_order_id' => 'required',
         ]);
 
         ## New delivery order of partitions
@@ -222,7 +223,7 @@ class DeliveryOrders extends ApiController
                 else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
             }
 
-            $delivery_order->request_order_id = $request->request_order_id;
+            $delivery_order->request_order_id = $partition["request_order_id"];
             $delivery_order->outgoing_good_id = $request->outgoing_good_id;
             $delivery_order->revise_id = $revise->id;
             $delivery_order->save();
