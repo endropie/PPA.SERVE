@@ -363,16 +363,17 @@ class DeliveryOrders extends ApiController
 
             if ($request_order_item = RequestOrderItem::find($row['request_order_item_id'])) {
                 $detail->request_order_item()->associate($request_order_item);
+                $detail->save();
+                $detail->request_order_item->calculate();
             }
+            else $this->error("Reconcile [". ($detail->item->part_name ?? "#$detail->id") ."] DETAIL (".$row['request_order_item_id'].") Failed!");
 
             if ($reconcile_item = $detail->getReconcileItem($reconcile)) {
                 $detail->reconcile_item_id = $reconcile_item->id;
+                $detail->save();
+                $detail->reconcile_item->calculate();
             }
             else $this->error("Reconcile [". ($detail->item->part_name ?? "#$detail->id") ."] Failed!");
-
-            $detail->save();
-            $detail->reconcile_item->calculate();
-            $detail->request_order_item->calculate();
         }
 
         $delivery_order->request_order_id = $request_order->id;
