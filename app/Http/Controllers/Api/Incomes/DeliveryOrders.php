@@ -88,7 +88,6 @@ class DeliveryOrders extends ApiController
             $detail->save();
 
 
-            if ($reconcile_item) $reconcile_item->calculate();
             if ($request_order_item) {
                 $request_order_item->calculate();
                 if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
@@ -97,6 +96,7 @@ class DeliveryOrders extends ApiController
             }
 
             $detail->delete();
+            if ($reconcile_item) $reconcile_item->calculate();
         }
 
         $delivery_order->status = $mode;
@@ -234,8 +234,6 @@ class DeliveryOrders extends ApiController
         $revise->status = 'REVISED';
         $revise->save();
         $revise->delete();
-
-        // $this->error('MULTI:LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
