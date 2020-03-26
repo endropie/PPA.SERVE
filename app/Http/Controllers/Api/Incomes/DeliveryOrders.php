@@ -158,6 +158,10 @@ class DeliveryOrders extends ApiController
         if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. MANY-REVISION Not alowed!");
         if($revise->is_internal) $this->error("[". $revise->number ."] is INTERNAL. MANY-REVISION Not alowed!");
         if(!$request_order) $this->error("[". $revise->number ."] RequestOrder Failed. MANY-REVISION Not alowed!");
+        if($revise->status != 'OPEN') {
+            if ($revise->request_order->status == 'CLOSED') $this->error("[". $revise->request_order->number ."] has CLOSED. REVISION Not alowed!");
+            if ($revise->reconcile_id) $this->error("[". $revise->number ."] BASE INTERNAL. REVISION Not alowed!");
+        }
 
         ## Remove detail of revision
         foreach ($revise->delivery_order_items as $detail) {
@@ -248,6 +252,14 @@ class DeliveryOrders extends ApiController
         $request_order = $revise->request_order;
 
         if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
+
+        if($revise->status != 'OPEN') {
+            if ($revise->is_internal) $this->error("[". $revise->number ."] not OPEN. REVISION Not alowed!");
+            else {
+                if ($revise->request_order->status == 'CLOSED') $this->error("[". $revise->request_order->number ."] has CLOSED. REVISION Not alowed!");
+                if ($revise->reconcile_id) $this->error("[". $revise->number ."] BASE INTERNAL. REVISION Not alowed!");
+            }
+        }
 
         ## Remove detail of revision
         foreach ($revise->delivery_order_items as $detail) {
