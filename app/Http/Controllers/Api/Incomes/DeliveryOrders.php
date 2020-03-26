@@ -49,6 +49,7 @@ class DeliveryOrders extends ApiController
             'request_order',
             'delivery_order_items.item.unit',
             'delivery_order_items.unit',
+            'delivery_order_items.item.item_units',
             'delivery_order_items.request_order_item',
         ])->withTrashed()->findOrFail($id);
 
