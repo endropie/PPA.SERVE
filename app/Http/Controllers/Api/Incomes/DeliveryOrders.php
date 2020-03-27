@@ -47,13 +47,14 @@ class DeliveryOrders extends ApiController
             'customer',
             'vehicle',
             'request_order',
+            'revisions',
             'delivery_order_items.item.unit',
             'delivery_order_items.unit',
             'delivery_order_items.item.item_units',
             'delivery_order_items.request_order_item',
         ])->withTrashed()->findOrFail($id);
 
-        $delivery_order->append(['reconcile_number', 'has_revision', 'has_relationship']);
+        $delivery_order->append(['reconcile_number', 'has_relationship']);
 
         return response()->json($delivery_order);
     }
@@ -362,9 +363,13 @@ class DeliveryOrders extends ApiController
 
         $reconcile = DeliveryOrder::findOrFail($id);
         $request_order = RequestOrder::find($request->request_order["id"]);
+        $prefix_code = $reconcile->customer->code ?? "C$reconcile->customer_id";
 
         ## Auto generate number of reconciliation
-        $request->merge(['number'=> $this->getNextSJDeliveryNumber()]);
+        $request->merge([
+            'number'=> $this->getNextSJDeliveryNumber($request->get('date')),
+            'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code)
+        ]);
 
         $delivery_order = DeliveryOrder::create($request->all());
 

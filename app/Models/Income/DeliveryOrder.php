@@ -12,12 +12,12 @@ class DeliveryOrder extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'revise_number', 'customer_id', 'description', 'is_internal',
+        'number', 'indexed_number', 'revise_number', 'customer_id', 'description', 'is_internal',
         'transaction', 'date', 'vehicle_id', 'rit',
         'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
 
-    protected $appends = ['fullnumber'];
+    protected $appends = ['fullnumber', 'fullnumber_index', 'fullnumber_revise'];
 
     protected $hidden = [];
 
@@ -55,6 +55,16 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Income\DeliveryOrder');
     }
 
+    public function revise()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryOrder')->withTrashed();
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany('App\Models\Income\DeliveryOrder', 'revise_id')->withTrashed();
+    }
+
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
@@ -82,7 +92,7 @@ class DeliveryOrder extends Model
 
     public function getHasRevisionAttribute()
     {
-        return $this->hasMany(get_class($this),'id')->where('number', $this->number)->where('id', '!=', $this->id);
+        return $this->revisions;
     }
 
     public function getFullnumberAttribute()
@@ -92,10 +102,27 @@ class DeliveryOrder extends Model
         return $this->number;
     }
 
-    public function getReconcilenumberAttribute()
+    public function getFullnumberIndexAttribute()
     {
-        if ($this->reconcile) return $this->reconcile->fullnumber;
+        if ($this->indexed_number && $this->revise_number) return $this->indexed_number ." R.". (int) $this->revise_number;
 
+        return $this->indexed_number;
+    }
+
+    public function getFullnumberReviseAttribute()
+    {
+        $revise = app('App\Models\Income\DeliveryOrder')->withTrashed()->find($this->revise_id);
+        if (!$revise) return null;
+
+        return $revise->revise_number
+            ? $revise->number ." R.". (int) $revise->revise_number
+            : $revise->number;
+    }
+
+    public function getReconcileNumberAttribute()
+    {
+        $reconcile = app('App\Models\Income\DeliveryOrder')->find($this->reconcile_id);
+        if ($reconcile) return $reconcile->fullnumber;
         return null;
     }
 }

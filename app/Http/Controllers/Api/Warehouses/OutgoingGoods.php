@@ -138,8 +138,11 @@ class OutgoingGoods extends ApiController
             $request_order->save();
         }
 
+        $prefix_code = $outgoing_good->customer->code ?? "C$outgoing_good->customer_id";
+
         $delivery_order = $outgoing_good->delivery_orders()->create([
-            'number' => $this->getNextSJDeliveryNumber(),
+            'number' => $this->getNextSJDeliveryNumber($outgoing_good->date),
+            'indexed_number' => $this->getNextSJDeliveryIndexedNumber($outgoing_good->date, $prefix_code),
             'transaction' =>  $outgoing_good->transaction,
             'customer_id' => $outgoing_good->customer_id,
             'customer_name' => $outgoing_good->customer_name,
@@ -247,8 +250,10 @@ class OutgoingGoods extends ApiController
         }
 
         if (sizeof($over)) {
+            $prefix_code = $outgoing_good->customer->code ?? "C$outgoing_good->customer_id";
             $delivery_order = $outgoing_good->delivery_orders()->create([
-                'number' => $this->getNextSJInternalNumber(),
+                'number' => $this->getNextSJInternalNumber($outgoing_good->date),
+                'indexed_number' => $this->getNextSJDeliveryIndexedNumber($outgoing_good->date, $prefix_code),
                 'transaction' =>  $outgoing_good->transaction,
                 'customer_id' => $outgoing_good->customer_id,
                 'customer_name' => $outgoing_good->customer_name,
@@ -279,9 +284,11 @@ class OutgoingGoods extends ApiController
 
         foreach ($list as $RO => $rows) {
             $request_order = RequestOrder::findOrFail($RO);
+            $prefix_code = $outgoing_good->customer->code ?? "C$outgoing_good->customer_id";
 
             $delivery_order = $outgoing_good->delivery_orders()->create([
-                'number' => $this->getNextSJDeliveryNumber(),
+                'number' => $this->getNextSJDeliveryNumber($outgoing_good->date),
+                'indexed_number' => $this->getNextSJDeliveryIndexedNumber($outgoing_good->date, $prefix_code),
                 'transaction' =>  $outgoing_good->transaction,
                 'customer_id' => $outgoing_good->customer_id,
                 'customer_name' => $outgoing_good->customer_name,

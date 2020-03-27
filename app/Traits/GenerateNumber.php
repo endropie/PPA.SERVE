@@ -51,6 +51,27 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextSJDeliveryIndexedNumber($date = null, $prefix)
+    {
+        $modul = 'sj_delivery';
+        $digit = (int) setting()->get("$modul.indexed_number_digit", 3);
+        $interval = setting()->get("$modul.indexed_number_interval", '{Y-m}');
+        $separator = setting()->get("general.prefix_separator", '/');
+
+        if (strlen($interval)) $prefix = $prefix . $separator . $interval;
+        $prefix.= $separator;
+
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextSJDeliveryNumber($date = null)
     {
         $modul = 'sj_delivery';
@@ -241,7 +262,7 @@ trait GenerateNumber
         return $number;
     }
 
-    protected function prefixParser($modul, $default_prefix = '', $default_interval = '{Y}')
+    protected function prefixParser ($modul, $default_prefix = '', $default_interval = '{Y}')
     {
         $result_number = '';
         if ($code = setting()->get("$modul.number_prefix", $default_prefix)) {
@@ -255,7 +276,7 @@ trait GenerateNumber
         return $result_number;
     }
 
-    protected function dateParser($str, $date)
+    protected function dateParser ($str, $date)
     {
         $matches = array();
         $regex = "/{(.*)}/";
