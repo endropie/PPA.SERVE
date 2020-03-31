@@ -26,6 +26,7 @@ class DeliveryOrder extends Request
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,revise_number,' . $id,
             'date' => 'required',
+            'transaction' => 'required',
             'customer_id' => 'required',
             'request_order_id' => ($this->get('is_internal') ? '' : 'required'),
             'delivery_order_items.*.item_id' => 'required',

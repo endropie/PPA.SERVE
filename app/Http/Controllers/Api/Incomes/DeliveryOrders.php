@@ -186,6 +186,7 @@ class DeliveryOrders extends ApiController
         $request->validate([
             'partitions' => 'required',
             'partitions.*.request_order_id' => 'required',
+            'partitions.*.transaction' => 'required',
         ]);
 
         ## New delivery order of partitions
@@ -195,6 +196,7 @@ class DeliveryOrders extends ApiController
 
             $request->merge([
                 'revise_number'=> ($max + 1),
+                'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);
 
@@ -235,7 +237,6 @@ class DeliveryOrders extends ApiController
             $delivery_order->save();
 
         }
-
 
         $revise->request_order()->dissociate();
         $revise->status = 'REVISED';
