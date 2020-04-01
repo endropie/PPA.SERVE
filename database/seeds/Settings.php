@@ -35,7 +35,7 @@ class Settings extends Seeder
             "incoming_good.number_prefix"     => "IMP",
             "incoming_good.number_interval"   => "{Y}",
             "incoming_good.number_digit"      => "5",
-            "incoming_good.indexed_number_digit" => "3",
+            "incoming_good.indexed_number_digit" => "4",
             "incoming_good.indexed_number_interval" => "{Y-m}",
 
             "opname_stock.number_prefix"     => "STO",
@@ -73,7 +73,7 @@ class Settings extends Seeder
             "sj_delivery.number_prefix"     => "SJDO",
             "sj_delivery.number_interval"   => "{Y}",
             "sj_delivery.number_digit"      => "5",
-            "sj_delivery.indexed_number_digit" => "3",
+            "sj_delivery.indexed_number_digit" => "4",
             "sj_delivery.indexed_number_interval" => "{Y-m}",
 
             "sj_internal.number_prefix"     => "SJID",
