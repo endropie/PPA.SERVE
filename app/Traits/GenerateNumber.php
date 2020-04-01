@@ -64,7 +64,7 @@ trait GenerateNumber
         $prefix = $this->dateParser($prefix, $date);
 
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
