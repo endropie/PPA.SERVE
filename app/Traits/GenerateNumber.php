@@ -63,7 +63,10 @@ trait GenerateNumber
 
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
+
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -79,7 +82,9 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul, 'SJDO');
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
