@@ -237,7 +237,7 @@ class OutgoingGoods extends ApiController
         foreach ($outer as $key => $amount) {
             if (round($amount) > 0) {
                 $item = Item::find($key);
-                $label = ($item->part_name ?? $key);
+                $label = ($item->part_number ?? $key);
 
                 if ($outgoing_good->transaction == 'REGULER' && $outgoing_good->customer->order_mode == 'PO') {
                     $this->request->validate(['delivery_order_intern' => 'required']);
