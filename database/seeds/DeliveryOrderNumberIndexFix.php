@@ -13,19 +13,25 @@ class DeliveryOrderNumberIndexFix extends Seeder
     {
         DB::beginTransaction();
 
-        $deliveries = DeliveryOrder::where('indexed_number', 'LIKE', '%1000')->get();
+        ## RESET "INDEXED NUMBER" as NULL
+        DeliveryOrder::withTrashed()->update(['indexed_number' => null]);
+
+        $deliveries = DeliveryOrder::withTrashed()->select('number', 'date')->distinct()->get();
         foreach ($deliveries as $delivery) {
-            $prefix_code = $delivery->customer->code;
-            $number = $this->getNextSJDeliveryIndexedNumber($delivery->date, $prefix_code);
-            $update = DeliveryOrder::withTrashed()->where('number', $delivery->number)->update(['indexed_number' => $number]);
+
+            $delivery_order = DeliveryOrder::withTrashed()->where('number', $delivery->number)->first();
+            $prefix_code = $delivery_order->customer->code;
+            $number = $this->getNextSJDeliveryIndexedNumber($delivery_order->date, $prefix_code);
+            $update = DeliveryOrder::withTrashed()->where('number', $delivery_order->number)->update(['indexed_number' => $number]);
             if ($update) {
-                print("DeliveryOrder($delivery->id) :: [$update]\n");
+                print("DeliveryOrder($delivery_order->id) :: [$update]\n");
             }
             else {
-                print("DeliveryOrder($delivery->id) FAILED!\n");
+                print("DeliveryOrder($delivery_order->id) FAILED!\n");
             }
         }
 
+        // DB::rollback();
         DB::commit();
     }
 
