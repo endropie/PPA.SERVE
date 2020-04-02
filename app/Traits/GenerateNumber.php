@@ -63,8 +63,10 @@ trait GenerateNumber
 
         $prefix = $this->dateParser($prefix, $date);
 
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(indexed_number, "'.$prefix.'", "") * 1) AS N')
+            ->where('indexed_number','LIKE', $prefix.'%')->get()->max('N');
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -80,7 +82,10 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul, 'SJDO');
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -96,7 +101,10 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul, 'SJID');
         $prefix = $this->dateParser($prefix, $date, '');
 
-        $next = \App\Models\Income\DeliveryOrder::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Income\DeliveryOrder::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -169,7 +177,10 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Warehouse\IncomingGood::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Warehouse\IncomingGood::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -190,39 +201,9 @@ trait GenerateNumber
 
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Warehouse\IncomingGood::withTrashed()->where('indexed_number','LIKE', $prefix.'%')->max('indexed_number');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
-    public function getNextOpnameVoucherNumber($date = null)
-    {
-        $modul = 'opname_voucher';
-        $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul, "VSO", "{Y}");
-        $prefix = $this->dateParser($prefix, $date);
-
-        $next = \App\Models\Warehouse\OpnameVoucher::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
-    public function getNextOpnameNumber($date = null)
-    {
-        $modul = 'opname_stock';
-        $digit = (int) setting()->get("$modul.number_digit", 2);
-        $prefix = $this->prefixParser($modul, "STO", "{Y}");
-        $prefix = $this->dateParser($prefix, $date);
-
-        $next = \App\Models\Warehouse\Opname::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Warehouse\IncomingGood::withTrashed()
+            ->selectRaw('MAX(REPLACE(indexed_number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -238,7 +219,48 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Warehouse\OutgoingGood::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Warehouse\OutgoingGood::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextOpnameNumber($date = null)
+    {
+        $modul = 'opname_stock';
+        $digit = (int) setting()->get("$modul.number_digit", 2);
+        $prefix = $this->prefixParser($modul, "STO", "{Y}");
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Warehouse\Opname::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextOpnameVoucherNumber($date = null)
+    {
+        $modul = 'opname_voucher';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, "VSO", "{Y}");
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Warehouse\OpnameVoucher::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -254,7 +276,10 @@ trait GenerateNumber
         $prefix = $this->prefixParser($modul);
         $prefix = $this->dateParser($prefix, $date);
 
-        $next = \App\Models\Transport\ScheduleBoard::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
+        $next = \App\Models\Transport\ScheduleBoard::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
