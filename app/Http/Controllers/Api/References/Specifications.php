@@ -14,7 +14,7 @@ class Specifications extends ApiController
     {
         switch (request('mode')) {
             case 'all':
-                $specifications = Specification::filter($filter)->get();
+                $specifications = Specification::with(['color'])->filter($filter)->get();
                 break;
 
             case 'datagrid':
@@ -23,7 +23,7 @@ class Specifications extends ApiController
                 break;
 
             default:
-                $specifications = Specification::with('color')->filter($filter)->collect();
+                $specifications = Specification::with(['color'])->filter($filter)->collect();
                 break;
         }
 
