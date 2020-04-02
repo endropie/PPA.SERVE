@@ -15,6 +15,7 @@ class DeliveryOrderNumberIndexFix extends Seeder
 
         $deliveries = DeliveryOrder::withTrashed()
             ->whereNull('revise_id')
+            ->where('is_internal', 0)
             ->where('indexed_number', 'LIKE', '%03/1000')
             ->get();
 
@@ -31,8 +32,8 @@ class DeliveryOrderNumberIndexFix extends Seeder
             }
         }
 
-        DB::rollback();
-        // DB::commit();
+        DB::rollback(); print("ROLLBACK\n");
+        // DB::commit();  print("COMMIT\n");
     }
 
 }
