@@ -188,6 +188,7 @@ class OutgoingGoods extends ApiController
         $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($outgoing_good) {
                 return $query->where('status', 'OPEN')
+                    ->where('order_mode', $outgoing_good->customer->order_mode)
                     ->where('transaction', $outgoing_good->transaction)
                     ->where('customer_id', $outgoing_good->customer_id);
             })->get();
@@ -239,6 +240,7 @@ class OutgoingGoods extends ApiController
                 $item = Item::find($key);
                 $label = ($item->part_number ?? $key);
 
+                ## [SJID] SJ-INTERNAL
                 if ($outgoing_good->transaction == 'REGULER' && $outgoing_good->customer->order_mode == 'PO') {
                     $this->request->validate(['delivery_order_intern' => 'required']);
                     if ($this->request->delivery_order_intern) {
