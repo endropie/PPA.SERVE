@@ -187,8 +187,9 @@ class OutgoingGoods extends ApiController
         $list = []; $over=[];
         $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($outgoing_good) {
+                $order_mode = $outgoing_good->transaction == 'RETURN' ? 'NONE' : $outgoing_good->customer->order_mode;
                 return $query->where('status', 'OPEN')
-                    ->where('order_mode', $outgoing_good->customer->order_mode)
+                    ->where('order_mode', $order_mode)
                     ->where('transaction', $outgoing_good->transaction)
                     ->where('customer_id', $outgoing_good->customer_id);
             })->get();
