@@ -241,14 +241,14 @@ class OutgoingGoods extends ApiController
                 $item = Item::find($key);
                 $label = ($item->part_number ?? $key);
 
-                ## [SJID] SJ-INTERNAL
-                if ($outgoing_good->transaction == 'REGULER' && $outgoing_good->customer->order_mode == 'PO') {
-                    $this->request->validate(['delivery_order_intern' => 'required']);
-                    if ($this->request->delivery_order_intern) {
-                        $over[$key] = $amount;
-                        continue;
-                    }
-                }
+                ## [SJID] SJ-INTERNAL (HOLD)
+                // if ($outgoing_good->transaction == 'REGULER' && $outgoing_good->customer->order_mode == 'PO') {
+                //     $this->request->validate(['delivery_order_intern' => 'required']);
+                //     if ($this->request->delivery_order_intern) {
+                //         $over[$key] = $amount;
+                //         continue;
+                //     }
+                // }
                 $this->error("OVER OUTGOING BY PO [$label:$amount]");
             }
         }
@@ -270,7 +270,6 @@ class OutgoingGoods extends ApiController
                 'rit' => $outgoing_good->rit,
                 'is_internal' => true,
             ]);
-
 
             foreach ($over as $key => $amount) {
                 $item = Item::find($key);
