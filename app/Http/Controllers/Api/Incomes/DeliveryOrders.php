@@ -287,7 +287,11 @@ class DeliveryOrders extends ApiController
 
         ## Auto generate number of revision
         if ($request->number) {
-            $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
+            $max = (int) DeliveryOrder::withTrashed()
+                ->selectRaw('MAX(revise_number * 1) AS N')
+                ->where('number', $request->number)
+                ->get()->max('N');
+
             $request->merge(['revise_number'=> ($max + 1)]);
         }
 
