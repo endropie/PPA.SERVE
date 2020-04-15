@@ -32,7 +32,7 @@ class Packings extends ApiController
 
             default:
                 $packings = Packing::with([
-                    'user_by',
+                    'created_user',
                     'packing_items',
                     'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
                     'customer'=> function($q) { $q->select(['id', 'code', 'name']); },

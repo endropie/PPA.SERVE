@@ -4,11 +4,6 @@ namespace App\Models;
 trait WithUserBy
 {
 
-    public function user_by()
-	{
-        return $this->belongsTo('App\Models\Auth\User', 'created_by');
-    }
-
     public function created_user()
 	{
         return $this->belongsTo('App\Models\Auth\User', 'created_by');

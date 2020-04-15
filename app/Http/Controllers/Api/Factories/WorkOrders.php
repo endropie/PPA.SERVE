@@ -40,7 +40,7 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_orders = WorkOrder::with(['user_by', 'line', 'shift'])->filter($filter)->latest()->collect();
+                $work_orders = WorkOrder::with(['created_user', 'line', 'shift'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
                     $row->append(['is_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_productions', 'summary_packings']);
                     return $row;

@@ -27,7 +27,7 @@ class Opnames extends ApiController
                 break;
 
             default:
-                $opnames = Opname::with('user_by')->filter($filters)->latest()->collect();
+                $opnames = Opname::with('created_user')->filter($filters)->latest()->collect();
                 $opnames->getCollection()->transform(function($item) {
                     // $item->append();
                     return $item;

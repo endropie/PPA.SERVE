@@ -23,13 +23,13 @@ class RequestOrders extends ApiController
                 break;
 
             case 'datagrid':
-                $request_orders = RequestOrder::with(['user_by', 'customer'])->filter($filters)
+                $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filters)
                   ->latest()->get();
                 $request_orders->each->append(['is_relationship']);
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['user_by', 'customer'])
+                $request_orders = RequestOrder::with(['created_user', 'customer'])
                   ->filter($filters)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {

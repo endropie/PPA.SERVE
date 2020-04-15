@@ -35,7 +35,7 @@ class OutgoingGoods extends ApiController
 
             default:
                 $outgoing_goods = OutgoingGood::with([
-                    'user_by',
+                    'created_user',
                     'delivery_orders' => function ($q) {
                         $q->select(['id', 'outgoing_good_id', 'number', 'revise_number']);
                     },

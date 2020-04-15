@@ -28,7 +28,7 @@ class DeliveryOrders extends ApiController
                 break;
 
             default:
-                $delivery_orders = DeliveryOrder::with(['user_by','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
+                $delivery_orders = DeliveryOrder::with(['created_user','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
                     $item->append(['reconcile_number','is_relationship', 'summary_items', 'summary_reconciles']);
                     return $item;
@@ -43,7 +43,7 @@ class DeliveryOrders extends ApiController
     {
 
         $delivery_order = DeliveryOrder::with([
-            'user_by',
+            'created_user',
             'customer',
             'vehicle',
             'request_order',
