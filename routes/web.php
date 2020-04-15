@@ -11,38 +11,29 @@
 |
 */
 
+use App\Models\Warehouse\OutgoingGood;
+use App\Models\Income\DeliveryOrder;
+
 Route::middleware('auth')->get('/user', function () {
     return auth()->user;
 });
 
-Route::get('/calculate-delivery', function() {
-    return App\Models\Common\ItemStock::deliveryTransferAmount();
+Route::middleware('auth')->group(function () {
+
+    Route::get('/calculate-delivery', function() {
+        return App\Models\Common\ItemStock::deliveryTransferAmount();
+    });
+
+    Route::get('/check-delivery', function() {
+        return App\Models\Common\ItemStock::deliveryCheckAmount();
+    });
+
+    Route::get('/test-incoming-good', function() {
+        // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'
+    });
 });
 
-Route::get('/check-delivery', function() {
-    return App\Models\Common\ItemStock::deliveryCheckAmount();
-});
 
-Route::get('/test-incoming-good', function() {
-    // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'
-});
-
-Route::get('migrate', function (Request $request) {
-    if (empty(request('key'))) dd('NOT FOUND KEY');
-
-    $print = [];
-
-    Artisan::call('migrate:fresh', ['--seed' => true]);
-    $print[] = Artisan::output();
-
-    Artisan::call('migrate',['--path' => 'vendor/laravel/passport/database/migrations','--force' => true]);
-    $print[] = Artisan::output();
-
-    Artisan::call('passport:install');
-    $print[] = Artisan::output();
-
-    dd($print);
-});
 
 Auth::routes();
 
