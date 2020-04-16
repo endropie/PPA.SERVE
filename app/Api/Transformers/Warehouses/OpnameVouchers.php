@@ -15,7 +15,7 @@ class OpnameVouchers extends TransformerAbstract
     protected $allowFilled = true;
 
     protected $availableIncludes = [
-        'created_user', 'item', 'unit',
+        'user_by', 'created_user', 'item', 'unit',
     ];
 
     public function transform(Model $model)
@@ -27,6 +27,13 @@ class OpnameVouchers extends TransformerAbstract
     }
 
     public function includeUserBy(Model $model)
+    {
+        if ($user_by = $model->user_by) {
+            return $this->item($user_by, new UserTransformer());
+        }
+    }
+
+    public function includeCreatedUser(Model $model)
     {
         if ($created_user = $model->created_user) {
             return $this->item($created_user, new UserTransformer());
