@@ -45,7 +45,7 @@ class DeliveryOrderItem extends Model
 
     public function item()
     {
-        return $this->belongsTo('App\Models\Common\Item');
+        return $this->belongsTo('App\Models\Common\Item')->withSampled();
     }
 
     public function stockable()

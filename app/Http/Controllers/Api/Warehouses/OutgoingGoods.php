@@ -169,15 +169,20 @@ class OutgoingGoods extends ApiController
 
         foreach ($rows as $row) {
             $detail = $request_order->request_order_items()->create($row);
+
+            ## Setup unit price
+            $detail->price = ($detail->item && $detail->item->price)
+                ? $detail->unit_rate * $detail->item->price : 0;
+            $detail->save();
+
             $delivery_order_item = $delivery_order->delivery_order_items()->create($row);
-
-            $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
-
             $delivery_order_item->request_order_item()->associate($detail);
             $delivery_order_item->save();
-            $delivery_order_item->calculate();
+
+            $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
         }
 
+        $delivery_order->delivery_order_items->each->calculate();
         $delivery_order->request_order()->associate($request_order);
         $delivery_order->save();
     }

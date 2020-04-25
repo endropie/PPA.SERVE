@@ -20,6 +20,12 @@ class Item extends Filter
         return $this->builder->orWhereIn('id', $value);
     }
 
+    public function sampled($value = '') {
+        if (!strlen($value)) return $this->builder;
+
+        return $this->builder->sampled();
+    }
+
     public function has_stocks($value = '') {
         if(!strlen($value)) return $this->builder;
 

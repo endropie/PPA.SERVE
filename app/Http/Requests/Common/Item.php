@@ -25,21 +25,27 @@ class Item extends Request
             $code = '';
         }
 
+        $sampleValid  = [
+            'customer_id' => 'required',
+            'part_name' => 'required',
+            'part_number' => 'required',
+            'unit_id' => 'required',
+        ];
 
-        return [
+        if ($this->get('sample', null)) return $sampleValid;
+
+        return array_merge($sampleValid, [
             'code' => ($id ? 'required|':'').'max:191|unique:items,NULL,' . $id,
             'brand_id' => 'required',
-            'customer_id' => 'required',
             'specification_id' => 'required',
             'item_productions.*.production_id' => 'required',
-
             'item_productions' =>
             function ($attribute, $value, $fail) {
                 if (sizeof($value) == 0) {
                     $fail('Pre productions must be select min. 1 process production.');
                 }
             },
-        ];
+        ]);
     }
 
     public function messages()

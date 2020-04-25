@@ -73,24 +73,24 @@ class Items extends ApiController
         $this->DATABASE::beginTransaction();
 
         if(!strlen($request->code)) {
-            $code = Item::select('id')->max('id');
+            $code = Item::withSampled()->select('id')->max('id');
             $code = str_pad($code + 1, 6, '0', STR_PAD_LEFT);
             $request->merge(['code' => $code]);
         }
 
         $item = Item::create($request->all());
 
-        $preline_rows = $request->item_prelines;
+        $preline_rows = $request->item_prelines ?? [];
         for ($i=0; $i < count($preline_rows); $i++) {
             // create pre production on the item updated!
-            if($i == 0) $preline_rows[$i]["ismain"] = 1;
-            $item->item_prelines()->create($preline_rows[$i]);
+            if ($i == 0) $preline_rows[$i]["ismain"] = 1;
+            if ($preline_rows[$i]['line_id']) $item->item_prelines()->create($preline_rows[$i]);
         }
 
-        $unit_rows = $request->item_units;
+        $unit_rows = $request->item_units ?? [];
         for ($i=0; $i < count($unit_rows); $i++) {
             // create item units on the item updated!
-            $item->item_units()->create($unit_rows[$i]);
+            if ($unit_rows[$i]['unit_id']) $item->item_units()->create($unit_rows[$i]);
         }
 
         if(!$item->code) $item->update(['code' => $item->id]);
@@ -106,7 +106,7 @@ class Items extends ApiController
             'customer','brand','category_item', 'type_item', 'size', 'unit',
             'item_stockables'
         ];
-        $item = Item::with(array_merge($with, ['item_prelines', 'item_units']))->findOrFail($id);
+        $item = Item::withSampled()->with(array_merge($with, ['item_prelines', 'item_units']))->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         $this->DATABASE::commit();
@@ -117,7 +117,7 @@ class Items extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        $item = Item::findOrFail($id);
+        $item = Item::withSampled()->findOrFail($id);
 
         $item->update($request->input());
 

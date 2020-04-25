@@ -229,8 +229,10 @@ class IncomingGoods extends ApiController
 
         foreach ($incoming_good->incoming_good_items as $detail) {
             // Calculate stock on "validation" Incoming Goods!
-            $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
-            $detail->item->transfer($detail, $detail->unit_valid, $to);
+            if ($incoming_good->transaction != 'SAMPLE') {
+                $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
+                $detail->item->transfer($detail, $detail->unit_valid, $to);
+            }
         }
 
         if (strtoupper($incoming_good->order_mode) === 'NONE') {
@@ -337,9 +339,14 @@ class IncomingGoods extends ApiController
         foreach ($details as $detail) {
             $request_order_item = $detail->request_order_item;
 
-            $field = collect($detail)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=> $detail->valid, 'price'=>0]);
+            $field = collect($detail)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=> $detail->valid]);
 
-            $request_order_item = RequestOrderItem::updateOrCreate(['id'=>$detail->request_order_item_id],$field->toArray());
+            $request_order_item = RequestOrderItem::updateOrCreate(['id' => $detail->request_order_item_id], $field->toArray());
+            ## Setup unit price
+            $request_order_item->price = ($detail->item && $request_order_item->item->price)
+                ? $request_order_item->unit_rate * $request_order_item->item->price : 0;
+            $request_order_item->save();
+
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
         }
@@ -375,8 +382,12 @@ class IncomingGoods extends ApiController
             foreach ($rows as $row) {
                 $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=>$row['valid'], 'price'=>0])->toArray();
                 $detail = $model->request_order_items()->create($fields);
+                ## Setup unit price
+                $detail->price = ($detail->item && $detail->item->price)
+                    ? $detail->unit_rate * $detail->item->price : 0;
 
-                $detail->price = $detail->item->price ?? 0;
+                $detail->save();
+
                 $row->request_order_item()->associate($detail);
                 $row->save();
             }

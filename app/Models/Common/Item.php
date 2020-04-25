@@ -4,17 +4,19 @@ namespace App\Models\Common;
 
 use App\Models\Model;
 use App\Filters\Filterable;
+use App\Models\DataSamples;
 
 class Item extends Model
 {
-    use Filterable;
+    use Filterable, DataSamples;
 
     protected $allowTransferDisabled;
 
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
         'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'price',
-        'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable'
+        'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable',
+        'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'sample'
     ];
 
     protected $appends = ['customer_code', 'totals'];
@@ -158,6 +160,19 @@ class Item extends Model
         $stockist = ItemStock::getValidStockist($stockist);
 
         return $this->item_stocks->where('stockist', $stockist)->first();
+    }
+
+    public function getUnitPrice($unit = null)
+    {
+        $price = (double) $this->price ?? 0;
+        if (!$unit) return $price;
+        else
+        {
+            $id = $unit->id ?? $unit;
+            $rate = ($u = $this->item_units()->where('unit_id', $id)->get()->first())
+                ? $u->rate : 1;
+            return  $price * $rate;
+        }
     }
 
     public function transfer($collect, $number, $stockist = false, $exStockist = false) {

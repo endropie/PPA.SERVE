@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Filters\Income\DeliveryOrder as Filters;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Income\Customer;
 use App\Models\Income\DeliveryOrder;
 use App\Models\Income\DeliveryOrderItem;
 use App\Models\Income\RequestOrder;
@@ -39,9 +40,36 @@ class DeliveryOrders extends ApiController
         return response()->json($delivery_orders);
     }
 
+    public function store(Request $request)
+    {
+        $this->DATABASE::beginTransaction();
+
+        ## Form validate is SAMPLE transaction only
+        $request->validate(['transaction' => 'in:SAMPLE']);
+
+        if ($customer = Customer::find($request->get('customer_id'))) {
+            $prefix_code = $customer->code ?? "C:$customer->id";
+        }
+        else $request->validate(['customer_id' => 'not_in:'.$request->get('customer_id')]);
+
+        if(!$request->number) $request->merge([
+            'number'=> $this->getNextSJDeliveryNumber(),
+            'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
+        ]);
+
+        $delivery_order = DeliveryOrder::create($request->input());
+
+        foreach ($request->delivery_order_items as $row) {
+            ## create DeliveryOrder items on the Delivery order revision!
+            $detail = $delivery_order->delivery_order_items()->create($row);
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($delivery_order);
+    }
+
     public function show($id)
     {
-
         $delivery_order = DeliveryOrder::with([
             'created_user',
             'customer',
@@ -67,7 +95,30 @@ class DeliveryOrders extends ApiController
         else if (request('mode') == 'internal-revision') return $this->internalRevision($request, $id);
         else if (request('mode') == 'reconciliation') return $this->reconciliation($request, $id);
         else if (request('mode') == 'item-encasement') return $this->encasement($request, $id);
-        else return abort(404);
+
+        $this->DATABASE::beginTransaction();
+
+        ## Form validate is SAMPLE transaction only
+        $request->validate(['transaction' => 'in:SAMPLE']);
+
+        $delivery_order = DeliveryOrder::findOrFail($id);
+        $delivery_order->update($request->input());
+
+        ## DISCARD HAS VENDOR EXPERTICE'S REMOVED!
+        $collection = collect($request->delivery_order_items);
+        foreach ($delivery_order->delivery_order_items as $detail) {
+            if (!$collection->contains('id', $detail->id)) {
+                $detail->forceDelete();
+            }
+        }
+
+        foreach ($request->delivery_order_items as $row) {
+            ## create DeliveryOrder items on the Delivery order revision!
+            $detail = $delivery_order->delivery_order_items()->updateOrCreate(['id' => $row['id']], $row);
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($delivery_order);
     }
 
     public function destroy($id)
@@ -172,15 +223,14 @@ class DeliveryOrders extends ApiController
                     $request_order_item->item->distransfer($request_order_item);
                     $request_order_item->forceDelete();
                 }
-                else {
-                    $request_order_item->calculate();
-                }
             }
 
             $detail->item->distransfer($detail);
             $detail->request_order_item()->dissociate();
             $detail->save();
             $detail->delete();
+
+            if ($request_order_item) $request_order_item->calculate();
         }
 
         $request->validate([
@@ -209,9 +259,17 @@ class DeliveryOrders extends ApiController
                 $row = $rows[$i];
 
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
-                $request_order_item = $request_order->order_mode == 'ACCUMULATE'
-                    ? $request_order->request_order_items()->create(array_merge($row, ['price' => 0]))
-                    : $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
+                if ($request_order->order_mode == 'ACCUMULATE')
+                {
+                    $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
+                    ## Setup unit price
+                    $request_order_item->price = ($request_order_item->item && $request_order_item->item->price)
+                        ? (double) $request_order_item->unit_rate * (double) $request_order_item->item->price : 0;
+                    $request_order_item->save();
+                }
+                else {
+                    $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
+                }
 
                 ## create DeliveryOrder items on the Delivery order revision!
                 $detail = $delivery_order->delivery_order_items()->create($row);
@@ -310,6 +368,10 @@ class DeliveryOrders extends ApiController
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
                 if($request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
+                    ## Setup unit price
+                    $request_order_item->price = ($request_order_item->item && $request_order_item->item->price)
+                        ? (double) $request_order_item->unit_rate * (double) $request_order_item->item->price : 0;
+                    $request_order_item->save();
                 }
                 else {
                     $request_order_item = RequestOrderItem::find($row['request_order_item_id']);

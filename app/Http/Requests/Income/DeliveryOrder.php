@@ -24,11 +24,11 @@ class DeliveryOrder extends Request
         else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,revise_number,' . $id,
+            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'date' => 'required',
             'transaction' => 'required',
             'customer_id' => 'required',
-            'request_order_id' => ($this->get('is_internal') ? '' : 'required'),
+            'request_order_id' => ($this->get('is_internal') || $this->get('transaction') == 'SAMPLE' ? '' : 'required'),
             'delivery_order_items.*.item_id' => 'required',
             'delivery_order_items' =>
             function ($attribute, $value, $fail) {
