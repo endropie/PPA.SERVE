@@ -299,6 +299,8 @@ class DeliveryOrders extends ApiController
 
         $revise->request_order()->dissociate();
         $revise->status = 'REVISED';
+        $revise->reason_id = $request->get('reason_id', null);
+        $revise->reason_description = $request->get('reason_description', null);
         $revise->save();
         $revise->delete();
 
@@ -411,9 +413,9 @@ class DeliveryOrders extends ApiController
         $delivery_order->save();
 
         $revise->request_order()->dissociate();
+        $revise->status = 'REVISED';
         $revise->reason_id = $request->get('reason_id', null);
         $revise->reason_description = $request->get('reason_description', null);
-        $revise->status = 'REVISED';
         $revise->save();
         $revise->delete();
 
