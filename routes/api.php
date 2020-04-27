@@ -95,6 +95,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('sizes', 'References\Sizes');
             Route::apiResource('brands', 'References\Brands');
             Route::apiResource('colors', 'References\Colors');
+            Route::apiResource('reasons', 'References\Reasons');
             Route::apiResource('type-items', 'References\TypeItems');
             Route::apiResource('category-items', 'References\CategoryItems');
             Route::apiResource('specifications', 'References\Specifications');

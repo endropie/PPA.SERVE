@@ -76,6 +76,7 @@ class DeliveryOrders extends ApiController
             'vehicle',
             'request_order',
             'revisions',
+            'reason',
             'delivery_order_items.item.unit',
             'delivery_order_items.unit',
             'delivery_order_items.item.item_units',
@@ -410,6 +411,8 @@ class DeliveryOrders extends ApiController
         $delivery_order->save();
 
         $revise->request_order()->dissociate();
+        $revise->reason_id = $request->get('reason_id', null);
+        $revise->reason_description = $request->get('reason_description', null);
         $revise->status = 'REVISED';
         $revise->save();
         $revise->delete();

@@ -80,6 +80,11 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Common\Employee');
     }
 
+    public function reason()
+    {
+        return $this->belongsTo('App\Models\Reference\Reason');
+    }
+
     public function getSummaryItemsAttribute() {
         return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
     }
