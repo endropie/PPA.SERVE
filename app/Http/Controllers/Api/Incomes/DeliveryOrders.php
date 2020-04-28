@@ -105,7 +105,7 @@ class DeliveryOrders extends ApiController
         $delivery_order = DeliveryOrder::findOrFail($id);
         $delivery_order->update($request->input());
 
-        ## DISCARD HAS VENDOR EXPERTICE'S REMOVED!
+        ## DISCARD Delivery order items REMOVED!
         $collection = collect($request->delivery_order_items);
         foreach ($delivery_order->delivery_order_items as $detail) {
             if (!$collection->contains('id', $detail->id)) {
@@ -227,11 +227,14 @@ class DeliveryOrders extends ApiController
             }
 
             $detail->item->distransfer($detail);
-            $detail->request_order_item()->dissociate();
-            $detail->save();
             $detail->delete();
 
-            if ($request_order_item) $request_order_item->calculate();
+            if ($request_order_item = $detail->request_order_item) {
+                $request_order_item->calculate();
+            }
+
+            $detail->request_order_item()->dissociate();
+            $detail->save();
         }
 
         $request->validate([
@@ -333,17 +336,17 @@ class DeliveryOrders extends ApiController
                     $request_order_item->item->distransfer($request_order_item);
                     $request_order_item->forceDelete();
                 }
-                else {
-                    $request_order_item = $detail->request_order_item;
-                    $detail->save();
-                    $request_order_item->calculate();
-                }
             }
 
             $detail->item->distransfer($detail);
+            $detail->delete();
+
+            if ($request_order_item = $detail->request_order_item) {
+                $request_order_item->calculate();
+            }
+
             $detail->request_order_item()->dissociate();
             $detail->save();
-            $detail->delete();
         }
 
         ## Auto generate number of revision
