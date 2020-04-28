@@ -30,12 +30,6 @@ class DeliveryOrder extends Request
             'customer_id' => 'required',
             'request_order_id' => ($this->get('is_internal') || $this->get('transaction') == 'SAMPLE' ? '' : 'required'),
             'delivery_order_items.*.item_id' => 'required',
-            'delivery_order_items' =>
-            function ($attribute, $value, $fail) {
-                if (sizeof($value) == 0) {
-                    $fail('Delivery-Items must be select min. 1 item production.');
-                }
-            },
         ];
     }
 
