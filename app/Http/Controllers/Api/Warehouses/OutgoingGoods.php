@@ -201,7 +201,7 @@ class OutgoingGoods extends ApiController
 
         $request_order_items = $request_order_items
             ->filter(function ($x) use ($outgoing_good) {
-                // if ($x->request_order->order_mode != 'PO') return true;
+                if ($x->request_order->order_mode != 'PO') return true;
                 return $outgoing_good->date >= $x->request_order->date
                     && $outgoing_good->date <= $x->request_order->actived_date;
             })
