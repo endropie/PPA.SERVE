@@ -364,9 +364,12 @@ class IncomingGoods extends ApiController
         if (strtoupper($mode) === 'NONE') {
             $number = $this->getNextRequestOrderNumber($incoming_good->date);
 
+            $actived = $incoming_good->customer->order_monthly_actived ? date("Y-m-t", strtotime($incoming_good->date)) : null;
+
             $model = RequestOrder::create([
                 'number'        => $number,
                 'date'          => $incoming_good->date,
+                'actived_date' => $actived,
                 'customer_id'   => $incoming_good->customer_id,
                 'reference_number' => $incoming_good->reference_number,
                 'transaction'    => $incoming_good->transaction,
