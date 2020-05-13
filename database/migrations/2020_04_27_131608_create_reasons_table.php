@@ -17,6 +17,7 @@ class CreateReasonsTable extends Migration
         Schema::create('reasons', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
+            $table->boolean('enable')->default(1);
             $table->timestamps();
         });
 
