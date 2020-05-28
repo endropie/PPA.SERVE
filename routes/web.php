@@ -31,8 +31,6 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-
-Accurate::routes();
 Auth::routes();
 
 Route::get('/', function () { return view('welcome'); });
