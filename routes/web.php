@@ -11,8 +11,6 @@
 |
 */
 
-use App\Models\Warehouse\OutgoingGood;
-use App\Models\Income\DeliveryOrder;
 
 Route::middleware('auth')->get('/user', function () {
     return auth()->user;
@@ -34,7 +32,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-
+Accurate::routes();
 Auth::routes();
 
 Route::get('/', function () { return view('welcome'); });
