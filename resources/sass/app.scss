@@ -1,32 +1,8 @@
-
 // Fonts
-// @import url('https://fonts.googleapis.com/css?family=Nunito');
-// @import '~nunito-fontface/css/nunito/nunito-fontface.css';
-// @import '~fontface-source-sans-pro/css/source-sans-pro.css';
-
-// Fontawesome
-@import '~@fortawesome/fontawesome-free/scss/fontawesome.scss';
-@import '~@fortawesome/fontawesome-free/scss/regular.scss';
-@import '~@fortawesome/fontawesome-free/scss/solid.scss';
-@import '~@fortawesome/fontawesome-free/scss/brands.scss';
-
-@import '~material-design-icons-iconfont/dist/material-design-icons.css';
+@import url('https://fonts.googleapis.com/css?family=Nunito');
 
 // Variables
 @import 'variables';
 
 // Bootstrap
-// @import '~bootstrap/scss/bootstrap';
-
-// AdminLTE
-@import '~admin-lte/build/scss/AdminLTE';
-
-// vuetify.styl
-@import '~vuetify/dist/vuetify.min.css';
-
-@import 'custom.css';
-
-.navbar-laravel {
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
+@import '~bootstrap/scss/bootstrap';
