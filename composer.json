@@ -14,7 +14,7 @@
         "bkwld/cloner": "^3.5",
         "dingo/api": "^3.0",
         "doctrine/dbal": "^2.9",
-        "endropie/accurate-client": "^0.1.2",
+        "endropie/accurate-client": "v0.1.4",
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^1.0",
         "guzzlehttp/guzzle": "^6.3",

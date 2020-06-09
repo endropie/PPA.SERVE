@@ -82,6 +82,7 @@
             <div class="content">
                 <div class="title m-b-md">
                     {{ env('APP_NAME','Laravel') }}
+                    <span style="font-size:15px; font-weight:bold;">{{ app()->version() }}</span>
                 </div>
 
                 <div class="links">
