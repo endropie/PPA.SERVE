@@ -40,6 +40,11 @@ class DeliveryOrder extends Model
         return $this->hasMany('App\Models\Warehouse\OurgoingGood');
     }
 
+    public function acc_invoice()
+    {
+        return $this->belongsTo('App\Models\Income\AccInvoice');
+    }
+
     public function request_order()
     {
         return $this->belongsTo('App\Models\Income\RequestOrder');

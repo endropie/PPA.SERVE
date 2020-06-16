@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\RequestOrder as Filters;
+use App\Models\Income\AccInvoice;
 use App\Models\Income\RequestOrder;
 use App\Traits\GenerateNumber;
 
@@ -33,7 +34,7 @@ class RequestOrders extends ApiController
                   ->filter($filters)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
-                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery']);
+                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery', 'delivery_counter']);
                     return $item;
                 });
                 break;
@@ -67,7 +68,8 @@ class RequestOrders extends ApiController
             'customer',
             'request_order_items.item.item_units',
             'request_order_items.unit',
-            'delivery_orders'
+            'delivery_orders',
+            'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
@@ -209,4 +211,72 @@ class RequestOrders extends ApiController
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
+
+    public function createInvoice($id)
+    {
+        $request = request();
+        $request->validate([
+            // 'number' => 'required',
+            // 'date' => 'required',
+        ]);
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+        $invoice = $request_order->acc_invoices()->create([
+            'number' => $this->getNextAccInvoiceNumber(),
+            'date' => now(),
+        ]);
+
+        foreach ($request->input('delivery_orders') as $row) {
+            $delivery_order = $request_order->delivery_orders()->find($row['id']);
+
+            if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
+            if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+
+            $delivery_order->acc_invoice()->associate($invoice);
+            $delivery_order->save();
+        }
+
+        $response = $invoice->accurate()->push();
+
+        if (!$response['d']) {
+            $this->DATABASE::rollback();
+            return $response;
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($response);
+    }
+
+    public function pushInvoice ($id)
+    {
+        $invoice = AccInvoice::findOrFail($id);
+        return $invoice->accurate()->push();
+    }
+
+    public function forgetInvoice ($id)
+    {
+        $invoice = AccInvoice::findOrFail($id);
+        $forget = $invoice->accurate()->forget();
+
+        $invoice->delete();
+
+        return $forget;
+    }
+
+    public function showInvoice($id)
+    {
+        $request_order = AccInvoice::with([
+
+            'acc_invoice_items.item.item_units',
+            'request_order.customer',
+            'delivery_orders.delivery_order_items.item',
+            'delivery_orders.delivery_order_items.unit',
+        ])->findOrFail($id);
+
+        $request_order->append([]);
+
+        return response()->json($request_order);
+    }
+
 }

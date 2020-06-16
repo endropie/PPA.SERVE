@@ -34,6 +34,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::middleware(['auth:api'])->group( function(){
                 Route::name('user')->post('/', 'Auth\Authentication@user');
                 Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken');
+                Route::name('confirm-password')->post('/confirm-password', 'Auth\Authentication@confirmPassword');
                 Route::name('change-password')->post('/change-password', 'Auth\Authentication@setChangePassword');
                 Route::name('logout')->post('logout', 'Auth\Authentication@logout');
             });
@@ -48,11 +49,17 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::prefix('common')->name('common.')->group(function () {
             Route::get('items/stockables', 'Common\Items@stockables');
+            Route::post('items/{id}/accurate/push', 'Common\Items@push');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
         });
 
         Route::prefix('incomes')->name('incomes.')->group(function () {
+            Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');
+            Route::post('request-orders/{id}/invoice/create', 'Incomes\RequestOrders@createInvoice');
+            Route::post('request-orders/invoice/{id}/accurate/push', 'Incomes\RequestOrders@pushInvoice');
+            Route::post('request-orders/invoice/{id}/accurate/forget', 'Incomes\RequestOrders@forgetInvoice');
+            Route::get('request-orders/invoice/{id}', 'Incomes\RequestOrders@showInvoice');
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');

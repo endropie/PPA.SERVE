@@ -39,7 +39,7 @@ class CreatePackingsTables extends Migration
             $table->decimal('quantity', 10, 2);
             $table->decimal('amount_faulty', 24, 4)->default(0);
             $table->integer('type_fault_id')->nullable();
-            $table->integer('work_order_item_id');
+            $table->integer('work_order_item_id')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

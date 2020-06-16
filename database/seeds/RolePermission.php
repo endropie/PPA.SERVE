@@ -19,9 +19,10 @@ class RolePermission extends Seeder
 			// Auth
 			'users' => ['c','r','u','d'],
 			'roles' => ['c','r','u','d'],
-			'permissions' => ['c','r','u','d'],
+            'permissions' => ['c','r','u','d'],
 			// Common
-			'items' => ['c','r','u','d','price','sample','reference'],
+			'customers' => ['c','r','u','d','push'],
+			'items' => ['c','r','u','d','price','sample','reference','push'],
 			'employees' => ['c','r','u','d','reference'],
 			// Factories
 			'packings' => ['c','r','u','d','close','void'],
@@ -29,9 +30,8 @@ class RolePermission extends Seeder
 			'work-productions' => ['c','r','u','d','close','void'],
 			'work-process' => ['r','confirm'],
 			// Incomes
-			'customers' => ['c','r','u','d'],
 			'forecasts' => ['c','r','u','d','close','void'],
-			'request-orders' => ['c','r','u','d','close','revision','void'],
+			'request-orders' => ['c','r','u','d','close','revision','void', 'push'],
 			// Warehouses
             'opname-stocks' => ['c','r','u','d','validation','revision','void'],
             'opname-vouchers' => ['c','r','u','d','validation','revision','void'],

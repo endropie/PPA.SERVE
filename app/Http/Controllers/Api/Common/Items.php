@@ -157,4 +157,19 @@ class Items extends ApiController
         $this->DATABASE::commit();
         return response()->json(array_merge($item->toArray(), ['success' => true]));
     }
+
+    public function push($id)
+    {
+        if ($id === 'all') {
+            $customers = item::whereNull('accurate_model_id')->get();
+            return $customers->map(function($customer) {
+                $push = $customer->accurate()->push();
+                return collect($push)->except('r');
+            });
+        }
+        else {
+            $customer = item::findOrFail($id);
+            return $customer->accurate()->push();
+        }
+    }
 }

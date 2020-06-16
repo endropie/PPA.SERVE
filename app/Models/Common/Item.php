@@ -5,12 +5,29 @@ namespace App\Models\Common;
 use App\Models\Model;
 use App\Filters\Filterable;
 use App\Models\DataSamples;
+use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class Item extends Model
 {
-    use Filterable, DataSamples;
+    use Filterable, DataSamples, AccurateTrait;
 
     protected $allowTransferDisabled;
+
+    protected $accurate_model = "item";
+
+    protected $accurate_push_attributes = [
+        'name' => 'part_name',
+        'no' => 'code',
+        'unitPrice' => 'price'
+    ];
+
+    static function boot()
+    {
+        parent::boot();
+        static::registerModelEvent('accurate.pushing', function($model, $record) {
+            return array_merge($record, ['itemType' => 'NON_INVENTORY']);
+        });
+    }
 
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',

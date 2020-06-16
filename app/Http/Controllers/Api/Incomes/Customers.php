@@ -76,4 +76,19 @@ class Customers extends ApiController
 
         return response()->json(['success' => true]);
     }
+
+    public function push ($id)
+    {
+        if ($id === 'all') {
+            $customers = Customer::whereNull('accurate_model_id')->get();
+            return $customers->map(function($customer) {
+                $push = $customer->accurate()->push();
+                return collect($push)->except('r');
+            });
+        }
+        else {
+            $customer = Customer::findOrFail($id);
+            return $customer->accurate()->push();
+        }
+    }
 }

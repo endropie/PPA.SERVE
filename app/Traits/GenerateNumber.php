@@ -35,6 +35,22 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextAccInvoiceNumber($date = null)
+    {
+        $modul = 'acc_invoice';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, 'INV');
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\AccInvoice::where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextPreDeliveryNumber($date = null)
     {
         $modul = 'pre_delivery';

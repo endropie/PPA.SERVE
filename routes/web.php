@@ -32,6 +32,13 @@ Route::middleware('auth')->group(function () {
 });
 
 Auth::routes();
+Accurate::routes();
+
+Route::get('/accurate-test', function () {
+    $customer = \App\Models\Income\Customer::first();
+    $response = $customer->accurate()->push();
+    return $response;
+});
 
 Route::get('/', function () { return view('welcome'); });
 

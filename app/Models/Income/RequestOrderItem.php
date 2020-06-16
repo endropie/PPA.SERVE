@@ -66,4 +66,14 @@ class RequestOrderItem extends Model
         $this->amount_delivery = $amount_delivery;
         $this->save();
     }
+
+    static function boot ()
+    {
+        parent::boot();
+        static::created(function($model) {
+            if ($model->price === null) {
+                $model->price = $model->item->price;
+            }
+        });
+    }
 }

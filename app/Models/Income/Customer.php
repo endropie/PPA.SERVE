@@ -3,10 +3,23 @@ namespace App\Models\Income;
 
 use App\Models\Model;
 use App\Filters\Filterable;
+use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class Customer extends Model
 {
-    use Filterable;
+    use Filterable, AccurateTrait;
+
+    protected $accurate_model = 'customer';
+
+    protected $accurate_push_attributes = [
+        'name' => 'name',
+        'customerNo' => 'code',
+        'notes' => 'description',
+    ];
+
+    protected $accurate_push_casts = [
+        'notes' => 'String',
+    ];
 
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',

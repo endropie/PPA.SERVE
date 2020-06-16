@@ -36,9 +36,26 @@ class RequestOrder extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
 
+    public function acc_invoices() {
+        return $this->hasMany('App\Models\Income\AccInvoice');
+    }
+
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function getDeliveryCounterAttribute() {
+        $all = $this->delivery_orders;
+        $confirmed = $all->where('status', 'CONFIRMED');
+        $invoiced = $confirmed->whereNotNull('acc_invoice_id');
+
+        return [
+            'all' => $all->count(),
+            'delivered' => $all->count() - $confirmed->count(),
+            'confirmed' => $confirmed->count() - $invoiced->count(),
+            'invoiced' => $invoiced->count()
+        ];
     }
 
     public function getTotalUnitAmountAttribute() {
