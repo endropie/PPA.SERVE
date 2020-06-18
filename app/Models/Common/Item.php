@@ -36,7 +36,7 @@ class Item extends Model
         'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'sample'
     ];
 
-    protected $appends = ['customer_code', 'totals'];
+    protected $appends = ['part_specification', 'customer_code', 'totals'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -143,6 +143,12 @@ class Item extends Model
     public function size()
     {
         return $this->belongsTo(\App\Models\Reference\Size::class);
+    }
+
+    public function getPartSpecificationAttribute()
+    {
+
+        return $this->specification->name ?? null;
     }
 
     public function getUnitConvertionsAttribute()
