@@ -16,7 +16,10 @@ class Setting extends ApiController
     {
 
         foreach ($request->input() as $key => $value) {
-            setting()->set("$name.$key", $value);
+            if (is_array($value) && sizeof($value) == 0) setting()->forget("$name.$key");
+            else {
+                setting()->set("$name.$key", $value);
+            }
         }
 
         setting()->save();
