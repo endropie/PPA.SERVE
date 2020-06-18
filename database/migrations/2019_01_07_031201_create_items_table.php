@@ -31,7 +31,7 @@ class CreateItemsTable extends Migration
             $table->decimal('sa_dm')->nullable()->default(0);
             $table->decimal('weight')->nullable()->default(0);
 
-            $table->decimal('price', 20, 2)->default(0);
+            $table->decimal('price', 20, 2)->nullable()->default(0);
 
             $table->integer('category_item_id')->nullable();
             $table->integer('type_item_id')->nullable();
