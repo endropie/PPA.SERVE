@@ -2,12 +2,13 @@
 
 namespace App\Models\Income;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryOrderItem extends Model
 {
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $fillable = [
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'

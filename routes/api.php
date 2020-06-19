@@ -60,6 +60,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('request-orders/invoice/{id}/accurate/push', 'Incomes\RequestOrders@pushInvoice');
             Route::post('request-orders/invoice/{id}/accurate/forget', 'Incomes\RequestOrders@forgetInvoice');
             Route::get('request-orders/invoice/{id}', 'Incomes\RequestOrders@showInvoice');
+            Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
+
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
@@ -68,6 +70,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
+            Route::get('incoming-goods/items', 'Warehouses\IncomingGoods@items');
+
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
             Route::apiResource('opnames', 'Warehouses\Opnames');

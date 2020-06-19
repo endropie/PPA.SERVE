@@ -4,32 +4,34 @@ namespace App\Http\Controllers\Api\Warehouses;
 
 use App\Http\Requests\Warehouse\IncomingGood as Request;
 use App\Http\Controllers\ApiController;
-use App\Filters\Warehouse\IncomingGood as Filters;
+use App\Filters\Warehouse\IncomingGood as Filter;
+use App\Filters\Warehouse\IncomingGoodItem as FilterItem;
 use App\Models\Income\Customer;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\PreDelivery;
 use App\Models\Income\RequestOrderItem;
+use App\Models\Warehouse\IncomingGoodItem;
 use App\Traits\GenerateNumber;
 
 class IncomingGoods extends ApiController
 {
     use GenerateNumber;
 
-    public function index(Filters $filters)
+    public function index(Filter $filter, FilterItem $filterItem)
     {
         switch (request('mode')) {
             case 'all':
-                $incoming_goods = IncomingGood::filter($filters)->get();
+                $incoming_goods = IncomingGood::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $incoming_goods = IncomingGood::with(['customer'])->filter($filters)->latest()->get();
+                $incoming_goods = IncomingGood::with(['customer'])->filter($filter)->latest()->get();
                 $incoming_goods->each->append(['is_relationship']);
                 break;
 
             default:
-                $incoming_goods = IncomingGood::with(['created_user','customer'])->filter($filters)->latest()->collect();
+                $incoming_goods = IncomingGood::with(['created_user','customer'])->filter($filter)->latest()->collect();
                 $incoming_goods->getCollection()->transform(function($item) {
                     $item->append(['is_relationship']);
                     return $item;
@@ -38,6 +40,28 @@ class IncomingGoods extends ApiController
         }
 
         return response()->json($incoming_goods);
+    }
+
+    public function items(FilterItem $filter_item)
+    {
+        switch (request('mode')) {
+            case 'all':
+            $incoming_good_items = IncomingGoodItem::filter($filter_item)->latest()->get();
+            break;
+
+            default:
+                $incoming_good_items = IncomingGoodItem::with(['unit', 'item', 'incoming_good'])
+                  ->filter($filter_item)
+                  ->latest()->collect();
+
+                $incoming_good_items->getCollection()->transform(function($row) {
+                    return $row;
+                });
+
+                break;
+        }
+
+        return response()->json($incoming_good_items);
     }
 
     public function store(Request $request)

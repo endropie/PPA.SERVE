@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
-use App\Filters\Income\DeliveryOrder as Filters;
+use App\Filters\Income\DeliveryOrder as Filter;
+use App\Filters\Income\DeliveryOrderItem as FilterItem;
 use App\Http\Requests\Income\DeliveryOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\Customer;
@@ -16,20 +17,20 @@ class DeliveryOrders extends ApiController
 {
     use GenerateNumber;
 
-    public function index(Filters $filters)
+    public function index(Filter $filter)
     {
         switch (request('mode')) {
             case 'all':
-                $delivery_orders = DeliveryOrder::filter($filters)->get();
+                $delivery_orders = DeliveryOrder::filter($filter)->get();
                 break;
 
             case 'datagrid':
-                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->get();
+                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->get();
                 $delivery_orders->each->append(['is_relationship']);
                 break;
 
             default:
-                $delivery_orders = DeliveryOrder::with(['created_user','customer','operator','vehicle'])->filter($filters)->orderBy('id', 'DESC')->latest()->collect();
+                $delivery_orders = DeliveryOrder::with(['created_user','customer','operator','vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->collect();
                 $delivery_orders->getCollection()->transform(function($item) {
                     $item->append(['reconcile_number','is_relationship', 'summary_items', 'summary_reconciles']);
                     return $item;
@@ -38,6 +39,28 @@ class DeliveryOrders extends ApiController
         }
 
         return response()->json($delivery_orders);
+    }
+
+    public function items(FilterItem $filter_item)
+    {
+        switch (request('mode')) {
+            case 'all':
+            $delivery_order_items = DeliveryOrderItem::filter($filter_item)->latest()->get();
+            break;
+
+            default:
+                $delivery_order_items = DeliveryOrderItem::with(['unit', 'item', 'delivery_order'])
+                  ->filter($filter_item)
+                  ->latest()->collect();
+
+                $delivery_order_items->getCollection()->transform(function($row) {
+                    return $row;
+                });
+
+                break;
+        }
+
+        return response()->json($delivery_order_items);
     }
 
     public function store(Request $request)

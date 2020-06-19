@@ -2,12 +2,13 @@
 
 namespace App\Models\Warehouse;
 
+use App\Filters\Filterable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 
 class IncomingGoodItem extends Model
 {
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $fillable = [
         'item_id', 'quantity', 'unit_id', 'unit_rate', 'valid', 'note'
