@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
+use App\Http\Requests\Request as BaseRequest;
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\RequestOrder as Filters;
@@ -212,19 +213,20 @@ class RequestOrders extends ApiController
         return response()->json($request_order);
     }
 
-    public function createInvoice($id)
+    public function createInvoice($id, BaseRequest $request)
     {
-        $request = request();
         $request->validate([
-            // 'number' => 'required',
-            // 'date' => 'required',
+            'date' => 'required',
+            'delivery_orders.*.id' => 'required'
         ]);
+
+        // return response()->json($request->toArray(),501);
         $this->DATABASE::beginTransaction();
 
         $request_order = RequestOrder::findOrFail($id);
         $invoice = $request_order->acc_invoices()->create([
             'number' => $this->getNextAccInvoiceNumber(),
-            'date' => now(),
+            'date' => $request->date ?? now(),
         ]);
 
         foreach ($request->input('delivery_orders') as $row) {
@@ -239,25 +241,37 @@ class RequestOrders extends ApiController
 
         $response = $invoice->accurate()->push();
 
-        if (!$response['d']) {
+        if ($invoice->request_order->customer->invoice_mode == 'SEPARATE') {
+            $service = $invoice->service();
+            $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
+            $response2 = $service->accurate()->push();
+            // abort(501, 'SEPARATE PROSES');
+            if (!$response2['s']) {
+                $this->DATABASE::rollback();
+                return response()->json(['message' => $response['d'], 'success' => $response['s']], 501);
+            }
+        }
+
+        if (!$response['s']) {
             $this->DATABASE::rollback();
-            return $response;
+            return response()->json(['message' => $response['d'], 'success' => $response['s']], 501);
         }
 
         $this->DATABASE::commit();
         return response()->json($response);
     }
 
-    public function pushInvoice ($id)
-    {
-        $invoice = AccInvoice::findOrFail($id);
-        return $invoice->accurate()->push();
-    }
-
     public function forgetInvoice ($id)
     {
         $invoice = AccInvoice::findOrFail($id);
         $forget = $invoice->accurate()->forget();
+
+        if ($invoice->accurate_service_model_id)
+        {
+            $service = $invoice->service();
+            $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
+            $service->accurate()->forget();
+        }
 
         $invoice->delete();
 

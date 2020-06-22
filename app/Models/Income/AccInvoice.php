@@ -10,10 +10,12 @@ class AccInvoice extends Model
 {
     use Filterable, WithUserBy, AccurateTrait;
 
+    protected $serviceMode = false;
+
     protected $accurate_model = 'sales-invoice';
 
     protected $accurate_push_attributes = [
-        'number' => 'number',
+        'number' => 'fullnumber',
         'transDate' => 'date',
         'customerNo' => 'request_order.customer.code'
     ];
@@ -50,5 +52,21 @@ class AccInvoice extends Model
     public function acc_invoice_items()
     {
         return $this->hasManyThrough('App\Models\Income\DeliveryOrderItem', 'App\Models\Income\DeliveryOrder');
+    }
+
+    public function getFullnumberAttribute()
+    {
+        return (string) $this->number . ($this->serviceMode ? '.JASA' : '');
+    }
+
+    public function getServiceModeAttribute()
+    {
+        return (boolean) $this->serviceMode;
+    }
+
+    public function service()
+    {
+        $this->serviceMode = true;
+        return $this;
     }
 }
