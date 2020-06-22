@@ -21,7 +21,7 @@ class OutgoingGoodVerification extends Request
         }
         else $id = null;
 
-        if ($method == 'POST' && Request::exists('outgoing_good_verifications')) {
+        if ($method == 'POST' && request()->exists('outgoing_good_verifications')) {
             return [
                 'pre_delivery_id' => 'required',
                 'date' => 'required',
