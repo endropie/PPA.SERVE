@@ -22,4 +22,9 @@ class Request extends FormRequest
 
         return parent::getValidatorInstance();
     }
+
+    public function rules()
+    {
+        return [];
+    }
 }
