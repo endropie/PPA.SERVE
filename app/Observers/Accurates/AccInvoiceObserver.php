@@ -28,9 +28,13 @@ class AccInvoiceObserver
             $detailName = $detail->item->part_name;
             if ($detail->item->part_name != $detail->item->part_number) $detailName .= " (".$detail->item->part_number.")";
 
-            $price = $detail->request_order_item
-                ? $detail->request_order_item->price
-                : $detail->item->price;
+            $price = $detail->item->price;
+
+            if ($detail->request_order_item) {
+                if ($detail->request_order_item->request_order->order_mode === 'PO') {
+                    $price = $detail->request_order_item->price;
+                }
+            }
 
             if ($mode == 'DETAIL') {
                 $servicePersen = (double) ($detail->item->customer->pph_service / 100);
