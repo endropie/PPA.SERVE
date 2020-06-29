@@ -106,7 +106,7 @@ class Items extends ApiController
             'customer','brand','category_item', 'type_item', 'size', 'unit',
             'item_stockables'
         ];
-        $item = Item::withSampled()->with(array_merge($with, ['item_prelines', 'item_units']))->findOrFail($id);
+        $item = Item::withSampled()->with(array_merge($with, ['item_prelines.line', 'item_units']))->findOrFail($id);
         $item->is_editable = (!$item->is_related);
 
         $this->DATABASE::commit();
@@ -138,6 +138,11 @@ class Items extends ApiController
             $item->item_units()->create($unit_rows[$i]);
         }
 
+        if ($request->isRegulerRequest) {
+            $item->sample_moved_by = auth()->user()->id;
+            $item->save();
+        }
+
         $this->DATABASE::commit();
         return response()->json($item);
     }
@@ -158,18 +163,42 @@ class Items extends ApiController
         return response()->json(array_merge($item->toArray(), ['success' => true]));
     }
 
+    public function sampleValidation($id)
+    {
+        $item = Item::withSampled()->findOrFail($id);
+
+        if (!$item->sample) return $this->error("Part [$item->code] $item->part_name is not sample!");
+
+        if (!$item->sample_moved_by) return $this->error("Part [$item->code] $item->part_name is not sample moved!");
+
+        if ($item->sample_validated_by) return $this->error("Part [$item->code] $item->part_name has been validated!");
+
+        if (!$item->item_prelines->count()) return $this->error("Part [$item->code] $item->part_name has not prelines!");
+
+        if (!$item->unit) return $this->error("Part [$item->code] $item->part_name has not unit!");
+
+        if (!$item->specification) return $this->error("Part [$item->code] $item->part_name has not specification!");
+
+        $item->sample_validated_by = auth()->user()->id;
+        $item->sample = 0;
+
+        $item->save();
+
+        return response()->json($item);
+    }
+
     public function push($id)
     {
         if ($id === 'all') {
-            $customers = item::whereNull('accurate_model_id')->get();
-            return $customers->map(function($customer) {
-                $push = $customer->accurate()->push();
+            $items = Item::whereNull('accurate_model_id')->get();
+            return $items->map(function($item) {
+                $push = $item->accurate()->push();
                 return collect($push)->except('r');
             });
         }
         else {
-            $customer = item::findOrFail($id);
-            return $customer->accurate()->push();
+            $item = Item::findOrFail($id);
+            return $item->accurate()->push();
         }
     }
 }

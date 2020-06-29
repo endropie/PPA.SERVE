@@ -26,6 +26,15 @@ class Item extends Filter
         return $this->builder->sampled();
     }
 
+    public function sampling($value = '') {
+        if (!strlen($value) || $value == 'REGULER') return $this->builder;
+
+        return $this->builder->sampled()
+            ->when($value === 'VALIDATE', function($q) {
+                return $q->whereNotNull('sample_moved_by')->whereNull('sample_validated_by');
+            });
+    }
+
     public function has_stocks($value = '') {
         if(!strlen($value)) return $this->builder;
 
