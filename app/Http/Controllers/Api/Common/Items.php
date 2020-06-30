@@ -140,6 +140,7 @@ class Items extends ApiController
 
         if ($request->isRegulerRequest) {
             $item->sample_moved_by = auth()->user()->id;
+            $item->sample_moved_at = now();
             $item->save();
         }
 
@@ -180,6 +181,7 @@ class Items extends ApiController
         if (!$item->specification) return $this->error("Part [$item->code] $item->part_name has not specification!");
 
         $item->sample_validated_by = auth()->user()->id;
+        $item->sample_validated_at = now();
         $item->sample = 0;
 
         $item->save();
