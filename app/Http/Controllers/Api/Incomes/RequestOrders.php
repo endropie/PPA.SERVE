@@ -69,11 +69,15 @@ class RequestOrders extends ApiController
             'customer',
             'request_order_items.item.item_units',
             'request_order_items.unit',
+            'request_order_items.incoming_good_item',
+            'request_order_items.delivery_order_items',
             'delivery_orders',
             'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
+
+        // $request_order->request_order_items->each->append('order_lots');
 
         return response()->json($request_order);
     }

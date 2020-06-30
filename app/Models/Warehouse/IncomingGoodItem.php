@@ -11,7 +11,7 @@ class IncomingGoodItem extends Model
     use Filterable, SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'quantity', 'unit_id', 'unit_rate', 'valid', 'note'
+        'item_id', 'quantity', 'unit_id', 'unit_rate', 'valid', 'note', 'lots'
     ];
 
     protected $appends = ['unit_amount'];

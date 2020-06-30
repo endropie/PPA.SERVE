@@ -51,6 +51,11 @@ class RequestOrderItem extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
     }
 
+    public function incoming_good_item()
+    {
+        return $this->hasOne('App\Models\Warehouse\IncomingGoodItem');
+    }
+
     public function getTotalDeliveryOrderItemAttribute() {
         return (double) $this->delivery_order_items->sum('unit_amount');
     }
