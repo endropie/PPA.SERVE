@@ -67,7 +67,8 @@ class WorkOrderItemLine extends Filter
                     if ($shift_id = request('shift_id', null)) $q->where('shift_id', $shift_id);
                     if ($ondate = request('ondate', null)) $q->where('date', '<=', $ondate);
                     if ($onshift = request('onshift', null)) $q->where('shift_id', '<=', $onshift);
-                    return $q->where('status', '<>', 'CLOSED')->stateHasNot('PRODUCTED');
+                    // abort(501, 'NONONO!');
+                    return $q->whereNull('stockist_direct')->where('status', '<>', 'CLOSED')->stateHasNot('PRODUCTED');
                 });
             });
     }

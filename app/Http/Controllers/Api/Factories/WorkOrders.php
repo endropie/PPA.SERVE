@@ -86,16 +86,18 @@ class WorkOrders extends ApiController
             $row = $rows[$i];
             ## create item row on the Work Orders updated!
             $detail = $work_order->work_order_items()->create($row);
-            ## Calculate stock on after the Work Orders updated!
-            $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
 
-            $row_lines = $row['work_order_item_lines'];
-            if($row_lines) {
-                for ($j=0; $j < count($row_lines); $j++) {
-                    $row_line = $row_lines[$j];
-                    if($j == 0) $row_line["ismain"] = 1;
-                    $detail->work_order_item_lines()->create($row_line);
+            if (!$work_order->stockist_direct) {
+                $FROM = $work_order->stockist_from;
+                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
+
+                $row_lines = $row['work_order_item_lines'];
+                if($row_lines) {
+                    for ($j=0; $j < count($row_lines); $j++) {
+                        $row_line = $row_lines[$j];
+                        if($j == 0) $row_line["ismain"] = 1;
+                        $detail->work_order_item_lines()->create($row_line);
+                    }
                 }
             }
         }
@@ -143,6 +145,7 @@ class WorkOrders extends ApiController
         if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
         if(request('mode') == 'reopen') return $this->reopen($request, $id);
+        if(request('mode') == 'directed') return $this->directValidated($request, $id);
 
         $this->DATABASE::beginTransaction();
 
@@ -166,16 +169,20 @@ class WorkOrders extends ApiController
             $row = $rows[$i];
 
             $detail = $work_order->work_order_items()->create($row);
-            ## Calculate stock on after Detail item updated!
-            $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
 
-            $row_lines = $row['work_order_item_lines'];
-            if($row_lines) {
-                for ($j=0; $j < count($row_lines); $j++) {
-                    $row_line = $row_lines[$j];
-                    if($j == 0) $row_line["ismain"] = 1;
-                    $detail->work_order_item_lines()->create($row_line);
+
+            if (!$work_order->stockist_direct) {
+                ## Calculate stock on after Detail item updated!
+                $FROM = $work_order->stockist_from;
+                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
+
+                $row_lines = $row['work_order_item_lines'];
+                if($row_lines) {
+                    for ($j=0; $j < count($row_lines); $j++) {
+                        $row_line = $row_lines[$j];
+                        if($j == 0) $row_line["ismain"] = 1;
+                        $detail->work_order_item_lines()->create($row_line);
+                    }
                 }
             }
         }
@@ -252,14 +259,17 @@ class WorkOrders extends ApiController
 
             $detail = $work_order->work_order_items()->create($row);
 
-            ## Calculate stock on after Detail item updated!
-            $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
 
-            $row_lines = $row['work_order_item_lines'] ?? [];
-            for ($j=0; $j < count($row_lines); $j++) {
-                $row_line = $row_lines[$j];
-                $detail->work_order_item_lines()->create($row_line);
+            if (!$work_order->stockist_direct) {
+                ## Calculate stock on after Detail item updated!
+                $FROM = $work_order->stockist_from;
+                $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
+
+                $row_lines = $row['work_order_item_lines'] ?? [];
+                for ($j=0; $j < count($row_lines); $j++) {
+                    $row_line = $row_lines[$j];
+                    $detail->work_order_item_lines()->create($row_line);
+                }
             }
         }
 
@@ -347,6 +357,33 @@ class WorkOrders extends ApiController
 
         if (!$work_order->has_packed) {
             $work_order->moveState('PACKED');
+        }
+
+        $work_order->moveState('CLOSED');
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function directValidated(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be VALIDATED!");
+        if($work_order->status != 'OPEN') $this->error("WO [#$work_order->number] has state 'OPEN'. Not allowed to be VALIDATED!");
+
+        $FROM = $work_order->stockist_from;
+        $DIRECT = $work_order->stockist_direct;
+        $work_order->work_order_items->each(function($detail) use ($FROM, $DIRECT) {
+            $detail->item->distransfer($detail);
+            $detail->item->transfer($detail, $detail->unit_amount, $DIRECT, $FROM);
+        });
+
+        if ($user = auth()->user()) {
+            $work_order->direct_validated_by = $user->id;
+            $work_order->save();
         }
 
         $work_order->moveState('CLOSED');

@@ -26,7 +26,7 @@ class RolePermission extends Seeder
 			'employees' => ['c','r','u','d','reference'],
 			// Factories
 			'packings' => ['c','r','u','d','close','void'],
-			'work-orders' => ['c','r','u','d','close','revision','void'],
+			'work-orders' => ['c','r','u','d','close','revision','void','validation'],
 			'work-productions' => ['c','r','u','d','close','void'],
 			'work-process' => ['r','confirm'],
 			// Incomes
