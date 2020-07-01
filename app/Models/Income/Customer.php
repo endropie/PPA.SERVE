@@ -33,7 +33,6 @@ class Customer extends Model
 
     protected $casts = [
         'tax' => 'double',
-        'pph_material' => 'double',
         'pph_service' => 'double',
     ];
 

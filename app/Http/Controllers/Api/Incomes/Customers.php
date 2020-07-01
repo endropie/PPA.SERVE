@@ -32,9 +32,8 @@ class Customers extends ApiController
 
     public function store(Request $request)
     {
-        $request->merge( ['tax' => (float) $request->tax]);
-        $request->merge( ['pph_service' => (float) $request->pph_service ]);
-        $request->merge( ['pph_material' => (float) $request->pph_material ]);
+        $request->merge( ['tax' => (double) $request->tax]);
+        $request->merge( ['pph_service' => (double) $request->pph_service ]);
         $customer = Customer::create($request->all());
 
         return response()->json($customer);
@@ -51,9 +50,8 @@ class Customers extends ApiController
     public function update(Request $request, $id)
     {
         $customer = Customer::findOrFail($id);
-        $request->merge( ['tax' => (float) $request->tax]);
-        $request->merge( ['pph_service' => (float) $request->pph_service ]);
-        $request->merge( ['pph_material' => (float) $request->pph_material ]);
+        $request->merge( ['tax' => (double) $request->tax]);
+        $request->merge( ['pph_service' => (double) $request->pph_service ]);
         $customer->update($request->input());
 
         // Delete all contacts on before the customer updated!
