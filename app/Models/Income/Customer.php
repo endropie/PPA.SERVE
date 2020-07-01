@@ -23,7 +23,7 @@ class Customer extends Model
 
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
-        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service', 'description', 'enable',
+        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_service', 'description', 'enable',
         'invoice_mode', 'delivery_mode', 'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
     ];
 
