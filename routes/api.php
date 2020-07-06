@@ -29,6 +29,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::middleware([
         'auth:api',
         ])->group( function(){
+        Route::post('uploads/file', 'Uploads@storeFile');
+        Route::delete('uploads/file', 'Uploads@destroyFile');
+        // Route::post('uploads/exist', 'Uploads@existFile');
 
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::middleware(['auth:api'])->group( function(){

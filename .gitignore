@@ -2,6 +2,7 @@
 /public/fonts/vendor
 /public/hot
 /public/storage
+/public/uploads
 /public/css/app.css
 /public/jss/app.jss
 /storage/*.key

@@ -138,9 +138,19 @@ class Items extends ApiController
             $item->item_units()->create($unit_rows[$i]);
         }
 
-        if ($request->isRegulerRequest) {
-            $item->sample_moved_by = auth()->user()->id;
-            $item->sample_moved_at = now();
+        if ($item->sample && $request->sample_priced_at === true) {
+            $item->sample_priced_at = now();
+            $item->save();
+        }
+
+        if ($item->sample && $request->sample_enginered_at === true) {
+            $item->sample_enginered_at = now();
+            $item->sample_enginered_by = auth()->user()->id;
+            $item->save();
+        }
+
+        if ($item->sample && $request->sample_depicted_at === true) {
+            $item->sample_depicted_at = now();
             $item->save();
         }
 
@@ -168,16 +178,15 @@ class Items extends ApiController
     {
         $item = Item::withSampled()->findOrFail($id);
 
+        ## PRIMARY REQUIRED! ##
         if (!$item->sample) return $this->error("Part [$item->code] $item->part_name is not sample!");
+        if (!$item->sample_enginered_at) return $this->error("Part [$item->code] $item->part_name has not enginered!");
+        if (!$item->sample_priced_at) return $this->error("Part [$item->code] $item->part_name has not Priced!");
+        if ($item->sample_validated_at) return $this->error("Part [$item->code] $item->part_name has been validated!");
 
-        if (!$item->sample_moved_by) return $this->error("Part [$item->code] $item->part_name is not sample moved!");
-
-        if ($item->sample_validated_by) return $this->error("Part [$item->code] $item->part_name has been validated!");
-
+        ## ADDITIONAL REQUIRED! ##
         if (!$item->item_prelines->count()) return $this->error("Part [$item->code] $item->part_name has not prelines!");
-
         if (!$item->unit) return $this->error("Part [$item->code] $item->part_name has not unit!");
-
         if (!$item->specification) return $this->error("Part [$item->code] $item->part_name has not specification!");
 
         $item->sample_validated_by = auth()->user()->id;

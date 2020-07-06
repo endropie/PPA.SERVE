@@ -33,7 +33,7 @@ class Item extends Model
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
         'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'price',
         'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable',
-        'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'sample'
+        'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'estimate_begin_date', 'sample'
     ];
 
     protected $appends = ['part_specification', 'customer_code', 'totals'];
@@ -44,6 +44,7 @@ class Item extends Model
         'sa_dm' => 'double',
         'weight' => 'double',
         'price' => 'double',
+        'depicts' => 'array'
     ];
 
     protected $relationships = [

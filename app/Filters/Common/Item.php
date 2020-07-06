@@ -30,8 +30,22 @@ class Item extends Filter
         if (!strlen($value) || $value == 'REGULER') return $this->builder;
 
         return $this->builder->sampled()
-            ->when($value === 'VALIDATE', function($q) {
-                return $q->whereNotNull('sample_moved_by')->whereNull('sample_validated_by');
+            ->when($value === 'SAMPLE:DEPICT', function($q) {
+                return $q->whereNull('sample_depicted_at')->where('project', 'NEW');
+            })
+            ->when($value === 'SAMPLE:ENGINERY', function($q) {
+                return $q->whereNull('sample_enginered_at')->where(function($q) {
+                    return $q->orWhere('project', 'MIGRATE')
+                             ->orWhere(function ($q) {
+                                return $q->where('project', 'NEW')->whereNotNull('sample_depicted_at');
+                            });
+                });
+            })
+            ->when($value === 'SAMPLE:PRICE', function($q) {
+                return $q->whereNull('sample_priced_at')->whereNotNull('sample_enginered_at');
+            })
+            ->when($value === 'SAMPLE:VALIDATE', function($q) {
+                return $q->whereNull('sample_validated_by')->whereNotNull('sample_enginered_at')->whereNotNull('sample_priced_at');
             });
     }
 

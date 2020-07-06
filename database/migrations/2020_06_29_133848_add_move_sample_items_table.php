@@ -14,10 +14,17 @@ class AddMoveSampleItemsTable extends Migration
     public function up()
     {
         Schema::table('items', function (Blueprint $table) {
-            $table->foreignId('sample_moved_by')->nullable()->after('created_by');
-            $table->foreignId('sample_validated_by')->nullable()->after('sample_moved_by');
+            $table->date('estimate_begindate')->nullable()->after('estimate_price');
+            $table->jsonb('depics')->nullable()->after('description');
 
-            $table->timestamp('sample_moved_at')->nullable();
+            $table->enum('project', ['NONE', 'NEW', 'MIGRATE'])->default('NONE')->after('sample');
+
+            $table->foreignId('sample_enginered_by')->nullable()->after('sample_depicted_by');
+            $table->foreignId('sample_validated_by')->nullable()->after('sample_priced_by');
+
+            $table->timestamp('sample_depicted_at')->nullable();
+            $table->timestamp('sample_enginered_at')->nullable();
+            $table->timestamp('sample_priced_at')->nullable();
             $table->timestamp('sample_validated_at')->nullable();
         });
     }
@@ -30,9 +37,16 @@ class AddMoveSampleItemsTable extends Migration
     public function down()
     {
         Schema::table('items', function (Blueprint $table) {
-            $table->dropColumn('sample_moved_by');
+
+            $table->dropColumn('project');
+            $table->dropColumn('depics');
+
+            $table->dropColumn('sample_enginered_by');
             $table->dropColumn('sample_validated_by');
-            $table->dropColumn('sample_moved_at');
+
+            $table->dropColumn('sample_depicted_at');
+            $table->dropColumn('sample_enginered_at');
+            $table->dropColumn('sample_priced_at');
             $table->dropColumn('sample_validated_at');
         });
     }
