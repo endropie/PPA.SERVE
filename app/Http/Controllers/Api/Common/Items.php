@@ -95,6 +95,8 @@ class Items extends ApiController
 
         if(!$item->code) $item->update(['code' => $item->id]);
 
+        $this->sampleTimestamp($item, $request);
+
         $this->DATABASE::commit();
         return response()->json($item);
     }
@@ -138,21 +140,7 @@ class Items extends ApiController
             $item->item_units()->create($unit_rows[$i]);
         }
 
-        if ($item->sample && $request->sample_priced_at === true) {
-            $item->sample_priced_at = now();
-            $item->save();
-        }
-
-        if ($item->sample && $request->sample_enginered_at === true) {
-            $item->sample_enginered_at = now();
-            $item->sample_enginered_by = auth()->user()->id;
-            $item->save();
-        }
-
-        if ($item->sample && $request->sample_depicted_at === true) {
-            $item->sample_depicted_at = now();
-            $item->save();
-        }
+        $this->sampleTimestamp($item, $request);
 
         $this->DATABASE::commit();
         return response()->json($item);
@@ -172,6 +160,26 @@ class Items extends ApiController
 
         $this->DATABASE::commit();
         return response()->json(array_merge($item->toArray(), ['success' => true]));
+    }
+
+    public function sampleTimestamp($item, $request)
+    {
+        if ($item->sample && $request->sample_priced_at === true) {
+            $item->sample_priced_at = now();
+            $item->save();
+        }
+
+        if ($item->sample && $request->sample_enginered_at === true) {
+            $item->sample_enginered_at = now();
+            $item->sample_enginered_by = auth()->user()->id;
+            $item->save();
+        }
+
+        if ($item->sample && $request->sample_depicted_at === true) {
+            $item->depicts = $request->depicts;
+            $item->sample_depicted_at = now();
+            $item->save();
+        }
     }
 
     public function sampleValidation($id)

@@ -5,11 +5,12 @@ namespace App\Models\Common;
 use App\Models\Model;
 use App\Filters\Filterable;
 use App\Models\DataSamples;
+use App\Models\WithUserBy;
 use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class Item extends Model
 {
-    use Filterable, DataSamples, AccurateTrait;
+    use Filterable, WithUserBy, DataSamples, AccurateTrait;
 
     protected $allowTransferDisabled;
 
@@ -38,7 +39,7 @@ class Item extends Model
 
     protected $appends = ['part_specification', 'customer_code', 'totals'];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['updated_at'];
 
     protected $casts = [
         'sa_dm' => 'double',

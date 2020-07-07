@@ -21,12 +21,6 @@ class Item extends Filter
     }
 
     public function sampled($value = '') {
-        if (!strlen($value)) return $this->builder;
-
-        return $this->builder->sampled();
-    }
-
-    public function sampling($value = '') {
         if (!strlen($value) || $value == 'REGULER') return $this->builder;
 
         return $this->builder->sampled()
@@ -45,7 +39,7 @@ class Item extends Filter
                 return $q->whereNull('sample_priced_at')->whereNotNull('sample_enginered_at');
             })
             ->when($value === 'SAMPLE:VALIDATE', function($q) {
-                return $q->whereNull('sample_validated_by')->whereNotNull('sample_enginered_at')->whereNotNull('sample_priced_at');
+                return $q->whereNull('sample_validated_at')->whereNotNull('sample_enginered_at')->whereNotNull('sample_priced_at');
             });
     }
 
