@@ -19,8 +19,8 @@ class AddMoveSampleItemsTable extends Migration
 
             $table->enum('project', ['NONE', 'NEW', 'MIGRATE'])->default('NONE')->after('sample');
 
-            $table->foreignId('sample_enginered_by')->nullable()->after('sample_depicted_by');
-            $table->foreignId('sample_validated_by')->nullable()->after('sample_priced_by');
+            $table->foreignId('sample_enginered_by')->nullable()->after('sample_created_by');
+            $table->foreignId('sample_validated_by')->nullable()->after('sample_created_by');
 
             $table->timestamp('sample_depicted_at')->nullable();
             $table->timestamp('sample_enginered_at')->nullable();
