@@ -20,7 +20,7 @@ class Item extends Filter
         return $this->builder->orWhereIn('id', $value);
     }
 
-    public function sampled($value = '') {
+    public function sample_in($value = '') {
         if (!strlen($value) || $value == 'REGULER') return $this->builder;
 
         return $this->builder->sampled()
