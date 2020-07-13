@@ -18,6 +18,7 @@ class AddMoveSampleItemsTable extends Migration
             $table->jsonb('depics')->nullable()->after('description');
 
             $table->enum('project', ['NONE', 'NEW', 'MIGRATE'])->default('NONE')->after('sample');
+            $table->string('project_number')->nullable()->after('project');
 
             $table->foreignId('sample_enginered_by')->nullable()->after('created_by');
             $table->foreignId('sample_validated_by')->nullable()->after('created_by');
