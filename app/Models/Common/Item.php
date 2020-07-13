@@ -26,7 +26,11 @@ class Item extends Model
     {
         parent::boot();
         static::registerModelEvent('accurate.pushing', function($model, $record) {
-            return array_merge($record, ['itemType' => 'NON_INVENTORY']);
+            return array_merge($record, [
+                'tax1Name' => 'Pajak Pertambahan Nilai',
+                'tax3Name' => 'Jasa Teknik',
+                'itemType' => 'SERVICE'
+            ]);
         });
     }
 
@@ -37,7 +41,7 @@ class Item extends Model
         'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'estimate_begin_date', 'project', 'sample'
     ];
 
-    protected $appends = ['part_specification', 'customer_code', 'totals'];
+    protected $appends = ['part_specification', 'part_subname', 'customer_code', 'totals'];
 
     protected $hidden = ['updated_at'];
 
@@ -147,10 +151,16 @@ class Item extends Model
         return $this->belongsTo(\App\Models\Reference\Size::class);
     }
 
-    public function getPartSpecificationAttribute()
+    public function getPartSubnameAttribute()
     {
-
-        return $this->specification->name ?? null;
+        $mode = setting()->get('item.subname_mode', null);
+        if ($mode == 'PART_NUMBER') {
+            return $this->part_number;
+        }
+        if ($mode == 'SPECIFICATION') {
+            return $this->specification ? $this->specification->name : null;
+        }
+        return null;
     }
 
     public function getUnitConvertionsAttribute()
