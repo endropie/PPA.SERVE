@@ -176,6 +176,12 @@ class Items extends ApiController
         }
 
         if ($item->sample && $request->sample_depicted_at === true) {
+
+            if ($request->depicts == null || collect($request->depicts)->count() == 0)
+            {
+                $this->error('Drawing not available!');
+            }
+
             $item->depicts = $request->depicts;
             $item->sample_depicted_at = now();
             $item->save();
