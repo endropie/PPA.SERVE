@@ -23,7 +23,7 @@ class Customer extends Model
 
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
-        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_service', 'description', 'enable',
+        'bank_account', 'npwp', 'pkp', 'with_ppn', 'with_pph', 'ppn', 'sen_service', 'exclude_service', 'description', 'enable',
         'invoice_mode', 'delivery_mode', 'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
     ];
 
@@ -32,8 +32,8 @@ class Customer extends Model
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [
-        'tax' => 'double',
-        'pph_service' => 'double',
+        'ppn' => 'double',
+        'sen_service' => 'double',
     ];
 
     protected $relationships = ['items'];
