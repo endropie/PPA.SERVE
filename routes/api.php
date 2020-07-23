@@ -83,6 +83,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('opname-vouchers', 'Warehouses\OpnameVouchers');
             Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
             Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
+            Route::apiResource('deportation-goods', 'Warehouses\DeportationGoods');
         });
 
         Route::prefix('factories')->name('factories.')->group(function () {

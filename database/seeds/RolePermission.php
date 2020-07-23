@@ -40,7 +40,8 @@ class RolePermission extends Seeder
             'outgoing-verifications' => ['c','r','u','d'],
 			'outgoing-goods' => ['c','r','d','void'],
 			'pre-deliveries' => ['c','r','u','d','close','revision','void'],
-			'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
+            'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
+			'deportation-goods' => ['c','r','u','d','validation','revision','void'],
 			'schedule-boards' => ['c','r','u','d','void'],
 			// Reference
 			'brands'		=> ['c','r','u','d'],
@@ -77,7 +78,7 @@ class RolePermission extends Seeder
             'incoming.good' => ['incoming-goods'],
             'opname.voucher' => ['opname-vouchers'],
             'opname.stock' => ['opname-stocks'],
-
+            'deportation.good' => ['deportation-goods'],
 
 			'reference' => [
 				'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes',
@@ -104,7 +105,7 @@ class RolePermission extends Seeder
 			$pass = Hash::make($key.'ppa');
 			// Ex: username: user.reference@ppa.com password: referenceppa
 
-            $user = User::firstOrCreate(['email' => $name .'@ppa.com'], ['name' => $name, 'password' => $pass]);
+            $user = User::firstOrCreate(['email' => strtolower($name .'@ppa.com')], ['name' => $name, 'password' => $pass]);
             $user->assignRole($profileRole->name);
 
             $label = "user.$key";
