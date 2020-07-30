@@ -35,9 +35,13 @@ Auth::routes();
 Accurate::routes();
 
 Route::get('/accurate-test', function () {
-    $customer = \App\Models\Income\Customer::first();
-    $response = $customer->accurate()->push();
-    return $response;
+    // $customer = \App\Models\Income\Customer::first();
+    // $response = $customer->accurate()->push();
+    $customers = \App\Models\Income\Customer::all();
+    $customers->each(function($customer) {
+        $customer->accurate()->push();
+    });
+    return response()->json(['status' => true]);
 });
 
 Route::get('/', function () { return view('welcome'); });
