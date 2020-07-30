@@ -14,7 +14,7 @@ class AddMoveSampleItemsTable extends Migration
     public function up()
     {
         Schema::table('items', function (Blueprint $table) {
-            $table->date('estimate_begindate')->nullable()->after('estimate_price');
+            $table->date('estimate_begin_date')->nullable()->after('estimate_price');
             $table->jsonb('depics')->nullable()->after('description');
 
             $table->enum('project', ['NONE', 'NEW', 'MIGRATE'])->default('NONE')->after('sample');
