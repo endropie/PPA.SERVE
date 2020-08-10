@@ -24,7 +24,6 @@ class RequestOrder extends Filter
 
     public function invoicing($order = 'true') {
         return $this->builder
-            ->where('status', 'CLOSED')
             ->whereHas('delivery_orders', function($q) {
                 return $q->whereNull('acc_invoice_id');
             });
