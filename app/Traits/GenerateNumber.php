@@ -39,7 +39,7 @@ trait GenerateNumber
     {
         $modul = 'acc_invoice';
         $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul, 'INV');
+        $prefix = $this->prefixParser($modul, 'INV', '{Y-m}');
         $prefix = $this->dateParser($prefix, $date);
 
         $next = \App\Models\Income\AccInvoice::where('number','LIKE', $prefix.'%')->max('number');

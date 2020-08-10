@@ -246,13 +246,19 @@ class RequestOrders extends ApiController
         $response = $invoice->accurate()->push();
 
         if ($invoice->request_order->customer->invoice_mode == 'SEPARATE') {
-            $service = $invoice->service();
-            $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
-            $response2 = $service->accurate()->push();
-            // abort(501, 'SEPARATE PROSES');
+
+            $invoice2 = $request_order->acc_invoices()->create([
+                'number' => $invoice->number . ".JASA",
+                'date' => $request->date ?? now(),
+            ]);
+            $invoice2->material_invoice()->associate($invoice);
+            $invoice2->save();
+
+            $response2 = $invoice2->accurate()->push();
+
             if (!$response2['s']) {
                 $this->DATABASE::rollback();
-                return response()->json(['message' => $response['d'], 'success' => $response['s']], 501);
+                return response()->json(['message' => $response2['d'], 'success' => $response2['s']], 501);
             }
         }
 
@@ -270,12 +276,17 @@ class RequestOrders extends ApiController
         $invoice = AccInvoice::findOrFail($id);
         $forget = $invoice->accurate()->forget();
 
-        if ($invoice->accurate_service_model_id)
-        {
-            $service = $invoice->service();
-            $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
-            $service->accurate()->forget();
+        if ($invoice2 = $invoice->service_invoice) {
+            $invoice2->accurate()->forget();
+            $invoice2->delete();
         }
+
+        // if ($invoice->accurate_service_model_id)
+        // {
+        //     $service = $invoice->service();
+        //     $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
+        //     $service->accurate()->forget();
+        // }
 
         $invoice->delete();
 
@@ -284,17 +295,11 @@ class RequestOrders extends ApiController
 
     public function showInvoice($id)
     {
-        $request_order = AccInvoice::with([
+        $invoice = AccInvoice::with(['request_order.customer'])->findOrFail($id);
 
-            'acc_invoice_items.item.item_units',
-            'request_order.customer',
-            'delivery_orders.delivery_order_items.item',
-            'delivery_orders.delivery_order_items.unit',
-        ])->findOrFail($id);
+        $invoice = $invoice->setAppends(['deliveries']);
 
-        $request_order->append([]);
-
-        return response()->json($request_order);
+        return response()->json($invoice);
     }
 
 }

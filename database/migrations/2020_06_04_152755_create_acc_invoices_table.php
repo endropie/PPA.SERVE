@@ -17,7 +17,10 @@ class CreateAccInvoicesTable extends Migration
             $table->id();
             $table->string('number');
             $table->date('date');
-            $table->foreignId('request_order_id');
+            $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
+            // $table->foreignId('request_order_id');
+            $table->foreignId('customer_id');
+            $table->foreignId('service_invoice_id')->nullable();
             $table->bigInteger('accurate_model_id')->nullable();
             $table->integer('created_by')->nullable();
             $table->timestamps();

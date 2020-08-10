@@ -37,4 +37,9 @@ class DeliveryOrder extends Filter
         }
     }
 
+    public function invoicing($order = 'true') {
+        return $this->builder->whereNull('acc_invoice_id');
+    }
+
+
 }
