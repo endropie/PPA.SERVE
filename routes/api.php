@@ -52,7 +52,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::prefix('common')->name('common.')->group(function () {
             Route::post('items/{id}/sample-validation', 'Common\Items@sampleValidation');
-            Route::post('items/{id}/accurate/push', 'Common\Items@push');
             Route::get('items/stockables', 'Common\Items@stockables');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');

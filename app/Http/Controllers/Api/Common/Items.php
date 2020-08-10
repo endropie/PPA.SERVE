@@ -211,19 +211,4 @@ class Items extends ApiController
 
         return response()->json($item);
     }
-
-    public function push($id)
-    {
-        if ($id === 'all') {
-            $items = Item::whereNull('accurate_model_id')->get();
-            return $items->map(function($item) {
-                $push = $item->accurate()->push();
-                return collect($push)->except('r');
-            });
-        }
-        else {
-            $item = Item::findOrFail($id);
-            return $item->accurate()->push();
-        }
-    }
 }
