@@ -14,7 +14,7 @@ class DeliveryOrderItem extends Model
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
     ];
 
-    protected $appends = ['unit_amount'];
+    protected $appends = ['unit_amount', 'number_lots'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -65,6 +65,15 @@ class DeliveryOrderItem extends Model
 
     public function getUnitAmountAttribute() {
         return (double) $this->quantity * $this->unit_rate;
+    }
+
+    public function getNumberLotsAttribute() {
+        if ($id = $this->getAttribute('request_order_item_id')) {
+            if($request_order_item = RequestOrderItem::find($id)) {
+                if ($request_order_item->incoming_good_item) return $request_order_item->incoming_good_item->lots ?? '-';
+            }
+        }
+        return null;
     }
 
     public function calculate() {
