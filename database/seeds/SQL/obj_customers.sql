@@ -14,7 +14,7 @@ MySQL - 5.7.26-log : Database - ppa
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 /*Data for the table `customers` */
 
-insert  into `customers`(`id`,`code`,`name`,`email`,`phone`,`fax`,`address`,`subdistrict`,`district`,`province_id`,`zipcode`,`npwp`,`pkp`,`bank_account`,`with_tax`,`with_pph`,`tax`,`pph_service`,`pph_material`,`invoice_mode`,`delivery_mode`,`order_mode`,`description`,`enable`,`created_at`,`updated_at`) values 
+insert  into `customers`(`id`,`code`,`name`,`email`,`phone`,`fax`,`address`,`subdistrict`,`district`,`province_id`,`zipcode`,`npwp`,`pkp`,`bank_account`,`with_ppn`,`with_pph`,`ppn`,`sen_service`,`exclude_service`,`invoice_mode`,`delivery_mode`,`order_mode`,`description`,`enable`,`created_at`,`updated_at`) values 
 (1,'ACJ','PT. ADHI CHANDRA JAYA','','021-5538547','','Kalisabi, RT.4 RW.2, Jatiuwung, Cibodas - Tangerang','Cibodas','Tangerang',NULL,'15138','25383019402000','','',1,1,10.00,0.00,0.00,NULL,'1','3',NULL,1,NULL,NULL),
 (2,'ADW','PT. ADHI WIJAYACITRA','','-','','Jl. Pangkalan 1 Blok B RT.3 RW. 3, Bantar Gebang - Bekasi','Bantar Gebang','Bekasi',NULL,'17310','15936941431000','','',1,1,10.00,0.00,0.00,NULL,'1','3',NULL,1,NULL,NULL),
 (3,'AFI','PT. AICHI FORGING INDONESIA','','','','JALAN PEGANGSAAN, Blok A1, Kelapa Gading','KELAPA GADING','',NULL,'','','','',1,1,10.00,10.00,10.00,NULL,'1','1',NULL,1,NULL,NULL),
