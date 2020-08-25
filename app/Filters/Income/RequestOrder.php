@@ -23,6 +23,7 @@ class RequestOrder extends Filter
 
     public function invoicing($order = 'true') {
         return $this->builder
+            ->where('transaction', 'REGULER')
             ->whereHas('delivery_orders', function($q) {
                 return $q->whereNull('acc_invoice_id');
             });

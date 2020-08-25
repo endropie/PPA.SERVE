@@ -14,11 +14,13 @@ class DeliveryOrder extends Filter
         parent::__construct($request);
     }
 
-    public function customer_id($value) {
+    public function customer_id($value) 
+    {
         return $this->builder->where('customer_id', $value);
     }
 
-    public function status ($value) {
+    public function status ($value) 
+    {
         switch (strtoupper($value)) {
             case 'RECONCILIATION':
                 return $this->builder->where('is_internal', 1)
@@ -37,9 +39,9 @@ class DeliveryOrder extends Filter
         }
     }
 
-    public function invoicing($order = 'true') {
+    public function invoicing($order = 'true') 
+    {
         return $this->builder->whereNull('acc_invoice_id');
     }
-
 
 }

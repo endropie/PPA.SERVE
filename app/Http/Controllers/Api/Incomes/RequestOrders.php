@@ -72,7 +72,7 @@ class RequestOrders extends ApiController
             'request_order_items.incoming_good_item',
             'request_order_items.delivery_order_items',
             'delivery_orders',
-            'acc_invoices'
+            // 'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddColumnAccurateModelTables extends Migration
+class AddColumnInvoiceRequestRequiredOnCustomers extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddColumnAccurateModelTables extends Migration
     public function up()
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->bigInteger('accurate_model_id')->nullable()->after('enable');
+            $table->boolean('invoice_request_required')->default(0)->after('invoice_mode');
         });
     }
 
@@ -25,9 +25,8 @@ class AddColumnAccurateModelTables extends Migration
      */
     public function down()
     {
-
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn('accurate_model_id');
+            $table->dropColumn('invoice_request_required');
         });
     }
 }

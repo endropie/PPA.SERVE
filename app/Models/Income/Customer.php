@@ -24,10 +24,11 @@ class Customer extends Model
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
         'bank_account', 'npwp', 'pkp', 'with_ppn', 'with_pph', 'ppn', 'sen_service', 'exclude_service', 'bounded_service', 'description', 'enable',
-        'invoice_mode', 'delivery_mode', 'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
+        'invoice_mode', 'invoice_request_required', 'delivery_mode',
+        'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
     ];
 
-    protected $appends = [ 'address_raw' ];
+    protected $appends = [ 'address_raw', 'is_invoice_request' ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -60,5 +61,11 @@ class Customer extends Model
         $raw .= ($this->zipcode ? ' '. $this->zipcode : '');
 
         return $raw;
+    }
+
+    public function getIsInvoiceRequestAttribute() {
+        if ($this->order_mode != 'NONE') return false;
+
+        return $this->invoice_request_required;
     }
 }

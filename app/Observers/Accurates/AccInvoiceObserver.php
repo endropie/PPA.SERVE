@@ -68,8 +68,8 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $priceMaterial,
-                    "detailItem[$key].useTax1" => (double) $useTax1,
-                    "detailItem[$key].useTax3" => (double) $useTax3,
+                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
+                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
                     "SUMMARY_JASA" => (double) ($quantity * $priceService)
                 ];
             }
@@ -85,16 +85,16 @@ class AccInvoiceObserver
                     "detailItem[$doublekey].detailNotes" => $detailNotes,
                     "detailItem[$doublekey].quantity" => (double) $quantity,
                     "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
-                    "detailItem[$doublekey].useTax1" => (double) $useTax1,
-                    "detailItem[$doublekey].useTax3" => (double) $useTax3,
+                    // "detailItem[$doublekey].useTax1" => (boolean) $useTax1,
+                    // "detailItem[$doublekey].useTax3" => (boolean) $useTax3,
 
                     "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
                     "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
                     "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
                     "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
                     "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
-                    "detailItem[". ($doublekey+1) ."].useTax1" => (double) $useTax1,
-                    "detailItem[". ($doublekey+1) ."].useTax3" => (double) $useTax3,
+                    // "detailItem[". ($doublekey+1) ."].useTax1" => (boolean) $useTax1,
+                    // "detailItem[". ($doublekey+1) ."].useTax3" => (boolean) $useTax3,
                 ];
             }
             else if ($mode == 'SEPARATE') {
@@ -109,8 +109,8 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
-                    "detailItem[$key].useTax1" => (double) $useTax1,
-                    "detailItem[$key].useTax3" => (double) $useTax3,
+                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
+                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
                 ];
             }
             else if ($mode == 'JOIN') {
@@ -120,8 +120,13 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $price,
-                    "detailItem[$key].useTax1" => (double) $useTax1,
-                    "detailItem[$key].useTax3" => (double) $useTax3,
+                    // "taxable" => true,
+                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
+                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
+                    // "taxDate" => '28/08/2020',
+                    // "taxNumber" => '123',
+                    // "documentCode" => 'DIGUNGGUNG',
+                    // "taxType" => 'BKN_PEMUNGUT_PPN',
                 ];
             }
             else {
