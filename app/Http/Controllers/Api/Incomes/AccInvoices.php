@@ -46,14 +46,16 @@ class AccInvoices extends ApiController
 
     public function store(Request $request)
     {
+
         $request->validate([
             'customer_id' => 'required',
             'date' => 'required',
             'order_mode' => 'required',
+            'customer_id' => 'required',
             'delivery_orders.*.id' => 'required',
             'request_orders.*.id' => 'required',
-            'delivery_orders' => 'array|required_if:order_mode,PO|required_if:order_mode,ACCUMULATE',
-            'request_orders' => 'array|required_if:order_mode,NONE',
+            // 'delivery_orders' => 'array|required_if:order_mode,PO|required_if:order_mode,ACCUMULATE',
+            // 'request_orders' => 'array|required_if:order_mode,NONE',
         ]);
 
         $this->DATABASE::beginTransaction();
@@ -63,33 +65,39 @@ class AccInvoices extends ApiController
             'date' => $request->date ?? now(),
         ])->all());
 
-        if ($acc_invoice->order_mode != 'NONE')
-        foreach ($request->input('delivery_orders') as $row) {
-            $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->find($row['id']);
+        if ($acc_invoice->customer->is_invoice_request == false) {
+            $request->validate(['delivery_orders' => 'required|array']);
 
-            if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
-            if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+            foreach ($request->input('delivery_orders') as $row) {
+                $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->find($row['id']);
 
-            $delivery_order->acc_invoice()->associate($acc_invoice);
-            $delivery_order->save();
-        }
+                if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
+                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
 
-
-        if ($acc_invoice->order_mode == 'NONE')
-        foreach ($request->input('request_orders') as $row) {
-            $request_order = RequestOrder::find($row["id"]);
-            if (!$request_order) $this->error('['.$row["fullnumber"].'] not invalid!');
-            if ($request_order->status != 'CLOSED') $this->error('['.$row["fullnumber"].'] has not CLOSED!');
-            if (!$request_order->delivery_orders->count()) $this->error('['.$row["fullnumber"].'] has not deliveries!');
-
-            foreach ($request_order->delivery_orders as $delivery_order) {
-                if ($delivery_order->status !== 'CONFIRMED') {
-                    return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
-                }
                 $delivery_order->acc_invoice()->associate($acc_invoice);
                 $delivery_order->save();
             }
+        }
 
+
+        if ($acc_invoice->customer->is_invoice_request == true) {
+            $request->validate(['request_orders' => 'required|array']);
+
+            foreach ($request->input('request_orders') as $row) {
+                $request_order = RequestOrder::find($row["id"]);
+                if (!$request_order) $this->error('['.$row["fullnumber"].'] not invalid!');
+                if ($request_order->status != 'CLOSED') $this->error('['.$row["fullnumber"].'] has not CLOSED!');
+                if (!$request_order->delivery_orders->count()) $this->error('['.$row["fullnumber"].'] has not deliveries!');
+
+                foreach ($request_order->delivery_orders as $delivery_order) {
+                    if ($delivery_order->status !== 'CONFIRMED') {
+                        return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                    }
+                    $delivery_order->acc_invoice()->associate($acc_invoice);
+                    $delivery_order->save();
+                }
+
+            }
         }
 
         $response = $acc_invoice->accurate()->push();
