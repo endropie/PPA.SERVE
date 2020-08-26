@@ -12,7 +12,7 @@ class AccInvoiceObserver
     public function pushing(Model $model, $record)
     {
         $mode = $model->customer->invoice_mode;
-        $withService = (boolean) $model->service_invoice_id;
+        $inMaterial = (boolean) !$model->service_invoice_id;
 
         $detailItems = $model->delivery_items
         ->groupBy(function($detail) {
@@ -24,7 +24,7 @@ class AccInvoiceObserver
             return $detail->item_id;
         })
         ->values()
-        ->map(function ($details, $key) use ($mode, $withService) {
+        ->map(function ($details, $key) use ($mode, $inMaterial) {
 
             $quantity = collect($details)->sum('quantity');
             $detail = $details->first();
@@ -55,7 +55,6 @@ class AccInvoiceObserver
                     $v = (100 + $detail->item->customer->sen_service) / 100;
                     $priceMaterial = ceil($price / $v * 100) / 100;
                     $priceService  = round($price - $priceMaterial, 2);
-                    // abort(501, json_encode(['exclude' => $v, 'priceMaterial' => $priceMaterial, 'priceService' => $priceService]));
                 }
                 else {
                     $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
@@ -101,11 +100,13 @@ class AccInvoiceObserver
                 $senService = (double) ($detail->item->customer->sen_service / 100);
                 $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
                 $priceService  = round($price - $priceMaterial, 2);
-                $detailPrice  = $withService ? $priceMaterial : $priceService;
+                $detailPrice = $inMaterial ? $priceMaterial : $priceService;
+                $detailNo = ($inMaterial ? 'ITEM-MATERIAL' : 'ITEM-JASA');
+                $detailName = ($inMaterial ? '[MATERIAL] ' : '[JASA] '). $detailName;
 
                 return [
-                    "detailItem[$key].itemNo" => $withService ? 'ITEM-MATERIAL' : 'ITEM-JASA' ,
-                    "detailItem[$key].detailName" => (string) ($withService ? '[MATERIAL] ' : '[JASA] '). $detailName,
+                    "detailItem[$key].itemNo" => $detailNo,
+                    "detailItem[$key].detailName" => (string) $detailName,
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
@@ -138,7 +139,6 @@ class AccInvoiceObserver
         {
             $key = $detailItems->count();
             $sum = (double) $detailItems->sum('SUMMARY_JASA');
-            // abort(501, 'ALL => '. $sum);
             $detailItems = $detailItems->push([
                 "detailItem[$key].itemNo" => 'ITEM-JASA',
                 "detailItem[$key].detailName" => 'JASA Part',
@@ -146,8 +146,6 @@ class AccInvoiceObserver
                 "detailItem[$key].unitPrice" => (double) $sum,
             ]);
         }
-
-        // abort(501, json_encode(['SUM' => $detailItems->toArray()]));
 
         $detailItems = $detailItems->collapse()->toArray();
 

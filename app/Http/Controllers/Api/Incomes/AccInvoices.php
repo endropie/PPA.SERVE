@@ -103,7 +103,7 @@ class AccInvoices extends ApiController
         $response = $acc_invoice->accurate()->push();
 
         if ($acc_invoice->customer->invoice_mode == 'SEPARATE') {
-            $acc_invoice2 = $acc_invoice->acc_invoices()->create(
+            $acc_invoice2 = AccInvoice::create(
                 $request->merge([
                     'number' => $acc_invoice->number . ".JASA",
                     'date' => $request->date ?? now(),

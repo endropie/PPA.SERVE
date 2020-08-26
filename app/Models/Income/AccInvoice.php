@@ -74,7 +74,8 @@ class AccInvoice extends Model
 
     public function getDeliveryItemsAttribute()
     {
-        return $this->hasManyThrough('App\Models\Income\DeliveryOrderItem', 'App\Models\Income\DeliveryOrder')->get();
+        $class = $this->material_invoice ?? $this;
+        return $class->hasManyThrough('App\Models\Income\DeliveryOrderItem', 'App\Models\Income\DeliveryOrder')->get();
     }
 
     public function getFullnumberAttribute()
