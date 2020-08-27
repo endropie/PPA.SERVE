@@ -18,7 +18,6 @@ class CreateAccInvoicesTable extends Migration
             $table->string('number');
             $table->date('date');
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
-            // $table->foreignId('request_order_id');
             $table->foreignId('customer_id');
             $table->foreignId('service_invoice_id')->nullable();
             $table->bigInteger('accurate_model_id')->nullable();
@@ -28,6 +27,14 @@ class CreateAccInvoicesTable extends Migration
 
         Schema::table('delivery_orders', function (Blueprint $table) {
             $table->foreignId('acc_invoice_id')->nullable()->after('request_order_id');
+            $table->foreign('acc_invoice_id')
+                  ->references('id')->on('acc_invoices')
+                  ->onDelete('set null');
+        });
+
+
+        Schema::table('request_orders', function (Blueprint $table) {
+            $table->foreignId('acc_invoice_id')->nullable()->after('status');
             $table->foreign('acc_invoice_id')
                   ->references('id')->on('acc_invoices')
                   ->onDelete('set null');
@@ -44,6 +51,11 @@ class CreateAccInvoicesTable extends Migration
         Schema::dropIfExists('acc_invoices');
 
         Schema::table('delivery_orders', function (Blueprint $table) {
+            $table->dropColumn('acc_invoice_id');
+        });
+
+
+        Schema::table('request_orders', function (Blueprint $table) {
             $table->dropColumn('acc_invoice_id');
         });
     }

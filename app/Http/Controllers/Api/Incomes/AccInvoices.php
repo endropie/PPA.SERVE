@@ -83,13 +83,18 @@ class AccInvoices extends ApiController
         if ($acc_invoice->customer->is_invoice_request == true) {
             $request->validate(['request_orders' => 'required|array']);
 
-            foreach ($request->input('request_orders') as $row) {
+            foreach ($request->input('request_orders') as $row)
+            {
                 $request_order = RequestOrder::find($row["id"]);
                 if (!$request_order) $this->error('['.$row["fullnumber"].'] not invalid!');
                 if ($request_order->status != 'CLOSED') $this->error('['.$row["fullnumber"].'] has not CLOSED!');
                 if (!$request_order->delivery_orders->count()) $this->error('['.$row["fullnumber"].'] has not deliveries!');
 
-                foreach ($request_order->delivery_orders as $delivery_order) {
+                foreach ($request_order->delivery_orders as $delivery_order)
+                {
+                    if ($delivery_order->acc_invoice) {
+                        return $this->error('Delivery has been invoiced [SJDO: '. $delivery_order->fullnumber .']');
+                    }
                     if ($delivery_order->status !== 'CONFIRMED') {
                         return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
                     }
@@ -97,6 +102,8 @@ class AccInvoices extends ApiController
                     $delivery_order->save();
                 }
 
+                $request_order->acc_invoice_id = $acc_invoice->id;
+                $request_order->save();
             }
         }
 
@@ -166,13 +173,6 @@ class AccInvoices extends ApiController
             $invoice2->accurate()->forget();
             $invoice2->delete();
         }
-
-        // if ($invoice->accurate_service_model_id)
-        // {
-        //     $service = $invoice->service();
-        //     $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
-        //     $service->accurate()->forget();
-        // }
 
         $invoice->delete();
 

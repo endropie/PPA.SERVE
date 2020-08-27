@@ -37,11 +37,6 @@ class AccInvoice extends Model
         return $this->belongsTo('App\Models\Income\Customer');
     }
 
-    public function request_order()
-    {
-        return $this->belongsTo('App\Models\Income\RequestOrder');
-    }
-
     public function service_invoice()
     {
         return $this->hasOne(self::class, 'service_invoice_id');
@@ -54,13 +49,16 @@ class AccInvoice extends Model
 
     public function delivery_orders()
     {
-        // $class = $this->material_invoice ?? $this;
         return $this->hasMany('App\Models\Income\DeliveryOrder');
+    }
+
+    public function request_orders()
+    {
+        return $this->hasMany('App\Models\Income\RequestOrder');
     }
 
     public function acc_invoice_items()
     {
-        // $class = $this->material_invoice ?? $this;
         return $this->hasManyThrough('App\Models\Income\DeliveryOrderItem', 'App\Models\Income\DeliveryOrder');
     }
 

@@ -36,10 +36,6 @@ class RequestOrder extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
 
-    public function acc_invoices() {
-        return $this->hasMany('App\Models\Income\AccInvoice');
-    }
-
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
