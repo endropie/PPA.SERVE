@@ -59,11 +59,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::prefix('incomes')->name('incomes.')->group(function () {
             Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');
-            Route::post('request-orders/{id}/invoice/create', 'Incomes\RequestOrders@createInvoice');
-            Route::post('request-orders/invoice/{id}/accurate/push', 'Incomes\RequestOrders@pushInvoice');
-            Route::post('request-orders/invoice/{id}/accurate/forget', 'Incomes\RequestOrders@forgetInvoice');
-            Route::get('request-orders/invoice/{id}', 'Incomes\RequestOrders@showInvoice');
             Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
+            Route::post('invoices/{id}/confirmed', 'Incomes\AccInvoices@confirmed');
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');

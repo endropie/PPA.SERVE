@@ -7,12 +7,10 @@ use App\Models\Income\AccInvoice as Model;
 class AccInvoiceObserver
 {
 
-    protected $summary_service = 0;
-
     public function pushing(Model $model, $record)
     {
         $mode = $model->customer->invoice_mode;
-        $inMaterial = (boolean) !$model->service_invoice_id;
+        $serviceModel = (boolean) $model->accurate_primary_key == 'service_model_id'; // ($record['is_model_service'] ?? false);
 
         $detailItems = $model->delivery_items
         ->groupBy(function($detail) {
@@ -24,7 +22,7 @@ class AccInvoiceObserver
             return $detail->item_id;
         })
         ->values()
-        ->map(function ($details, $key) use ($mode, $inMaterial) {
+        ->map(function ($details, $key) use ($mode, $serviceModel) {
 
             $quantity = collect($details)->sum('quantity');
             $detail = $details->first();
@@ -100,9 +98,9 @@ class AccInvoiceObserver
                 $senService = (double) ($detail->item->customer->sen_service / 100);
                 $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
                 $priceService  = round($price - $priceMaterial, 2);
-                $detailPrice = $inMaterial ? $priceMaterial : $priceService;
-                $detailNo = ($inMaterial ? 'ITEM-MATERIAL' : 'ITEM-JASA');
-                $detailName = ($inMaterial ? '[MATERIAL] ' : '[JASA] '). $detailName;
+                $detailPrice = $serviceModel ? $priceService : $priceMaterial;
+                $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
+                $detailName = ($serviceModel ? '[JASA] ' : '[MATERIAL] '). $detailName;
 
                 return [
                     "detailItem[$key].itemNo" => $detailNo,

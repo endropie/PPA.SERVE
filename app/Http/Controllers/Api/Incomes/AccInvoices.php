@@ -54,8 +54,6 @@ class AccInvoices extends ApiController
             'customer_id' => 'required',
             'delivery_orders.*.id' => 'required',
             'request_orders.*.id' => 'required',
-            // 'delivery_orders' => 'array|required_if:order_mode,PO|required_if:order_mode,ACCUMULATE',
-            // 'request_orders' => 'array|required_if:order_mode,NONE',
         ]);
 
         $this->DATABASE::beginTransaction();
@@ -78,7 +76,6 @@ class AccInvoices extends ApiController
                 $delivery_order->save();
             }
         }
-
 
         if ($acc_invoice->customer->is_invoice_request == true) {
             $request->validate(['request_orders' => 'required|array']);
@@ -107,33 +104,19 @@ class AccInvoices extends ApiController
             }
         }
 
-        $response = $acc_invoice->accurate()->push();
-
-        if ($acc_invoice->customer->invoice_mode == 'SEPARATE') {
-            $acc_invoice2 = AccInvoice::create(
-                $request->merge([
-                    'number' => $acc_invoice->number . ".JASA",
-                    'date' => $request->date ?? now(),
-                ])->all()
-            );
-            $acc_invoice2->material_invoice()->associate($acc_invoice);
-            $acc_invoice2->save();
-
-            $response2 = $acc_invoice2->accurate()->push();
-
-            if (!$response2['s']) {
-                $this->DATABASE::rollback();
-                return response()->json(['message' => $response2['d'], 'success' => $response2['s']], 501);
-            }
-        }
-
-        if (!$response['s']) {
-            $this->DATABASE::rollback();
-            return response()->json(['message' => $response['d'], 'success' => $response['s']], 501);
-        }
+        // if ($acc_invoice->customer->invoice_mode == 'SEPARATE') {
+        //     $acc_invoice2 = AccInvoice::create(
+        //         $request->merge([
+        //             'number' => $acc_invoice->number . ".JASA",
+        //             'date' => $request->date ?? now(),
+        //         ])->all()
+        //     );
+        //     $acc_invoice2->material_invoice()->associate($acc_invoice);
+        //     $acc_invoice2->save();
+        // }
 
         $this->DATABASE::commit();
-        return response()->json(array_merge($acc_invoice->toArray(),$response));
+        return response()->json($acc_invoice);
     }
 
     public function show($id)
@@ -147,36 +130,117 @@ class AccInvoices extends ApiController
 
     public function destroy($id)
     {
-        // DB::beginTransaction => Before the function process!
-        $this->DATABASE::beginTransaction();
 
         $invoice = AccInvoice::findOrFail($id);
-        $forget = $invoice->accurate()->forget();
 
-        if ($invoice2 = $invoice->service_invoice) {
-            $invoice2->accurate()->forget();
-            $invoice2->delete();
+        if ($invoice->accurate_model_id)
+        {
+            $this->DATABASE::beginTransaction();
+
+            $response = $invoice->accurate()->forget();
+            if (!$response['s']) {
+                return $this->error($response['d']);
+            }
+            $invoice->accurate_model_id = null;
+            $invoice->save();
+
+            $this->DATABASE::commit();
+        }
+
+        if ($invoice->service_model_id)
+        {
+            $this->DATABASE::beginTransaction();
+
+            $invoice2 = $invoice->fresh();
+            $invoice2->accurate_primary_key = 'service_model_id';
+            $response2 = $invoice2->accurate()->forget();
+            if (!$response2['s']) {
+                return $this->error($response2['d']);
+            }
+
+            $invoice->service_model_id = null;
+            $invoice2->save();
+
+            $this->DATABASE::commit();
         }
 
         $invoice->delete();
 
-        $this->DATABASE::commit();
         return response()->json(['success' => true]);
+    }
+
+    public function confirmed($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $acc_invoice = AccInvoice::findOrFail($id);
+
+        $response = $acc_invoice->accurate()->push();
+        if (!$response['s']) {
+            return $this->error($response['d']);
+        }
+
+        $acc_invoice->invoiced_number = $response['r']['number'];
+        $acc_invoice->save();
+
+        if ($acc_invoice->customer->invoice_mode == 'SEPARATE')
+        {
+            $service = $acc_invoice->fresh();
+            $service->setAccuratePrimaryKeyAttribute('service_model_id');
+
+            AccInvoice::registerModelEvent('accurate.pushing', function($record) use ($service) {
+                return [
+                    'number' => $service->invoiced_number . ".JASA",
+                    'is_model_service' => true,
+                ];
+            });
+
+            $response2 = $service->accurate()->push();
+            if (!$response2['s']) {
+                return $this->error($response2['d']);
+            }
+        }
+
+        $acc_invoice->status = 'INVOICED';
+        $acc_invoice->save();
+
+        $this->DATABASE::commit();
+
+        // return $response;
+
+        return response()->json(['message' => $response['d'], 'success' => $response['s']]);
     }
 
     public function forgetInvoice ($id)
     {
         $invoice = AccInvoice::findOrFail($id);
-        $forget = $invoice->accurate()->forget();
 
-        if ($invoice2 = $invoice->service_invoice) {
-            $invoice2->accurate()->forget();
-            $invoice2->delete();
+        if ($invoice->service_model_id)
+        {
+            $response = $invoice->accurate()->forget();
+            if (!$response['s']) {
+                return response()->json(['message' => $response['d'], 'success' => false], 501);
+            }
+            $invoice->accurate_model_id = null;
+            $invoice->save();
+        }
+
+        if ($invoice->service_model_id)
+        {
+            $invoice2 = $invoice->fresh();
+            $invoice2->accurate_primary_key = 'service_model_id';
+            $response2 = $invoice2->accurate()->forget();
+            if (!$response2['s']) {
+                return response()->json(['message' => $response['d'], 'success' => false], 501);
+            }
+
+            $invoice->service_model_id = null;
+            $invoice2->save();
         }
 
         $invoice->delete();
 
-        return $forget;
+        return response()->delete();
     }
 
 }
