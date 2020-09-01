@@ -188,13 +188,6 @@ class AccInvoices extends ApiController
             $service = $acc_invoice->fresh();
             $service->setAccuratePrimaryKeyAttribute('service_model_id');
 
-            // AccInvoice::registerModelEvent('accurate.pushing', function($record) use ($service) {
-            //     return [
-            //         'number' => $service->invoiced_number . ".JASA",
-            //         'is_model_service' => true,
-            //     ];
-            // });
-
             $response2 = $service->accurate()->push([
                 'number' => $service->invoiced_number . ".JASA",
                 'is_model_service' => true,

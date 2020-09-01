@@ -10,7 +10,7 @@ class AccInvoiceObserver
     public function pushing(Model $model, $record)
     {
         $mode = $model->customer->invoice_mode;
-        $serviceModel = (boolean) $model->accurate_primary_key == 'service_model_id'; // ($record['is_model_service'] ?? false);
+        $serviceModel = (boolean) ($record['is_model_service'] ?? false);
 
         $detailItems = $model->delivery_items
         ->groupBy(function($detail) {
@@ -108,8 +108,8 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
-                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
-                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
+                    "detailItem[$key].useTax1" => (boolean) $useTax1,
+                    "detailItem[$key].useTax3" => (boolean) $useTax3,
                 ];
             }
             else if ($mode == 'JOIN') {
