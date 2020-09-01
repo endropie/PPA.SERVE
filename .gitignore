@@ -1,4 +1,5 @@
 /node_modules
+/packages
 /public/fonts/vendor
 /public/hot
 /public/storage
