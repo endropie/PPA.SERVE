@@ -188,14 +188,17 @@ class AccInvoices extends ApiController
             $service = $acc_invoice->fresh();
             $service->setAccuratePrimaryKeyAttribute('service_model_id');
 
-            AccInvoice::registerModelEvent('accurate.pushing', function($record) use ($service) {
-                return [
-                    'number' => $service->invoiced_number . ".JASA",
-                    'is_model_service' => true,
-                ];
-            });
+            // AccInvoice::registerModelEvent('accurate.pushing', function($record) use ($service) {
+            //     return [
+            //         'number' => $service->invoiced_number . ".JASA",
+            //         'is_model_service' => true,
+            //     ];
+            // });
 
-            $response2 = $service->accurate()->push();
+            $response2 = $service->accurate()->push([
+                'number' => $service->invoiced_number . ".JASA",
+                'is_model_service' => true,
+            ]);
             if (!$response2['s']) {
                 return $this->error($response2['d']);
             }
@@ -205,8 +208,6 @@ class AccInvoices extends ApiController
         $acc_invoice->save();
 
         $this->DATABASE::commit();
-
-        // return $response;
 
         return response()->json(['message' => $response['d'], 'success' => $response['s']]);
     }
