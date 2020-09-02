@@ -138,7 +138,7 @@ class AccInvoiceObserver
             $key = $detailItems->count();
             $sum = (double) $detailItems->sum('SUMMARY_JASA');
             $detailItems = $detailItems->push([
-                "detailItem[$key].itemNo" => 'ITEM-JASA',
+                "detailItem[$key].itemNo" => 'ITEM-JASA-TOTAL',
                 "detailItem[$key].detailName" => 'JASA Part',
                 "detailItem[$key].quantity" => 1,
                 "detailItem[$key].unitPrice" => (double) $sum,
