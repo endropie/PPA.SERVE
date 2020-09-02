@@ -51,6 +51,7 @@ class AccInvoices extends ApiController
             'customer_id' => 'required',
             'date' => 'required',
             'order_mode' => 'required',
+            'invoice_modex' => 'required',
             'customer_id' => 'required',
             'delivery_orders.*.id' => 'required',
             'request_orders.*.id' => 'required',
