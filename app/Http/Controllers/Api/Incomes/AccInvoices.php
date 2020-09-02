@@ -104,17 +104,6 @@ class AccInvoices extends ApiController
             }
         }
 
-        // if ($acc_invoice->customer->invoice_mode == 'SEPARATE') {
-        //     $acc_invoice2 = AccInvoice::create(
-        //         $request->merge([
-        //             'number' => $acc_invoice->number . ".JASA",
-        //             'date' => $request->date ?? now(),
-        //         ])->all()
-        //     );
-        //     $acc_invoice2->material_invoice()->associate($acc_invoice);
-        //     $acc_invoice2->save();
-        // }
-
         $this->DATABASE::commit();
         return response()->json($acc_invoice);
     }

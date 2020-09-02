@@ -108,8 +108,8 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
-                    "detailItem[$key].useTax1" => (boolean) $useTax1,
-                    "detailItem[$key].useTax3" => (boolean) $useTax3,
+                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
+                    // "detailItem[$key].useTax3" => (boolean) ($useTax3 && $serviceModel),
                 ];
             }
             else if ($mode == 'JOIN') {

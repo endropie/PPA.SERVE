@@ -14,7 +14,6 @@ class AccInvoice extends Model
     protected $accurate_model = 'sales-invoice';
 
     protected $accurate_push_attributes = [
-        'number' => 'fullnumber',
         'transDate' => 'date',
         'customerNo' => 'customer.code'
     ];
