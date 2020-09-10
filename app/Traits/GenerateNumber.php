@@ -129,6 +129,25 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextDeliveryInternalNumber($date = null)
+    {
+        $modul = 'delivery_internal';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, 'DI', '{Y-m}');
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\DeliveryInternal::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+            // ->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextPackingNumber($date = null)
     {
         $modul = 'packing';
