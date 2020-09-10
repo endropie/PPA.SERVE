@@ -41,6 +41,7 @@ class RolePermission extends Seeder
 			'outgoing-goods' => ['c','r','d','void'],
 			'pre-deliveries' => ['c','r','u','d','close','revision','void'],
             'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
+            'delivery-internals' => ['c','r','u','d','void'],
 			'deportation-goods' => ['c','r','u','d','validation','revision','void'],
 			'schedule-boards' => ['c','r','u','d','void'],
 			// Reference
@@ -74,6 +75,7 @@ class RolePermission extends Seeder
             'outgoing.good' => ['outgoing-goods'],
             'sj.delivery' => ['sj-delivery-orders'],
             'pre.delivery' => ['pre-deliveries'],
+            'delivery.internal' => ['delivery-internals'],
 
             'incoming.good' => ['incoming-goods'],
             'opname.voucher' => ['opname-vouchers'],
