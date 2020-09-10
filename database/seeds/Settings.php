@@ -33,7 +33,7 @@ class Settings extends Seeder
             "financial.begin_start"             => now()->startOfYear()->format("d-m"),
 
             "incoming_good.number_prefix"     => "IMP",
-            "incoming_good.number_interval"   => "{Y}",
+            "incoming_good.number_interval"   => "{Y-m}",
             "incoming_good.number_digit"      => "5",
             "incoming_good.indexed_number_digit" => "4",
             "incoming_good.indexed_number_interval" => "{Y-m}",
@@ -43,7 +43,7 @@ class Settings extends Seeder
             "opname_stock.number_digit"      => "5",
 
             "outgoing_good.number_prefix"     => "PLO",
-            "outgoing_good.number_interval"   => "{Y}",
+            "outgoing_good.number_interval"   => "{Y-m}",
             "outgoing_good.number_digit"      => "5",
 
             "work_order.number_prefix"     => "SPK",
@@ -59,26 +59,30 @@ class Settings extends Seeder
             "packing.number_digit"      => "5",
 
             "forecast.number_prefix"     => "FCO",
-            "forecast.number_interval"   => "{Y}",
+            "forecast.number_interval"   => "{Y-m}",
             "forecast.number_digit"      => "5",
 
             "request_order.number_prefix"     => "SO",
-            "request_order.number_interval"   => "{Y}",
+            "request_order.number_interval"   => "{Y-m}",
             "request_order.number_digit"      => "5",
 
             "pre_delivery.number_prefix"     => "PDO",
-            "pre_delivery.number_interval"   => "{Y}",
+            "pre_delivery.number_interval"   => "{Y-m}",
             "pre_delivery.number_digit"      => "5",
 
             "sj_delivery.number_prefix"     => "SJDO",
-            "sj_delivery.number_interval"   => "{Y}",
+            "sj_delivery.number_interval"   => "{Y-m}",
             "sj_delivery.number_digit"      => "5",
             "sj_delivery.indexed_number_digit" => "4",
             "sj_delivery.indexed_number_interval" => "{Y-m}",
 
             "sj_internal.number_prefix"     => "SJID",
-            "sj_internal.number_interval"   => "{Y}",
+            "sj_internal.number_interval"   => "{Y-m}",
             "sj_internal.number_digit"      => "5",
+
+            "delivery_internal.number_prefix"     => "DI",
+            "delivery_internal.number_interval"   => "{Y-m}",
+            "delivery_internal.number_digit"      => "5",
         ];
         foreach ($settings as $key => $value) {
             if (!setting($key)) {
