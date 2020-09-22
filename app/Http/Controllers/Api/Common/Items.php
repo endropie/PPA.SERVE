@@ -35,8 +35,20 @@ class Items extends ApiController
           break;
 
           default:
-            $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])
-              ->filter($filters)->collect();
+            $items = Item::with(['item_prelines','item_units', 'unit', 'brand', 'customer', 'specification'])
+                ->filter($filters)->collect();
+
+            $items->getCollection()->transform(function ($item) {
+                if (request()->has('delivery_outstanding')) {
+
+                    $item->amount_delivery_verify = $item->amount_delivery_verify(request('delivery_outstanding'));
+                    $item->amount_delivery_task_reguler = $item->amount_delivery_task(request('delivery_outstanding'), 'REGULER');
+                    $item->amount_delivery_task_return = $item->amount_delivery_task(request('delivery_outstanding'), 'RETURN');
+                    $item->amount_delivery_load_reguler = $item->amount_delivery_load(request('delivery_outstanding'), 'REGULER');
+                    $item->amount_delivery_load_return = $item->amount_delivery_load(request('delivery_outstanding'), 'RETURN');
+                }
+                return $item;
+            });
           break;
         }
 

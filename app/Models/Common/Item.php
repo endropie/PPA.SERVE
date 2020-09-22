@@ -92,6 +92,18 @@ class Item extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
     }
 
+    public function delivery_task_items() {
+        return $this->hasMany('App\Models\Income\DeliveryTaskItem');
+    }
+
+    public function delivery_verify_items() {
+        return $this->hasMany('App\Models\Income\DeliveryVerifyItem');
+    }
+
+    public function delivery_load_items() {
+        return $this->hasMany('App\Models\Income\DeliveryLoadItem');
+    }
+
     public function units()
     {
         return $this->belongsToMany('App\Models\Reference\Unit', 'item_units');
@@ -189,6 +201,34 @@ class Item extends Model
     public function getCustomerCodeAttribute()
     {
         return $this->customer ? $this->customer->code : null;
+    }
+
+    public function amount_delivery_verify ($date = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_verify_items()->where('date', $date)->get()->sum('unit_amount');
+    }
+
+    public function amount_delivery_task ($date = null, $trans = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_task_items()->whereHas('delivery_task', function ($q) use ($trans, $date) {
+            return $q->where('date', $date)
+                     ->when($trans !== null, function($q) use ($trans) {
+                         return $q->where('transaction', $trans);
+                     });
+        })->get()->sum('unit_amount');
+    }
+
+    public function amount_delivery_load ($date = null, $trans = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_load_items()->whereHas('delivery_load', function ($q) use ($trans, $date) {
+            return $q->where('date', $date)
+                    ->when($trans !== null, function($q) use ($trans) {
+                        return $q->where('transaction', $trans);
+                    });;
+        })->get()->sum('unit_amount');
     }
 
     public function stock($stockist)

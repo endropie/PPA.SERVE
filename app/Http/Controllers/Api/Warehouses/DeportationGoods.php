@@ -67,7 +67,8 @@ class DeportationGoods extends ApiController
         $deportation_good = DeportationGood::withTrashed()->with([
             'customer',
             'deportation_good_items.item.item_units',
-            'deportation_good_items.unit'
+            'deportation_good_items.unit',
+            'created_user'
         ])->findOrFail($id);
 
         $deportation_good->append(['is_relationship','has_relationship']);

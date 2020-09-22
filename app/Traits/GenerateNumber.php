@@ -67,6 +67,44 @@ trait GenerateNumber
         return $number;
     }
 
+    public function getNextDeliveryTaskNumber($date = null)
+    {
+        $modul = 'delivery_task';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, "PDO", "{Y-m}");
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\DeliveryTask::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
+    public function getNextDeliveryLoadNumber($date = null)
+    {
+        $modul = 'delivery_load';
+        $digit = (int) setting()->get("$modul.number_digit", 5);
+        $prefix = $this->prefixParser($modul, "PLD", "{Y-m}");
+        $prefix = $this->dateParser($prefix, $date);
+
+        $next = \App\Models\Income\DeliveryLoad::withTrashed()
+            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
+            ->where('number','LIKE', $prefix.'%')->get()->max('N');
+        // ->where('number','LIKE', $prefix.'%')->max('number');
+        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
+        $next++;
+
+        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
+
+        return $number;
+    }
+
     public function getNextSJDeliveryIndexedNumber($date = null, $prefix)
     {
         $modul = 'sj_delivery';
@@ -101,7 +139,7 @@ trait GenerateNumber
         $next = \App\Models\Income\DeliveryOrder::withTrashed()
             ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
             ->where('number','LIKE', $prefix.'%')->get()->max('N');
-            // ->where('number','LIKE', $prefix.'%')->max('number');
+
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
@@ -139,7 +177,7 @@ trait GenerateNumber
         $next = \App\Models\Income\DeliveryInternal::withTrashed()
             ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
             ->where('number','LIKE', $prefix.'%')->get()->max('N');
-            // ->where('number','LIKE', $prefix.'%')->max('number');
+
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
