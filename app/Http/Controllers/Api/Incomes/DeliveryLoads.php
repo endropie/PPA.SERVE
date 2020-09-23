@@ -209,11 +209,15 @@ class DeliveryLoads extends ApiController
                     ->where('order_mode', $order_mode)
                     ->where('transaction', $delivery_load->transaction)
                     ->where('customer_id', $delivery_load->customer_id)
-                    ->where('date', '<=', $delivery_load->date)
-                    ->whereRaw("$delivery_load->date <= IFNULL(actived_date, '$delivery_load->date') ");
+                    ->where('date', '<=', $delivery_load->date);
+                    // ->whereRaw("DATE($delivery_load->date) <= IF(actived_date IS NULL, '$delivery_load->date', actived_date)");
             })->get();
 
         $request_order_items = $request_order_items
+            ->filter(function ($detail) use ($delivery_load) {
+                if ($detail->request_order->actived_date && $detail->request_order->actived_date < $delivery_load->date) return false;
+                return true;
+            })
             ->map(function ($detail) {
                 $detail->sortin = $detail->request_order->date ." ". $detail->request_order->created_at;
                 return $detail;
@@ -254,7 +258,7 @@ class DeliveryLoads extends ApiController
             if (round($amount) > 0) {
                 $item = Item::find($key);
                 $label = ($item->part_number ?? $key);
-                $this->error("OVER OUTGOING BY PO [$label:$amount]" . $outer);
+                $this->error("OVER LOADING BY PO [$label:$amount]" . $outer);
             }
         }
 
