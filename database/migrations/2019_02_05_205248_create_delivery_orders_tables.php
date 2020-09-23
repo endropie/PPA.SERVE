@@ -55,6 +55,10 @@ class CreateDeliveryOrdersTables extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('delivery_orders', function (Blueprint $table) {
+            $table->foreignId('delivery_load_id')->nullable()->after('request_order_id');
+        });
     }
 
     /**

@@ -16,6 +16,7 @@ class CreateAccInvoicesTable extends Migration
         Schema::create('acc_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('number');
+            $table->string('invoiced_number');
             $table->date('date');
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->enum('invoice_mode', ['JOIN', 'SEPARATE', 'DETAIL', 'SUMMARY']);
