@@ -12,7 +12,7 @@ class DeliveryInternal extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'date', 'option', 'internal_notes',
+        'number', 'date', 'option', 'reason_id', 'reason_description',
         'customer_id', 'customer_name', 'customer_phone', 'customer_address'
     ];
 

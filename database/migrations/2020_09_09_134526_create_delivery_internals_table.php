@@ -23,7 +23,8 @@ class CreateDeliveryInternalsTable extends Migration
             $table->text('customer_address')->nullable();
             $table->jsonb('option')->nullable();
             $table->string('status')->default('OPEN');
-            $table->string('internal_notes')->nullable();
+            $table->foreignId('reason_id')->nullable();
+            $table->string('reason_description')->nullable();
             $table->foreignId('created_by');
             $table->timestamps();
             $table->softDeletes();

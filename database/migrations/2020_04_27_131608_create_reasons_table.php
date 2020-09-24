@@ -18,6 +18,7 @@ class CreateReasonsTable extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->boolean('enable')->default(1);
+            $table->string('type');
             $table->timestamps();
         });
 

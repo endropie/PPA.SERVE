@@ -9,7 +9,7 @@ class Reason extends Model
 {
     use Filterable;
 
-    protected $fillable = ['name', 'enable'];
+    protected $fillable = ['name', 'enable', 'type'];
 
     protected $hidden = ['created_at', 'updated_at'];
 }
