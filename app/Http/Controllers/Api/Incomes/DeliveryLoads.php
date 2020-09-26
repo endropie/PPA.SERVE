@@ -52,10 +52,20 @@ class DeliveryLoads extends ApiController
             // create detail item created!
             $detail = $delivery_load->delivery_load_items()->create($rows[$i]);
 
+            $label = $detail->item->part_name . "(". $detail->item->code .")";
+
             $request->validate(
-                ["delivery_load_items.$i.quantity" => "lte:". $detail->maxAmountDetail() ],
-                ["delivery_load_items.$i.quantity.lte" => "Maximum ". $detail->maxAmountDetail() ]
+                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:". $detail->maxAmountDetail() ],
+                ["delivery_load_items.$i.quantity.lte" => "Maximum (Load) ". $detail->maxAmountDetail() .". Part: ". $label ]
             );
+
+            $request->validate(
+                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:". $detail->maxFGDetail() ],
+                ["delivery_load_items.$i.quantity.lte" => "Maximum (FG) ". $detail->maxFGDetail() .". Part: ". $label]
+            );
+
+
+            if($i == 1) $this->error(['QTY', $detail->unit_amount, $detail->maxFGDetail(), $detail->maxAmountDetail()]);
 
             $detail->setLoadVerified();
         }

@@ -12,9 +12,25 @@ class Items extends ApiController
 {
     public function index(Filters $filters)
     {
+
+        $collection = function ($item) {
+            if (request()->has('delivery_date')) {
+                $date = request('delivery_date');
+                $item->amount_delivery = [
+                    "FG" => $item->totals["FG"],
+                    "VERIFY" => $item->amount_delivery_verify($date),
+                    "TASK.REG" => $item->amount_delivery_task($date, 'REGULER'),
+                    "TASK.RET" => $item->amount_delivery_task($date, 'RETURN'),
+                    "LOAD.REG" => $item->amount_delivery_load($date, 'REGULER'),
+                    "LOAD.RET" => $item->amount_delivery_load($date, 'RETURN')
+                ];
+            }
+            return $item;
+        };
+
         switch (request('mode')) {
           case 'all':
-            $items = Item::with(['item_prelines','item_units','unit'])->filter($filters)->get();
+            $items = Item::with(['item_prelines','item_units','unit'])->filter($filters)->get()->map($collection);
           break;
 
           case 'datagrid':
@@ -38,16 +54,7 @@ class Items extends ApiController
             $items = Item::with(['item_prelines','item_units', 'unit', 'brand', 'customer', 'specification'])
                 ->filter($filters)->collect();
 
-            $items->getCollection()->transform(function ($item) {
-                if (request()->has('delivery_task_date')) {
-                    $item->amount_delivery_verify = $item->amount_delivery_verify(request('delivery_task_date'));
-                    $item->amount_delivery_task_reguler = $item->amount_delivery_task(request('delivery_task_date'), 'REGULER');
-                    $item->amount_delivery_task_return = $item->amount_delivery_task(request('delivery_task_date'), 'RETURN');
-                    $item->amount_delivery_load_reguler = $item->amount_delivery_load(request('delivery_task_date'), 'REGULER');
-                    $item->amount_delivery_load_return = $item->amount_delivery_load(request('delivery_task_date'), 'RETURN');
-                }
-                return $item;
-            });
+            $items->getCollection()->transform($collection);
           break;
         }
 

@@ -13,7 +13,7 @@ class Item extends Filter
         parent::__construct($request);
     }
 
-    public function delivery_task_date ($value = '') {
+    public function delivery_date ($value = '') {
         // if (!strlen($value)) return $this->builder;
         return $this->builder->whereHas('delivery_task_items', function($q) use($value) {
             return $q->whereHas('delivery_task', function($q) use ($value){

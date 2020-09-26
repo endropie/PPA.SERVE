@@ -36,9 +36,10 @@ class DeliveryVerifies extends ApiController
         return response()->json($delivery_verify_items);
     }
 
-
     public function store(Request $request)
     {
+        if (request('mode') == 'multi-store') return $this->multiStore($request);
+
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'date' => 'required|date',
@@ -53,13 +54,52 @@ class DeliveryVerifies extends ApiController
 
         $delivery_verify_item = DeliveryVerifyItem::create($request->input());
 
+        $label = $delivery_verify_item->item->part_name . "(". $delivery_verify_item->item->code .")";
+
         $request->validate(
-            ["quantity" => "lte:". $delivery_verify_item->maxNewVerifyAmount() ],
-            ["quantity" => "Maximum ". $delivery_verify_item->maxNewVerifyAmount() ]
+            ["quantity" => "numeric|gt:0|lte:". $delivery_verify_item->maxNewVerifyAmount() ],
+            ["quantity.lte" => "Maximum ". $delivery_verify_item->maxNewVerifyAmount() .". Part: ". $label]
         );
 
         $this->DATABASE::commit();
         return response()->json($delivery_verify_item);
+    }
+
+    public function multiStore(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'date' => 'required|date',
+            'rit' => 'required',
+            'multi_items' => "required|array|min:1",
+            'multi_items.*.item_id' => 'required|exists:items,id',
+            'multi_items.*.unit_id' => 'required',
+            'multi_items.*.unit_rate' => 'required',
+            'multi_items.*.quantity' => 'required',
+        ]);
+
+        $this->DATABASE::beginTransaction();
+
+        foreach ($request->multi_items as $key => $row) {
+            $input = array_merge($row, [
+                "customer_id" => $request->customer_id,
+                "date" => $request->date,
+                "rit" => $request->rit
+            ]);
+
+            $delivery_verify_item = DeliveryVerifyItem::create($input);
+
+            $label = $delivery_verify_item->item->part_name . "(". $delivery_verify_item->item->code .")";
+
+            $request->validate(
+                ["multi_items.$key.quantity" => "numeric|gt:0|lte:". $delivery_verify_item->maxNewVerifyAmount() ],
+                ["multi_items.$key.quantity.lte" => "Maximum ". $delivery_verify_item->maxNewVerifyAmount() .". Part: ". $label ]
+            );
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($delivery_verify_item);
+
     }
 
     public function show($id)

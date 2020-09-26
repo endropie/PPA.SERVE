@@ -45,7 +45,7 @@ class DeliveryLoadItem extends Model
 
     public function maxAmountDetail ()
     {
-        $FG = (double) $this->item->totals['FG'];
+        // $FG = (double) $this->item->totals['FG'];
 
         $verified = (double) app("App\Models\Income\DeliveryVerifyItem")
             ->where('item_id', $this->item_id)
@@ -80,7 +80,20 @@ class DeliveryLoadItem extends Model
         $ownVerified = ($verified - $loaded) > 0 ? ($verified - $loaded) : 0;
         $ownTask = ($transTask - $transLoaded) > 0 ? ($transTask - $transLoaded) : 0;
 
-        return round(min($FG, $ownVerified, $ownTask) / $this->unit_rate, 2);
+        return round(min($ownVerified, $ownTask) / $this->unit_rate, 2);
+    }
+
+    public function maxFGDetail ()
+    {
+        $FG = (double) $this->item->totals['FG'];
+
+        $loaded = (double) app("App\Models\Income\DeliveryLoadItem")
+            ->where('item_id', $this->item_id)
+            ->where('delivery_load_id', $this->delivery_load_id)
+            ->whereNotIn('id', [$this->id])
+            ->get()->sum('unit_amount');
+
+        return round(($FG - $loaded) / $this->unit_rate, 2);
     }
 
     public function setLoadVerified ()
