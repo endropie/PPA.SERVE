@@ -29,7 +29,7 @@ class AccInvoice extends Model
     }
 
     protected $fillable = [
-        'number', 'date', 'customer_id', 'order_mode'
+        'number', 'invoiced_number', 'date', 'customer_id', 'order_mode', 'invoice_mode'
     ];
 
     public function customer()

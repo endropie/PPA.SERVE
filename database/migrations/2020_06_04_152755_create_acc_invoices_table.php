@@ -22,7 +22,7 @@ class CreateAccInvoicesTable extends Migration
             $table->enum('invoice_mode', ['JOIN', 'SEPARATE', 'DETAIL', 'SUMMARY']);
             $table->foreignId('customer_id');
             $table->string('status')->default('OPEN');
-            $table->foreignId('service_invoice_id')->nullable();
+            $table->bigInteger('service_model_id')->nullable();
             $table->bigInteger('accurate_model_id')->nullable();
             $table->integer('created_by')->nullable();
             $table->timestamps();
