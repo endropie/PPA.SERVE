@@ -321,6 +321,7 @@ class DeliveryOrders extends ApiController
 
             $delivery_order->request_order_id = $partition["request_order_id"];
             $delivery_order->outgoing_good_id = $request->outgoing_good_id;
+            $delivery_order->delivery_load_id = $request->delivery_load_id;
             $delivery_order->revise_id = $revise->id;
             $delivery_order->save();
 
@@ -440,6 +441,7 @@ class DeliveryOrders extends ApiController
         if (!$revise->is_internal) $delivery_order->request_order_id = $request->request_order_id;
 
         $delivery_order->outgoing_good_id = $request->outgoing_good_id;
+        $delivery_order->delivery_load_id = $request->delivery_load_id;
         $delivery_order->revise_id = $revise->id;
         $delivery_order->save();
 
