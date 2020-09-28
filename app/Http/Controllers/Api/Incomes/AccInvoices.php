@@ -53,8 +53,6 @@ class AccInvoices extends ApiController
             'order_mode' => 'required',
             'invoice_mode' => 'required',
             'customer_id' => 'required',
-            'delivery_orders.*.id' => 'required',
-            'request_orders.*.id' => 'required',
         ]);
 
         $this->DATABASE::beginTransaction();
@@ -111,10 +109,82 @@ class AccInvoices extends ApiController
 
     public function show($id)
     {
-        $acc_invoice = AccInvoice::with(['customer'])->findOrFail($id);
+        $acc_invoice = AccInvoice::with(['customer','request_orders','delivery_orders'])->findOrFail($id);
 
-        $acc_invoice->setAppends(['deliveries','has_relationship']);
+        $acc_invoice->setAppends(['deliveries', 'has_relationship']);
 
+        return response()->json($acc_invoice);
+    }
+
+    public function update($id, Request $request)
+    {
+
+        $request->validate([
+            'id' => 'required',
+            'customer_id' => 'required',
+            'date' => 'required',
+            'order_mode' => 'required',
+            'invoice_mode' => 'required',
+            'customer_id' => 'required',
+        ]);
+
+        $this->DATABASE::beginTransaction();
+
+        $acc_invoice = AccInvoice::findOrFail($id);
+
+        if ($acc_invoice->status != 'OPEN')  $this->error('Invoice Collect is not "OPEN" state. Update Failed!');
+        if ($acc_invoice->trashed())  $this->error('Invoice Collect is trashed. Update Failed!');
+
+        if ($acc_invoice->accurate_model_id)  $this->error('Invoice Collect has generated. Update Failed!');
+        if ($acc_invoice->service_model_id)  $this->error('Invoice Collect has generated. Update Failed!');
+
+        $acc_invoice->update($request->all());
+
+        $acc_invoice->delivery_orders()->update(['acc_invoice_id' => null]);
+        $acc_invoice->request_orders()->update(['acc_invoice_id' => null]);
+
+        if ($acc_invoice->customer->is_invoice_request == false) {
+            $request->validate(['delivery_orders' => 'required|array']);
+
+            foreach ($request->input('delivery_orders') as $row) {
+                $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->orWhere('acc_invoice_id', $id)->find($row['id']);
+
+                if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
+                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+
+                $delivery_order->acc_invoice()->associate($acc_invoice);
+                $delivery_order->save();
+            }
+        }
+
+        if ($acc_invoice->customer->is_invoice_request == true) {
+            $request->validate(['request_orders' => 'required|array']);
+
+            foreach ($request->input('request_orders') as $row)
+            {
+                $request_order = RequestOrder::find($row["id"]);
+                if (!$request_order) $this->error('['.$row["fullnumber"].'] not invalid!');
+                if ($request_order->status != 'CLOSED') $this->error('['.$row["fullnumber"].'] has not CLOSED!');
+                if (!$request_order->delivery_orders->count()) $this->error('['.$row["fullnumber"].'] has not deliveries!');
+
+                foreach ($request_order->delivery_orders as $delivery_order)
+                {
+                    if ($delivery_order->acc_invoice && $delivery_order->acc_invoice->id != $id) {
+                        return $this->error('Delivery has been invoiced [SJDO: '. $delivery_order->fullnumber .']');
+                    }
+                    if ($delivery_order->status !== 'CONFIRMED') {
+                        return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                    }
+                    $delivery_order->acc_invoice()->associate($acc_invoice);
+                    $delivery_order->save();
+                }
+
+                $request_order->acc_invoice_id = $acc_invoice->id;
+                $request_order->save();
+            }
+        }
+
+        $this->DATABASE::commit();
         return response()->json($acc_invoice);
     }
 
@@ -194,37 +264,4 @@ class AccInvoices extends ApiController
 
         return response()->json(['message' => $response['d'], 'success' => $response['s']]);
     }
-
-    public function forgetInvoice ($id)
-    {
-        $invoice = AccInvoice::findOrFail($id);
-
-        if ($invoice->service_model_id)
-        {
-            $response = $invoice->accurate()->forget();
-            if (!$response['s']) {
-                return response()->json(['message' => $response['d'], 'success' => false], 501);
-            }
-            $invoice->accurate_model_id = null;
-            $invoice->save();
-        }
-
-        if ($invoice->service_model_id)
-        {
-            $invoice2 = $invoice->fresh();
-            $invoice2->accurate_primary_key = 'service_model_id';
-            $response2 = $invoice2->accurate()->forget();
-            if (!$response2['s']) {
-                return response()->json(['message' => $response['d'], 'success' => false], 501);
-            }
-
-            $invoice->service_model_id = null;
-            $invoice2->save();
-        }
-
-        $invoice->delete();
-
-        return response()->delete();
-    }
-
 }

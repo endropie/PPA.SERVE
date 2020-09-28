@@ -32,6 +32,7 @@ class RolePermission extends Seeder
 			// Incomes
 			'forecasts' => ['c','r','u','d','close','void'],
 			'request-orders' => ['c','r','u','d','close','revision','void', 'push'],
+            'acc-invoices' => ['c','r','u','d','confirm'],
 			// Warehouses
             'opname-stocks' => ['c','r','u','d','validation','revision','void'],
             'opname-vouchers' => ['c','r','u','d','validation','revision','void'],
@@ -68,6 +69,8 @@ class RolePermission extends Seeder
 			'auth'	    => ['users', 'roles', 'permissions'],
 			'common'    => ['items', 'employees'],
             'marketing' => ['customers', 'forecasts', 'request-orders' ],
+
+            'invoice.collect' => ['acc-invoices'],
 
             'work.order' => ['work-orders'],
             'work.production' => ['work-productions'],

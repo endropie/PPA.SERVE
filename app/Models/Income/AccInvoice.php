@@ -4,7 +4,6 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
-use Carbon\Carbon;
 use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class AccInvoice extends Model
