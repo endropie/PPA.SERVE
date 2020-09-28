@@ -41,7 +41,13 @@ class DeliveryOrder extends Filter
 
     public function invoicing($order = 'true') 
     {
-        return $this->builder->whereNull('acc_invoice_id');
+        return $this->builder->where('transaction', 'REGULER')
+            ->where(function($q) {
+                return $q->whereNull('acc_invoice_id')
+                ->when(request('or_acc_invoice_id'), function($q) {
+                    return $q->orWhere('acc_invoice_id', request('or_acc_invoice_id'));
+                });
+            });
     }
 
 }

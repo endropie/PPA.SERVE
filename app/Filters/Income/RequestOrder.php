@@ -23,7 +23,13 @@ class RequestOrder extends Filter
 
     public function invoicing($order = 'true') {
         return $this->builder
-            ->where('transaction', 'REGULER')->whereNull('acc_invoice_id');
+            ->where('transaction', 'REGULER')
+            ->where(function($q) {
+                return $q->whereNull('acc_invoice_id')
+                ->when(request('or_acc_invoice_id'), function($q) {
+                    return $q->orWhere('acc_invoice_id', request('or_acc_invoice_id'));
+                });
+            });
     }
 
     public function sort_counter_invoiced($order = '') {
