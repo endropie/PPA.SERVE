@@ -88,6 +88,7 @@ class DeliveryLoads extends ApiController
             'delivery_load_items.item.item_units',
             'delivery_load_items.item.unit',
             'delivery_load_items.unit',
+            'delivery_orders'
         ])->withTrashed()->findOrFail($id);
 
         $delivery_load->append(['has_relationship']);
