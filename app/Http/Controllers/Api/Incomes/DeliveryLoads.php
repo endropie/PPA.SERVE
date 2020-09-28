@@ -64,9 +64,6 @@ class DeliveryLoads extends ApiController
                 ["delivery_load_items.$i.quantity.lte" => "Maximum (FG) ". $detail->maxFGDetail() .". Part: ". $label]
             );
 
-
-            if($i == 1) $this->error(['QTY', $detail->unit_amount, $detail->maxFGDetail(), $detail->maxAmountDetail()]);
-
             $detail->setLoadVerified();
         }
 
@@ -105,7 +102,6 @@ class DeliveryLoads extends ApiController
         $delivery_load = DeliveryLoad::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
-
 
         if ($delivery_load->is_relationship) $this->error("Delivery (Load) has RELATIONSHIP, is not allowed to be $mode");
 
