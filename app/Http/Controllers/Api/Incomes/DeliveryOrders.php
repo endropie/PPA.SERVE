@@ -152,6 +152,7 @@ class DeliveryOrders extends ApiController
         $delivery_order = DeliveryOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
+        if($delivery_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
         if($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $delivery_order->status != "OPEN") $this->error("The data $delivery_order->status state, is not allowed to be $mode!");
 
@@ -231,6 +232,8 @@ class DeliveryOrders extends ApiController
 
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
+
+        if($revise->acc_invoice_id) $this->error("The data has Invoice Collect, MANY-REVISION Not alowed !");
 
         if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. MANY-REVISION Not alowed!");
         if($revise->is_internal) $this->error("[". $revise->number ."] is INTERNAL. MANY-REVISION Not alowed!");
@@ -340,6 +343,8 @@ class DeliveryOrders extends ApiController
 
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
+
+        if($revise->acc_invoice_id) $this->error("The data has Invoice Collect, REVISION Not alowed!");
 
         if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
 
@@ -462,6 +467,8 @@ class DeliveryOrders extends ApiController
         $reconcile = DeliveryOrder::findOrFail($id);
         $request_order = RequestOrder::find($request->request_order["id"]);
         $prefix_code = $reconcile->customer->code ?? "C$reconcile->customer_id";
+
+        if($reconcile->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be Reconciliation!");
 
         ## Auto generate number of reconciliation
         $request->merge([

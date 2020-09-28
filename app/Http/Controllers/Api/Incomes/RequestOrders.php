@@ -92,9 +92,9 @@ class RequestOrders extends ApiController
 
         $request_order = RequestOrder::findOrFail($id);
 
-        if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, Not allowed to be changed');
-        }
+        if ($request_order->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be changed');
+        
+        if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be changed!");
 
         $request_order->update($request->input());
 
@@ -145,6 +145,9 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        
+        if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
 
         if ($mode == "VOID") {
             if ($request_order->status == 'VOID') $this->error("The data $request_order->status state, is not allowed to be $mode");
@@ -280,13 +283,6 @@ class RequestOrders extends ApiController
             $invoice2->accurate()->forget();
             $invoice2->delete();
         }
-
-        // if ($invoice->accurate_service_model_id)
-        // {
-        //     $service = $invoice->service();
-        //     $service->setAccuratePrimaryKeyAttribute('accurate_service_model_id');
-        //     $service->accurate()->forget();
-        // }
 
         $invoice->delete();
 
