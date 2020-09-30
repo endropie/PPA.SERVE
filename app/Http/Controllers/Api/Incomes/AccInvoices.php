@@ -249,7 +249,7 @@ class AccInvoices extends ApiController
             $service->setAccuratePrimaryKeyAttribute('service_model_id');
 
             $response2 = $service->accurate()->push([
-                'number' => $service->invoiced_number . ".JASA",
+                // 'number' => $service->invoiced_number . ".JASA",
                 'is_model_service' => true,
             ]);
             if (!$response2['s']) {
