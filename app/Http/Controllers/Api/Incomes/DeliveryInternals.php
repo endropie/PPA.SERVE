@@ -34,6 +34,8 @@ class DeliveryInternals extends ApiController
 
     public function store(Request $request)
     {
+        $this->DATABASE::beginTransaction();
+
         if(!$request->number) $request->merge(['number'=> $this->getNextDeliveryInternalNumber()]);
 
         $request->validate([
@@ -47,6 +49,8 @@ class DeliveryInternals extends ApiController
 
         $delivery_internal = DeliveryInternal::create($request->all());
 
+        $this->DATABASE::commit();
+
         return response()->json($delivery_internal);
     }
 
@@ -59,14 +63,22 @@ class DeliveryInternals extends ApiController
 
     public function update(Request $request, $id)
     {
+        if (request('mode') == "CLOSED") return $this->setClose($id);
+
+        $this->DATABASE::beginTransaction();
+
         $delivery_internal = DeliveryInternal::findOrFail($id);
         $delivery_internal->update($request->input());
+
+        $this->DATABASE::commit();
 
         return response()->json($delivery_internal);
     }
 
     public function destroy($id)
     {
+        $this->DATABASE::beginTransaction();
+
         $delivery_internal = DeliveryInternal::findOrFail($id);
 
         if (request('mode') == "VOID")
@@ -77,6 +89,21 @@ class DeliveryInternals extends ApiController
 
         $delivery_internal->delete();
 
+        $this->DATABASE::commit();
+
         return response()->json(['success' => true]);
+    }
+
+    public function setClose($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_internal = DeliveryInternal::findOrFail($id);
+        $delivery_internal->status = "CLOSED";
+        $delivery_internal->save();
+
+        $this->DATABASE::commit();
+
+        return response()->json($delivery_internal);
     }
 }
