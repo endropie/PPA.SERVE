@@ -147,6 +147,11 @@ class AccInvoiceObserver
 
         $detailItems = $detailItems->collapse()->toArray();
 
+        if ($branchId = env('ACCURATE_BRANCH_ID', null))
+        {
+            $record = array_merge($record, ['branchId' => $branchId]);
+        }
+
         return array_merge($record, $detailItems);
     }
 }
