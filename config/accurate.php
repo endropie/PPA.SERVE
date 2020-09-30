@@ -14,6 +14,8 @@ return [
     "redirect_callback_data" => true,
 
     "scope" => [
+        "access_privilege_view", "access_privilege_view",
+        "bank_transfer_view", "bank_transfer_save", "bank_transfer_delete",
         "item_view", "item_save",
         "branch_view", "branch_save",
         "department_view", "department_save",
@@ -39,6 +41,20 @@ return [
     ],
 
     "modules" => [
+        "access-privilege" => [
+            "list" => "/accurate/api/access-privilege/list.do",
+            "list" => "/accurate/api/access-privilege/detail.do"
+        ],
+        "auto-number" => [
+            "list" => "/accurate/api/auto-number/list.do"
+        ],
+        "bank-transfer" => [
+            "bulk-save" => "/accurate/api/bank-transfer/bulk-save.do",
+            "delete" => "/accurate/api/bank-transfer/delete.do",
+            "detail" => "/accurate/api/bank-transfer/detail.do",
+            "list" => "/accurate/api/bank-transfer/list.do",
+            "save" => "/accurate/api/bank-transfer/save.do",
+        ],
         "branch" => [
             "bulk-save" => "/accurate/api/branch/bulk-save.do",
             "delete" => "/accurate/api/branch/delete.do",
