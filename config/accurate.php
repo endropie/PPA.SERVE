@@ -14,8 +14,9 @@ return [
     "redirect_callback_data" => true,
 
     "scope" => [
+        "auto_number_view",
         "access_privilege_view", "access_privilege_view",
-        "bank_transfer_view", "bank_transfer_save", "bank_transfer_delete",
+        "bank_transfer_view", "bank_transfer_save",
         "item_view", "item_save",
         "branch_view", "branch_save",
         "department_view", "department_save",
