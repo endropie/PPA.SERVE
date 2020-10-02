@@ -146,7 +146,10 @@ class AccInvoices extends ApiController
             $request->validate(['delivery_orders' => 'required|array']);
 
             foreach ($request->input('delivery_orders') as $row) {
-                $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->orWhere('acc_invoice_id', $id)->find($row['id']);
+                $delivery_order = DeliveryOrder::where(function ($q) use ($id) {
+                        return $q->whereNull('acc_invoice_id')->orWhere('acc_invoice_id', $id);
+                    })
+                    ->find($row['id']);
 
                 if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
                 if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
