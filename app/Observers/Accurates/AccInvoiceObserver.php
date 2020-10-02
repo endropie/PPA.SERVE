@@ -154,7 +154,7 @@ class AccInvoiceObserver
 
         $record = array_merge($record, [
             "saveAsStatusType" => "UNAPPROVED",
-            "paymentTermName" => "net 30",
+            // "paymentTermName" => "net 30",
         ]);
 
         return array_merge($record, $detailItems);
