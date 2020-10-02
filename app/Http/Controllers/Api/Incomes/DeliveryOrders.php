@@ -218,6 +218,8 @@ class DeliveryOrders extends ApiController
         }
 
         $delivery_order->status = 'CONFIRMED';
+        $delivery_order->confirmed_by = auth()->user()->id;
+        $delivery_order->confirmed_at = now();
         $delivery_order->save();
 
         if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
