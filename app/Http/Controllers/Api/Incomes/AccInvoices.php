@@ -71,7 +71,7 @@ class AccInvoices extends ApiController
                 if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
                 if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
 
-                $delivery_order->acc_invoice()->associate($acc_invoice);
+                $delivery_order->acc_invoice_id = $acc_invoice->id;
                 $delivery_order->save();
             }
         }
@@ -94,7 +94,8 @@ class AccInvoices extends ApiController
                     if ($delivery_order->status !== 'CONFIRMED') {
                         return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
                     }
-                    $delivery_order->acc_invoice()->associate($acc_invoice);
+
+                    $delivery_order->acc_invoice_id = $acc_invoice->id;
                     $delivery_order->save();
                 }
 
@@ -150,7 +151,7 @@ class AccInvoices extends ApiController
                 if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
                 if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
 
-                $delivery_order->acc_invoice()->associate($acc_invoice);
+                $delivery_order->acc_invoice_id = $acc_invoice->id;
                 $delivery_order->save();
             }
         }
@@ -173,7 +174,8 @@ class AccInvoices extends ApiController
                     if ($delivery_order->status !== 'CONFIRMED') {
                         return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
                     }
-                    $delivery_order->acc_invoice()->associate($acc_invoice);
+
+                    $delivery_order->acc_invoice_id = $acc_invoice->id;
                     $delivery_order->save();
                 }
 
