@@ -133,8 +133,6 @@ class AccInvoices extends ApiController
         $acc_invoice = AccInvoice::findOrFail($id);
 
         if ($acc_invoice->status != 'OPEN')  $this->error('Invoice Collect is not "OPEN" state. Update Failed!');
-        if ($acc_invoice->trashed())  $this->error('Invoice Collect is trashed. Update Failed!');
-
         if ($acc_invoice->accurate_model_id)  $this->error('Invoice Collect has generated. Update Failed!');
         if ($acc_invoice->service_model_id)  $this->error('Invoice Collect has generated. Update Failed!');
 
