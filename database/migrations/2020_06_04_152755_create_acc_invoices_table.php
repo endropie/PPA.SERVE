@@ -16,12 +16,13 @@ class CreateAccInvoicesTable extends Migration
         Schema::create('acc_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('number');
-            $table->string('invoiced_number');
             $table->date('date');
             $table->enum('order_mode', ['PO', 'NONE', 'ACCUMULATE']);
             $table->enum('invoice_mode', ['JOIN', 'SEPARATE', 'DETAIL', 'SUMMARY']);
             $table->foreignId('customer_id');
             $table->string('status')->default('OPEN');
+            $table->string('invoiced_number');
+            $table->string('serviced_number');
             $table->bigInteger('service_model_id')->nullable();
             $table->bigInteger('accurate_model_id')->nullable();
             $table->integer('created_by')->nullable();

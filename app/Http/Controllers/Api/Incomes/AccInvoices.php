@@ -194,40 +194,42 @@ class AccInvoices extends ApiController
     public function destroy($id)
     {
 
-        $invoice = AccInvoice::findOrFail($id);
+        $acc_invoice = AccInvoice::findOrFail($id);
 
-        if ($invoice->accurate_model_id)
+        if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be RE-OPEN');
+
+        if ($acc_invoice->accurate_model_id)
         {
             $this->DATABASE::beginTransaction();
 
-            $response = $invoice->accurate()->forget();
+            $response = $acc_invoice->accurate()->forget();
             if (!$response['s']) {
                 return $this->error($response['d']);
             }
-            $invoice->accurate_model_id = null;
-            $invoice->save();
+            $acc_invoice->accurate_model_id = null;
+            $acc_invoice->save();
 
             $this->DATABASE::commit();
         }
 
-        if ($invoice->service_model_id)
+        if ($acc_invoice->service_model_id)
         {
             $this->DATABASE::beginTransaction();
 
-            $invoice2 = $invoice->fresh();
-            $invoice2->accurate_primary_key = 'service_model_id';
-            $response2 = $invoice2->accurate()->forget();
+            $acc_invoice2 = $acc_invoice->fresh();
+            $acc_invoice2->accurate_primary_key = 'service_model_id';
+            $response2 = $acc_invoice2->accurate()->forget();
             if (!$response2['s']) {
                 return $this->error($response2['d']);
             }
 
-            $invoice->service_model_id = null;
-            $invoice2->save();
+            $acc_invoice->service_model_id = null;
+            $acc_invoice2->save();
 
             $this->DATABASE::commit();
         }
 
-        $invoice->delete();
+        $acc_invoice->delete();
 
         return response()->json(['success' => true]);
     }
@@ -237,6 +239,8 @@ class AccInvoices extends ApiController
         $this->DATABASE::beginTransaction();
 
         $acc_invoice = AccInvoice::findOrFail($id);
+
+        if ($acc_invoice->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be INVOICED');
 
         $response = $acc_invoice->accurate()->push();
         if (!$response['s']) {
@@ -248,20 +252,73 @@ class AccInvoices extends ApiController
 
         if ($acc_invoice->customer->invoice_mode == 'SEPARATE')
         {
-            $service = $acc_invoice->fresh();
-            $service->setAccuratePrimaryKeyAttribute('service_model_id');
+            $acc_invoice2 = $acc_invoice->fresh();
+            $acc_invoice2->setAccuratePrimaryKeyAttribute('service_model_id');
 
-            $response2 = $service->accurate()->push([
-                // 'number' => $service->invoiced_number . ".JASA",
+            $response2 = $acc_invoice2->accurate()->push([
                 'is_model_service' => true,
             ]);
             if (!$response2['s']) {
                 return $this->error($response2['d']);
             }
+
+            $acc_invoice2->serviced_number = $response2['r']['number'];
+            $acc_invoice2->save();
         }
 
         $acc_invoice->status = 'INVOICED';
         $acc_invoice->save();
+
+        $this->DATABASE::commit();
+
+        return response()->json(['message' => $response['d'], 'success' => $response['s']]);
+    }
+
+    public function reopened($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $acc_invoice = AccInvoice::findOrFail($id);
+
+        if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be RE-OPEN');
+
+        $acc_invoice->invoiced_number = null;
+        $acc_invoice->accurate_model_id = null;
+        $acc_invoice->service_model_id = null;
+        $acc_invoice->status = 'OPEN';
+        $acc_invoice->save();
+
+        $this->DATABASE::commit();
+
+        return response()->json(['message' => 'Reopen succses!']);
+    }
+
+    public function syncronized($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $acc_invoice = AccInvoice::findOrFail($id);
+
+        if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be SYNC');
+
+        $response = \Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->accurate_model_id]);
+        if (!$response['s']) {
+            return $this->error($response['d']);
+        }
+
+        $acc_invoice->invoiced_number = $response['d']['number'];
+        $acc_invoice->save();
+
+        if ($acc_invoice->service_model_id)
+        {
+            $response2 = \Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->service_model_id]);
+            if (!$response2['s']) {
+                return $this->error($response2['d']);
+            }
+
+            $acc_invoice->serviced_number = $response2['d']['number'];
+            $acc_invoice->save();
+        }
 
         $this->DATABASE::commit();
 

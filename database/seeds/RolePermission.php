@@ -32,7 +32,7 @@ class RolePermission extends Seeder
 			// Incomes
 			'forecasts' => ['c','r','u','d','close','void'],
 			'request-orders' => ['c','r','u','d','close','revision','void', 'push'],
-            'acc-invoices' => ['c','r','u','d','confirm'],
+            'acc-invoices' => ['c','r','u','d','confirm', 'reopen'],
 			// Warehouses
             'opname-stocks' => ['c','r','u','d','validation','revision','void'],
             'opname-vouchers' => ['c','r','u','d','validation','revision','void'],
