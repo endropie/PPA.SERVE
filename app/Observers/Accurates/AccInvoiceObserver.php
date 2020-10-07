@@ -13,14 +13,10 @@ class AccInvoiceObserver
         $serviceModel = (boolean) ($record['is_model_service'] ?? false);
 
         $detailItems = $model->delivery_items
-        ->groupBy(function($detail) {
-            if ($detail->request_order_item) {
-                if ($detail->request_order_item->request_order->order_mode === 'PO') {
-                    return $detail->item_id . '-'. $detail->request_order_item->price;
-                }
-            }
-            return $detail->item_id;
+        ->sortBy(function ($detail) {
+            return $detail['item']['code'];
         })
+        ->groupBy('item_id')
         ->values()
         ->map(function ($details, $key) use ($mode, $serviceModel) {
 
@@ -40,12 +36,6 @@ class AccInvoiceObserver
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
             $price = (double) $detail->item->price;
-
-            if ($detail->request_order_item) {
-                if ($detail->request_order_item->request_order->order_mode === 'PO') {
-                    $price = $detail->request_order_item->price;
-                }
-            }
 
             if ($mode == 'SUMMARY') {
 
@@ -146,6 +136,8 @@ class AccInvoiceObserver
         }
 
         $detailItems = $detailItems->collapse()->toArray();
+
+        abort(502, json_encode($detailItems));
 
         if ($branchId = env('ACCURATE_BRANCH_ID', null))
         {
