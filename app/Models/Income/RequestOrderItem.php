@@ -56,22 +56,25 @@ class RequestOrderItem extends Model
         return $this->hasOne('App\Models\Warehouse\IncomingGoodItem');
     }
 
-    public function getTotalDeliveryOrderItemAttribute() {
-        return (double) $this->delivery_order_items->sum('unit_amount');
+    public function getTotalDeliveryOrderItemAttribute()
+    {
+        return (double) $this->delivery_order_items()->get()->sum('unit_amount');
     }
 
-    public function getUnitAmountAttribute() {
+    public function getUnitAmountAttribute()
+    {
         if($this->unit_rate <= 0) return false;
         return (double) $this->quantity * $this->unit_rate;
     }
 
-    public function getLotsAttribute () {
-        $rel = $this->incoming_good_item()->get();
-        if($rel) return null;
-        return $this->rel->lots;
+    public function getLotsAttribute ()
+    {
+        if(!$this->incoming_good_item()->first()) return null;
+        return $this->incoming_good_item()->first()->lots;
     }
 
-    public function calculate() {
+    public function calculate()
+    {
         // Summary Delivery.
         $amount_delivery = $this->delivery_order_items->sum('unit_amount');
         $this->amount_delivery = $amount_delivery;
