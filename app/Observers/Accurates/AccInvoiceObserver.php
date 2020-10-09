@@ -137,8 +137,6 @@ class AccInvoiceObserver
 
         $detailItems = $detailItems->collapse()->toArray();
 
-        abort(502, json_encode($detailItems));
-
         if ($branchId = env('ACCURATE_BRANCH_ID', null))
         {
             $record = array_merge($record, ['branchId' => $branchId]);
