@@ -42,12 +42,20 @@ class DeliveryInternals extends ApiController
             "number" => "required",
             "customer_id" => "required",
             "date" => "required",
-            "option" => "required",
-            "option.delivery_internal_items.*.name" => "required",
-            "option.delivery_internal_items.*.quantity" => "required",
+            "delivery_internal_items" => "required|array",
+            "delivery_internal_items.*.item_id" => "nullable|exists:items,id",
+            "delivery_internal_items.*.name" => "required",
+            "delivery_internal_items.*.quantity" => "required",
+            "delivery_internal_items.*.unit_id" => "required",
         ]);
 
         $delivery_internal = DeliveryInternal::create($request->all());
+
+        foreach ($request->delivery_internal_items as $row) {
+            $delivery_internal->delivery_internal_items()->create($row);
+        }
+
+        // $this->error('LOLOS');
 
         $this->DATABASE::commit();
 
@@ -56,19 +64,40 @@ class DeliveryInternals extends ApiController
 
     public function show($id)
     {
-        $delivery_internal = DeliveryInternal::with('customer','created_user')->findOrFail($id);
+        $delivery_internal = DeliveryInternal::with('customer','delivery_internal_items.item','delivery_internal_items.unit','created_user')->findOrFail($id);
 
         return response()->json($delivery_internal);
     }
 
     public function update(Request $request, $id)
     {
-        if (request('mode') == "CLOSED") return $this->setClose($id);
+        $request->validate([
+            "number" => "required",
+            "customer_id" => "required",
+            "date" => "required",
+            "delivery_internal_items" => "required|array",
+            "delivery_internal_items.*.name" => "required",
+            "delivery_internal_items.*.subname" => "required",
+            "delivery_internal_items.*.quantity" => "required",
+            "delivery_internal_items.*.item_id" => "nullable|exists:items,id",
+            "delivery_internal_items.*.unit_id" => "required",
+        ]);
 
         $this->DATABASE::beginTransaction();
 
         $delivery_internal = DeliveryInternal::findOrFail($id);
+
+        if ($delivery_internal->status !== 'OPEN') $this->error('DELIVERY (INTERN) has not OPEN state, is not allowed to be changed!');
+
         $delivery_internal->update($request->input());
+
+        $hasRowIDs = collect($request->delivery_internal_items)->whereNotNull('id')->pluck('id')->toArray();
+        $delivery_internal->delivery_internal_items()->whereNotIn('id', $hasRowIDs)->forceDelete();
+
+        foreach ($request->delivery_internal_items as $row)
+        {
+            $delivery_internal->delivery_internal_items()->updateOrCreate(['id' => $row['id'] ?? null], $row);
+        }
 
         $this->DATABASE::commit();
 
@@ -94,12 +123,35 @@ class DeliveryInternals extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function setClose($id)
+    public function confirmed($id)
     {
         $this->DATABASE::beginTransaction();
 
         $delivery_internal = DeliveryInternal::findOrFail($id);
-        $delivery_internal->status = "CLOSED";
+
+        if ($delivery_internal->status !== 'OPEN') $this->error('DELIVERY (INTERN) has not OPEN state, is not allowed to be confirmed!');
+
+        $delivery_internal->status = "CONFIRMED";
+        $delivery_internal->save();
+
+        $this->DATABASE::commit();
+
+        return response()->json($delivery_internal);
+    }
+
+    public function revised(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_internal = DeliveryInternal::findOrFail($id);
+
+        if ($delivery_internal->trashed()) $this->error('DELIVERY (INTERN) is trashed, is not allowed to be revised!');
+        if ($delivery_internal->revised_number) $this->error('DELIVERY (INTERN) has revised, is not allowed to be revised!');
+
+        $request->validate(['revised_number' => 'required']);
+
+        $delivery_internal->revised_number = $request->revised_number;
+
         $delivery_internal->save();
 
         $this->DATABASE::commit();

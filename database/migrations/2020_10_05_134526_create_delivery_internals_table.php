@@ -21,11 +21,25 @@ class CreateDeliveryInternalsTable extends Migration
             $table->string('customer_name')->nullable();
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
-            $table->jsonb('option')->nullable();
+            $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
+            $table->string('revised_number')->nullable();
             $table->foreignId('reason_id')->nullable();
             $table->string('reason_description')->nullable();
             $table->foreignId('created_by');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('delivery_internal_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('delivery_internal_id');
+            $table->foreignId('item_id');
+            $table->string('name');
+            $table->string('subname');
+            $table->decimal('quantity');
+            $table->foreignId('unit_id');
+            $table->text('note')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

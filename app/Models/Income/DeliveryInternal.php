@@ -12,16 +12,17 @@ class DeliveryInternal extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'date', 'option', 'reason_id', 'reason_description',
+        'number', 'date', 'reason_id', 'reason_description', 'description',
         'customer_id', 'customer_name', 'customer_phone', 'customer_address'
-    ];
-
-    protected $casts = [
-        'option' => 'array'
     ];
 
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function delivery_internal_items ()
+    {
+        return $this->hasMany('App\Models\Income\DeliveryInternalItem')->withTrashed();
     }
 }

@@ -60,6 +60,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::prefix('incomes')->name('incomes.')->group(function () {
             Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');
             Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
+            Route::put('delivery-internals/{id}/confirmed', 'Incomes\DeliveryInternals@confirmed');
+            Route::put('delivery-internals/{id}/revised', 'Incomes\DeliveryInternals@revised');
             Route::post('invoices/{id}/confirmed', 'Incomes\AccInvoices@confirmed');
             Route::post('invoices/{id}/reopened', 'Incomes\AccInvoices@reopened');
             Route::post('invoices/{id}/syncronized', 'Incomes\AccInvoices@syncronized');
@@ -99,6 +101,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::prefix('transports')->name('transports.')->group(function () {
             Route::apiResource('schedule-boards', 'Transports\ScheduleBoards');
+            Route::apiResource('trip-boards', 'Transports\Tripboards');
         });
 
         Route::prefix('references')->name('references.')->group(function () {
