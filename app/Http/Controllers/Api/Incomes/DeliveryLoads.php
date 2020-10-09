@@ -97,8 +97,6 @@ class DeliveryLoads extends ApiController
             return $delivery->only(['id', 'fullnumber']);
         });
 
-        ;
-
         return response()->json($delivery_load);
     }
 

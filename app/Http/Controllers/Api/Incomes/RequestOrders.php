@@ -31,10 +31,11 @@ class RequestOrders extends ApiController
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['created_user', 'customer'])
+                $request_orders = RequestOrder::with(['created_user'])
                   ->filter($filters)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
+                    $item->customer = $item->customer()->first()->only(['id', 'name', 'code']);
                     $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery', 'delivery_counter']);
                     return $item;
                 });
@@ -69,15 +70,20 @@ class RequestOrders extends ApiController
             'customer',
             'request_order_items.item.item_units',
             'request_order_items.unit',
-            'request_order_items.incoming_good_item',
-            'request_order_items.delivery_order_items',
-            'delivery_orders',
+            // 'request_order_items.incoming_good_item',
+            // 'request_order_items.delivery_order_items',
+            // 'delivery_orders',
             // 'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
+        $request_order->request_order_items->each->append('lots');
 
-        // $request_order->request_order_items->each->append('order_lots');
+        ## resource return as json
+        $request_order->delivery_orders = $request_order->delivery_orders()->get()->map(function ($delivery, $key) {
+            return $delivery->only(['id', 'fullnumber', 'status']);
+        });
+
 
         return response()->json($request_order);
     }
@@ -93,7 +99,7 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::findOrFail($id);
 
         if ($request_order->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be changed');
-        
+
         if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be changed!");
 
         $request_order->update($request->input());
@@ -146,7 +152,7 @@ class RequestOrders extends ApiController
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
 
-        
+
         if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
 
         if ($mode == "VOID") {

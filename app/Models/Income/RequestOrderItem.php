@@ -65,6 +65,12 @@ class RequestOrderItem extends Model
         return (double) $this->quantity * $this->unit_rate;
     }
 
+    public function getLotsAttribute () {
+        $rel = $this->incoming_good_item()->get();
+        if($rel) return null;
+        return $this->rel->lots;
+    }
+
     public function calculate() {
         // Summary Delivery.
         $amount_delivery = $this->delivery_order_items->sum('unit_amount');

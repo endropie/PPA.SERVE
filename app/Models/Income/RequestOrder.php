@@ -42,7 +42,7 @@ class RequestOrder extends Model
     }
 
     public function getDeliveryCounterAttribute() {
-        $all = $this->delivery_orders;
+        $all = $this->delivery_orders()->get();
         $confirmed = $all->where('status', 'CONFIRMED');
         $invoiced = $confirmed->whereNotNull('acc_invoice_id');
 
@@ -55,11 +55,11 @@ class RequestOrder extends Model
     }
 
     public function getTotalUnitAmountAttribute() {
-        return (double) $this->request_order_items->sum('unit_amount');
+        return (double) $this->request_order_items()->get()->sum('unit_amount');
     }
 
     public function getTotalUnitDeliveryAttribute() {
-        return (double) $this->delivery_order_items->sum('unit_amount');
+        return (double) $this->delivery_order_items()->get()->sum('unit_amount');
     }
 
     public function getFullnumberAttribute()

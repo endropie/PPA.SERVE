@@ -200,7 +200,10 @@ class Item extends Model
 
     public function getCustomerCodeAttribute()
     {
-        return $this->customer ? $this->customer->code : null;
+        $customer = $this->customer()->first();
+
+        if (!$customer) return null;
+        return $customer->code;
     }
 
     public function amount_delivery_verify ($date = null)
