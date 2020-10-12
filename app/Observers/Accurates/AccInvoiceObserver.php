@@ -41,11 +41,11 @@ class AccInvoiceObserver
 
                 if ($detail->item->customer->exclude_service) {
                     $v = (100 + $detail->item->customer->sen_service) / 100;
-                    $priceMaterial = ceil($price / $v * 100) / 100;
+                    $priceMaterial = ceil($price / $v * 10000) / 10000;
                     $priceService  = round($price - $priceMaterial, 2);
                 }
                 else {
-                    $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
+                    $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
                     $priceService  = round($price - $priceMaterial, 2);
                 }
 
@@ -63,7 +63,7 @@ class AccInvoiceObserver
             else if ($mode == 'DETAIL') {
                 $doublekey = (int) $key*2;
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
+                $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
                 $priceService  = round($price - $priceMaterial, 2);
 
                 return [
@@ -86,7 +86,7 @@ class AccInvoiceObserver
             }
             else if ($mode == 'SEPARATE') {
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = ceil($price * (1 - $senService) *100) / 100;
+                $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
                 $priceService  = round($price - $priceMaterial, 2);
                 $detailPrice = $serviceModel ? $priceService : $priceMaterial;
                 $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
@@ -143,7 +143,7 @@ class AccInvoiceObserver
         }
 
         $record = array_merge($record, [
-            "saveAsStatusType" => "UNAPPROVED",
+            // "saveAsStatusType" => "UNAPPROVED",
             // "paymentTermName" => "net 30",
         ]);
 
