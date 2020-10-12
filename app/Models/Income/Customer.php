@@ -44,6 +44,11 @@ class Customer extends Model
         return $this->hasMany('App\Models\Income\CustomerContact');
     }
 
+    public function customer_trips()
+    {
+        return $this->hasMany('App\Models\Income\CustomerTrip');
+    }
+
     public function customer_items() {
         return $this->hasMany('App\Models\Common\Item');
     }

@@ -39,7 +39,7 @@ class Customers extends ApiController
 
     public function show($id)
     {
-        $customer = Customer::with(['customer_contacts'])->findOrFail($id);
+        $customer = Customer::with(['customer_contacts','customer_trips'])->findOrFail($id);
         $customer->is_editable = (!$customer->is_related);
 
         return response()->json($customer);
@@ -58,6 +58,16 @@ class Customers extends ApiController
 
             // create contacts on the customer updated!
             $customer->customer_contacts()->create($pre[$i]);
+        }
+
+        // Delete all trips on before the customer updated!
+        $customer->customer_trips()->delete();
+
+        $trips = $request->customer_trips;
+        for ($i=0; $i < count($trips); $i++) {
+
+            // create trips on the customer updated!
+            $customer->customer_trips()->create($trips[$i]);
         }
 
         return response()->json($customer);

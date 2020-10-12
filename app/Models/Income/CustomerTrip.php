@@ -4,11 +4,11 @@ namespace App\Models\Income;
 
 use App\Models\Model;
 
-class CustomerContact extends Model
+class CustomerTrip extends Model
 {
 
     protected $fillable = [
-        'label', 'name', 'phone',
+        'trip_time'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
