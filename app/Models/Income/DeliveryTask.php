@@ -12,7 +12,7 @@ class DeliveryTask extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'date', 'time', 'rit', 'transaction', 'customer_id', 'description'
+        'number', 'date', 'trip_time', 'transaction', 'customer_id', 'description'
     ];
 
     protected $appends = ['fullnumber', 'is_overtime'];

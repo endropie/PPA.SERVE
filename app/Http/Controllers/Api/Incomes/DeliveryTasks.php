@@ -73,7 +73,7 @@ class DeliveryTasks extends ApiController
     public function show($id)
     {
         $delivery_task = DeliveryTask::with([
-            'customer',
+            'customer.customer_trips',
             'delivery_task_items.item.item_units',
             'delivery_task_items.item.unit',
             'delivery_task_items.unit',

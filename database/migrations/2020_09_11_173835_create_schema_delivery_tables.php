@@ -18,8 +18,9 @@ class CreateSchemaDeliveryTables extends Migration
             $table->string('number');
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->date('date');
-            $table->time('time');
-            $table->tinyInteger('rit');
+            $table->time('trip_time');
+            // $table->time('time');
+            // $table->tinyInteger('rit');
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 

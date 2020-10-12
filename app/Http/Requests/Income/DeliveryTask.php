@@ -27,7 +27,6 @@ class DeliveryTask extends Request
             'customer_id' => 'required|exists:customers,id',
             'date' => 'required',
             'transaction' => 'required|in:REGULER,RETURN',
-            'rit' => 'required',
             'delivery_task_items.*.item_id' => 'required',
             'delivery_task_items.*.quantity' => 'required',
             'delivery_task_items.*.unit_id' => 'required',
