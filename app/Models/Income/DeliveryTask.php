@@ -40,6 +40,6 @@ class DeliveryTask extends Model
 
     public function getIsOvertimeAttribute()
     {
-        return strtotime(date('Y-m-d H:i:s')) - strtotime($this->date ." ". $this->time) > 0;
+        return strtotime(date('Y-m-d H:i:s')) - strtotime($this->date ." ". $this->trip_time) > 0;
     }
 }
