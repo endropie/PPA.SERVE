@@ -211,12 +211,15 @@ class DeliveryOrders extends ApiController
 
         $delivery_order = DeliveryOrder::findOrFail($id);
 
+        if (!request('confirmed_number')) $this->error("Confirm number undefined. Confirmation not allowed!");
+
         if ($delivery_order->status != "OPEN") $this->error("SJDO[$delivery_order->number] has not OPEN state. Confirmation not allowed!");
 
         foreach ($delivery_order->delivery_order_items as $detail) {
             if ($detail->request_order_item) $detail->request_order_item->calculate();
         }
 
+        $delivery_order->confirmed_number = request('confirmed_number');
         $delivery_order->status = 'CONFIRMED';
         $delivery_order->confirmed_by = auth()->user()->id;
         $delivery_order->confirmed_at = now();
