@@ -11,7 +11,7 @@ class DeliveryVerifyItem extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'customer_id', 'date', 'rit', 'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
+        'customer_id', 'date', 'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
     ];
 
     protected $appends = ['unit_amount'];

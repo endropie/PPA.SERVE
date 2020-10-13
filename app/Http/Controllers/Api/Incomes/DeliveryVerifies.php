@@ -43,7 +43,7 @@ class DeliveryVerifies extends ApiController
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'date' => 'required|date',
-            'rit' => 'required',
+            // 'rit' => 'required',
             'item_id' => 'required|exists:items,id',
             'unit_id' => 'required',
             'unit_rate' => 'required',
@@ -70,7 +70,7 @@ class DeliveryVerifies extends ApiController
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'date' => 'required|date',
-            'rit' => 'required',
+            // 'rit' => 'required',
             'multi_items' => "required|array|min:1",
             'multi_items.*.item_id' => 'required|exists:items,id',
             'multi_items.*.unit_id' => 'required',
@@ -84,7 +84,7 @@ class DeliveryVerifies extends ApiController
             $input = array_merge($row, [
                 "customer_id" => $request->customer_id,
                 "date" => $request->date,
-                "rit" => $request->rit
+                // "rit" => $request->rit
             ]);
 
             $delivery_verify_item = DeliveryVerifyItem::create($input);
@@ -123,7 +123,7 @@ class DeliveryVerifies extends ApiController
         $request->validate([
             'customer_id' => 'required|exist:customers,id',
             'date' => 'required|date',
-            'rit' => 'required',
+            // 'rit' => 'required',
             'item_id' => 'required|exist:items,id',
             'unit_id' => 'required',
             'unit_rate' => 'required',
