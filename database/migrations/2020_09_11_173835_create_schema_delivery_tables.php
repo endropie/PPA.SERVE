@@ -48,7 +48,7 @@ class CreateSchemaDeliveryTables extends Migration
         Schema::create('delivery_verify_items', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->tinyInteger('rit');
+            // $table->tinyInteger('rit');
             $table->foreignId('customer_id');
             $table->foreignId('item_id');
             $table->foreignId('unit_id');
@@ -65,7 +65,8 @@ class CreateSchemaDeliveryTables extends Migration
             $table->id();
             $table->string('number');
             $table->date('date');
-            $table->tinyInteger('rit');
+            $table->time('trip_time');
+            // $table->tinyInteger('rit');
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->enum('order_mode', ['NONE', 'PO', 'ACCUMULATE']);
 
@@ -96,6 +97,9 @@ class CreateSchemaDeliveryTables extends Migration
             $table->softDeletes();
         });
 
+        Schema::table('delivery_orders', function (Blueprint $table) {
+            $table->foreignId('delivery_load_id')->nullable()->after('revise_number');
+        });
     }
 
     /**
@@ -111,5 +115,9 @@ class CreateSchemaDeliveryTables extends Migration
 
         Schema::dropIfExists('delivery_loads');
         Schema::dropIfExists('delivery_load_items');
+
+        Schema::table('delivery_orders', function (Blueprint $table) {
+            $table->dropColumn('delivery_load_id');
+        });
     }
 }

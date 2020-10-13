@@ -12,7 +12,7 @@ class DeliveryLoad extends Model
     use Filterable, SoftDeletes, WithUserBy;
 
     protected $fillable = [
-        'number', 'order_mode', 'date', 'rit', 'transaction', 'vehicle_id', 'description',
+        'number', 'transaction', 'order_mode', 'date', 'trip_time', 'vehicle_id', 'description',
         'customer_id',  'customer_name', 'customer_phone', 'customer_address', 'customer_note',
     ];
 

@@ -25,9 +25,9 @@ class DeliveryLoad extends Request
         return [
             'number' => ($id ? 'required' : 'nullable') .'|unique:delivery_loads,number,'. ($id) .',id',
             'customer_id' => 'required|exists:customers,id',
-            'date' => 'required',
             'transaction' => 'required|in:REGULER,RETURN',
-            'rit' => 'required',
+            'date' => 'required',
+            'trip_time' => 'required',
             'delivery_load_items' => 'required|array|min:1',
             'delivery_load_items.*.item_id' => 'required',
             'delivery_load_items.*.quantity' => 'required|gt:0',
