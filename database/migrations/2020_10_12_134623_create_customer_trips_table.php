@@ -16,7 +16,8 @@ class CreateCustomerTripsTable extends Migration
         Schema::create('customer_trips', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id');
-            $table->time('trip_time');
+            $table->tinyInteger('intday');
+            $table->time('time');
             $table->timestamps();
         });
     }

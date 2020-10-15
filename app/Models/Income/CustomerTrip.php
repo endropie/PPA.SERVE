@@ -8,7 +8,7 @@ class CustomerTrip extends Model
 {
 
     protected $fillable = [
-        'trip_time'
+        'intday', 'time'
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
