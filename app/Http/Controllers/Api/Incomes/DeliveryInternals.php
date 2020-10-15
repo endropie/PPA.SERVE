@@ -25,7 +25,7 @@ class DeliveryInternals extends ApiController
                 break;
 
             default:
-                $delivery_internals = DeliveryInternal::with('customer','created_user')->filter($filters)->collect();
+                $delivery_internals = DeliveryInternal::with('customer','created_user')->filter($filters)->latest()->collect();
                 break;
         }
 
