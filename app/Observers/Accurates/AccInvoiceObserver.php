@@ -35,17 +35,17 @@ class AccInvoiceObserver
 
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
-            $price = (double) $detail->item->price;
+            $price = (double) round($detail->item->price, 2);
 
             if ($mode == 'SUMMARY') {
 
                 if ($detail->item->customer->exclude_service) {
                     $v = (100 + $detail->item->customer->sen_service) / 100;
-                    $priceMaterial = ceil($price / $v * 10000) / 10000;
+                    $priceMaterial = round(ceil($price / $v * 10000) / 10000, 2);
                     $priceService  = round($price - $priceMaterial, 2);
                 }
                 else {
-                    $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
+                    $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
                     $priceService  = round($price - $priceMaterial, 2);
                 }
 
@@ -55,15 +55,13 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $priceMaterial,
-                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
-                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
                     "SUMMARY_JASA" => (double) ($quantity * $priceService)
                 ];
             }
             else if ($mode == 'DETAIL') {
                 $doublekey = (int) $key*2;
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
+                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
                 $priceService  = round($price - $priceMaterial, 2);
 
                 return [
@@ -72,21 +70,17 @@ class AccInvoiceObserver
                     "detailItem[$doublekey].detailNotes" => $detailNotes,
                     "detailItem[$doublekey].quantity" => (double) $quantity,
                     "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
-                    // "detailItem[$doublekey].useTax1" => (boolean) $useTax1,
-                    // "detailItem[$doublekey].useTax3" => (boolean) $useTax3,
 
                     "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
                     "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
                     "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
                     "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
                     "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
-                    // "detailItem[". ($doublekey+1) ."].useTax1" => (boolean) $useTax1,
-                    // "detailItem[". ($doublekey+1) ."].useTax3" => (boolean) $useTax3,
                 ];
             }
             else if ($mode == 'SEPARATE') {
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = ceil($price * (1 - $senService) * 10000) / 10000;
+                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
                 $priceService  = round($price - $priceMaterial, 2);
                 $detailPrice = $serviceModel ? $priceService : $priceMaterial;
                 $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
@@ -98,8 +92,6 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
-                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
-                    // "detailItem[$key].useTax3" => (boolean) ($useTax3 && $serviceModel),
                 ];
             }
             else if ($mode == 'JOIN') {
@@ -109,13 +101,6 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $price,
-                    // "taxable" => true,
-                    // "detailItem[$key].useTax1" => (boolean) $useTax1,
-                    // "detailItem[$key].useTax3" => (boolean) $useTax3,
-                    // "taxDate" => '28/08/2020',
-                    // "taxNumber" => '123',
-                    // "documentCode" => 'DIGUNGGUNG',
-                    // "taxType" => 'BKN_PEMUNGUT_PPN',
                 ];
             }
             else {
@@ -146,6 +131,8 @@ class AccInvoiceObserver
             // "saveAsStatusType" => "UNAPPROVED",
             // "paymentTermName" => "net 30",
         ]);
+
+        abort(502, json_encode([$detailItems]));
 
         return array_merge($record, $detailItems);
     }
