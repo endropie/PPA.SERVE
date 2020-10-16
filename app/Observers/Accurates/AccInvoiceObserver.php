@@ -132,8 +132,6 @@ class AccInvoiceObserver
             // "paymentTermName" => "net 30",
         ]);
 
-        abort(502, json_encode([$detailItems]));
-
         return array_merge($record, $detailItems);
     }
 }
