@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
-use App\Filters\Filter as Filter;
+// use App\Filters\Filter as Filter;
+use App\Filters\Income\Customer as Filter;
 use App\Http\Requests\Income\Customer as Request;
 use App\Http\Controllers\ApiController;
 
