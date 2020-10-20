@@ -28,6 +28,8 @@ class AccInvoiceObserver
             $subnameLabel = setting()->get('item.subname_label', null);
             $detailNotes = !$subnameMode ? null : (string) $subnameLabel ." ". $detail->item->part_subname;
 
+            $unit = ucfirst($detail->item->unit->code);
+
             $useTax1 = (boolean) $detail->item->customer->with_ppn;
             $useTax3 = (boolean) $detail->item->customer->with_pph;
 
@@ -55,6 +57,7 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $priceMaterial,
+                    "detailItem[$key].itemUnitName" => (string) $unit,
                     "SUMMARY_JASA" => (double) ($quantity * $priceService)
                 ];
             }
@@ -70,12 +73,14 @@ class AccInvoiceObserver
                     "detailItem[$doublekey].detailNotes" => $detailNotes,
                     "detailItem[$doublekey].quantity" => (double) $quantity,
                     "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
+                    "detailItem[$doublekey].itemUnitName" => (string) $unit,
 
                     "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
                     "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
                     "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
                     "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
                     "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
+                    "detailItem[". ($doublekey+1) ."].itemUnitName" => (string) $unit,
                 ];
             }
             else if ($mode == 'SEPARATE') {
@@ -92,6 +97,7 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) ($detailPrice),
+                    "detailItem[$key].itemUnitName" => (string) $unit,
                 ];
             }
             else if ($mode == 'JOIN') {
@@ -101,6 +107,7 @@ class AccInvoiceObserver
                     "detailItem[$key].detailNotes" => $detailNotes,
                     "detailItem[$key].quantity" => (double) $quantity,
                     "detailItem[$key].unitPrice" => (double) $price,
+                    "detailItem[$key].itemUnitName" => (string) $unit,
                 ];
             }
             else {
