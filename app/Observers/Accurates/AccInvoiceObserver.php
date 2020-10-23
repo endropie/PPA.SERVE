@@ -17,8 +17,9 @@ class AccInvoiceObserver
             return $detail['item']['code'];
         })
         ->groupBy('item_id')
-        ->values()
-        ->map(function ($details, $key) use ($mode, $serviceModel) {
+        ->values();
+
+        $detailItems = $detailItems->map(function ($details, $key) use ($mode, $serviceModel, $detailItems) {
 
             $quantity = collect($details)->sum('quantity');
             $detail = $details->first();
@@ -62,25 +63,40 @@ class AccInvoiceObserver
                 ];
             }
             else if ($mode == 'DETAIL') {
-                $doublekey = (int) $key*2;
+                $length = $detailItems->count();
+                // $doublekey = (int) $key*2;
                 $senService = (double) ($detail->item->customer->sen_service / 100);
                 $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
                 $priceService  = round($price - $priceMaterial, 2);
 
                 return [
-                    "detailItem[$doublekey].itemNo" => 'ITEM-MATERIAL',
-                    "detailItem[$doublekey].detailName" => (string) "[MATERIAL] ". $detailName,
-                    "detailItem[$doublekey].detailNotes" => $detailNotes,
-                    "detailItem[$doublekey].quantity" => (double) $quantity,
-                    "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
-                    "detailItem[$doublekey].itemUnitName" => (string) $unit,
+                    // "detailItem[$doublekey].itemNo" => 'ITEM-MATERIAL',
+                    // "detailItem[$doublekey].detailName" => (string) "[MATERIAL] ". $detailName,
+                    // "detailItem[$doublekey].detailNotes" => $detailNotes,
+                    // "detailItem[$doublekey].quantity" => (double) $quantity,
+                    // "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
+                    // "detailItem[$doublekey].itemUnitName" => (string) $unit,
 
-                    "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
-                    "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
-                    "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
-                    "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
-                    "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
-                    "detailItem[". ($doublekey+1) ."].itemUnitName" => (string) $unit,
+                    // "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
+                    // "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
+                    // "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
+                    // "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
+                    // "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
+                    // "detailItem[". ($doublekey+1) ."].itemUnitName" => (string) $unit,
+
+                    "detailItem[$key].itemNo" => 'ITEM-MATERIAL',
+                    "detailItem[$key].detailName" => (string) "[MATERIAL] ". $detailName,
+                    "detailItem[$key].detailNotes" => $detailNotes,
+                    "detailItem[$key].quantity" => (double) $quantity,
+                    "detailItem[$key].unitPrice" => (double) $priceMaterial,
+                    "detailItem[$key].itemUnitName" => (string) $unit,
+
+                    "detailItem[". ($key+$length) ."].itemNo" => 'ITEM-JASA',
+                    "detailItem[". ($key+$length) ."].detailName" => (string) "[JASA] ". $detailName,
+                    "detailItem[". ($key+$length) ."].detailNotes" => $detailNotes,
+                    "detailItem[". ($key+$length) ."].quantity" => (double) $quantity,
+                    "detailItem[". ($key+$length) ."].unitPrice" => (double) $priceService,
+                    "detailItem[". ($key+$length) ."].itemUnitName" => (string) $unit,
                 ];
             }
             else if ($mode == 'SEPARATE') {
