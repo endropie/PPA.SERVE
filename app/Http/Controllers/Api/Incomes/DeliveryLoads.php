@@ -134,6 +134,24 @@ class DeliveryLoads extends ApiController
         return response()->json(['success' => true]);
     }
 
+    public function vehicleUpdated ($id, Request $request)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request->validate(['vehicle.id' => 'required']);
+
+        $delivery_load = DeliveryLoad::findOrFail($id);
+
+        if ($delivery_load->is_checkout) $this->error('Delivery has CHECKOUT, is not allowed be changed!');
+
+        $delivery_load->vehicle_id = $request['vehicle']['id'];
+        $delivery_load->save();
+
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
+    }
+
     public function storeRequestOrder($delivery_load)
     {
 

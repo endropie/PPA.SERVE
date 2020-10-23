@@ -19,8 +19,6 @@ class CreateSchemaDeliveryTables extends Migration
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->date('date');
             $table->time('trip_time');
-            // $table->time('time');
-            // $table->tinyInteger('rit');
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
 
@@ -48,7 +46,6 @@ class CreateSchemaDeliveryTables extends Migration
         Schema::create('delivery_verify_items', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            // $table->tinyInteger('rit');
             $table->foreignId('customer_id');
             $table->foreignId('item_id');
             $table->foreignId('unit_id');
@@ -65,10 +62,10 @@ class CreateSchemaDeliveryTables extends Migration
             $table->id();
             $table->string('number');
             $table->date('date');
-            $table->time('trip_time');
-            // $table->tinyInteger('rit');
+            $table->time('trip_time')->nullable();
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->enum('order_mode', ['NONE', 'PO', 'ACCUMULATE']);
+            $table->boolean('is_untriped')->default(0);
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
