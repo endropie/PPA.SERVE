@@ -40,7 +40,7 @@ class IncomingGood extends Request
             'customer_id' => ['required', $in_customer],
             'date' => 'required',
             'time' => 'required',
-            'transaction' => 'required|in:REGULER,RETURN,SAMPLE',
+            'transaction' => 'required|in:REGULER,RETURN,SAMPLE,INTERNAL',
 
             'incoming_good_items.*.quantity' => 'required',
             'incoming_good_items.*.unit_id' => 'required',

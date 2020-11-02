@@ -259,7 +259,7 @@ class IncomingGoods extends ApiController
             }
         }
 
-        if (strtoupper($incoming_good->order_mode) === 'NONE') {
+        if (strtoupper($incoming_good->order_mode) === 'NONE' && strtoupper($incoming_good->transaction) !== 'INTERNAL') {
             $this->storeRequestOrder($incoming_good);
         }
 
