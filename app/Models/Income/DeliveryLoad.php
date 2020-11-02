@@ -33,6 +33,11 @@ class DeliveryLoad extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
 
+    public function delivery_checkout ()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryCheckout');
+    }
+
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
