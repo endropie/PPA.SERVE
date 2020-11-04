@@ -5,7 +5,7 @@ use App\Filters\Filter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class Deliveryload extends Filter
+class DeliveryLoad extends Filter
 {
     protected $request;
     public function __construct(Request $request)
