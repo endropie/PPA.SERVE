@@ -15,7 +15,7 @@ class DeliveryTask extends Model
         'number', 'date', 'trip_time', 'transaction', 'customer_id', 'description'
     ];
 
-    protected $appends = ['fullnumber', 'is_overtime', 'is_loaded'];
+    protected $appends = ['fullnumber', 'is_overtime', 'is_loaded', 'is_checkout'];
 
     public function delivery_task_items()
     {
@@ -40,7 +40,19 @@ class DeliveryTask extends Model
 
     public function getIsLoadedAttribute()
     {
-        return (boolean) app(\App\Models\Income\DeliveryLoad::class)->where('date', $this->date)->where('trip_time', $this->trip_time)->count();
+        return (boolean) app(\App\Models\Income\DeliveryLoad::class)
+            ->where('date', $this->date)
+            ->where('trip_time', $this->trip_time)
+            ->count();
+    }
+
+    public function getIsCheckoutAttribute()
+    {
+        return (boolean) app(\App\Models\Income\DeliveryLoad::class)
+            ->where('date', $this->date)
+            ->where('trip_time', $this->trip_time)
+            ->whereNotNull('delivery_checkout_id')
+            ->count();
     }
 
     public function getIsOvertimeAttribute()
