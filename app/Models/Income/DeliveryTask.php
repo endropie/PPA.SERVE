@@ -41,6 +41,7 @@ class DeliveryTask extends Model
     public function getIsLoadedAttribute()
     {
         return (boolean) app(\App\Models\Income\DeliveryLoad::class)
+            ->where('customer_id', $this->customer_id)
             ->where('date', $this->date)
             ->where('trip_time', $this->trip_time)
             ->count();
@@ -49,6 +50,7 @@ class DeliveryTask extends Model
     public function getIsCheckoutAttribute()
     {
         return (boolean) app(\App\Models\Income\DeliveryLoad::class)
+            ->where('customer_id', $this->customer_id)
             ->where('date', $this->date)
             ->where('trip_time', $this->trip_time)
             ->whereNotNull('delivery_checkout_id')
