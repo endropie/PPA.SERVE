@@ -74,6 +74,31 @@ class WorkOrders extends ApiController
         return response()->json($work_order_items);
     }
 
+    public function lines (Filter $filter)
+    {
+        if (!request('date')) return $this->error('REQUEST DATE REQUIRED');
+
+        $work_order_lines = WorkOrder::with(['line', 'shift'])
+            ->filter($filter)->get();
+
+            $work_order_lines = $work_order_lines
+                ->groupBy(function($item, $key){
+                    return $item["line_id"]."-".$item["shift_id"];
+                })
+                ->values()
+                ->map(function ($rows) {
+                    return array_merge($rows->first()->toArray(), [
+                        "summary_amount" => $rows->sum('total_amount'),
+                        "summary_production" => $rows->sum('total_production'),
+                        "summary_packing" => $rows->sum('total_packing')
+                        ]);
+
+                    });
+            // dd($work_order_lines);
+
+        return response()->json($work_order_lines);
+    }
+
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
