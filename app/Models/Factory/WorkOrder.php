@@ -70,6 +70,20 @@ class WorkOrder extends Model
         return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_packing');
     }
 
+    public function getHangerAmountAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_amount');
+    }
+
+    public function getHangerProductionAttribute() {
+
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_production');
+    }
+
+    public function getHangerPackingAttribute() {
+        // abort(502, $this->number. "=>". $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing'));
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing');
+    }
+
     public function getHasProductedAttribute() {
         $row = $this->stateable->where('state', 'PRODUCTED')->last();
         return $row ?? null;

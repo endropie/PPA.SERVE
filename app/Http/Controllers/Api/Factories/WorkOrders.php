@@ -83,7 +83,7 @@ class WorkOrders extends ApiController
 
             $work_order_lines = $work_order_lines
                 ->groupBy(function($item, $key){
-                    return $item["line_id"]."-".$item["shift_id"];
+                    return $item["line_id"]."-".$item["stockist_from"]."-".$item["shift_id"];
                 })
                 ->values()
                 ->map(function ($rows) {
@@ -93,8 +93,36 @@ class WorkOrders extends ApiController
                         "summary_packing" => $rows->sum('total_packing')
                         ]);
 
-                    });
-            // dd($work_order_lines);
+                })
+                ->sortBy(function ($item) {
+                    return $item['shift_id'] ."-". $item['line_id'];
+                })
+                ->values();
+
+
+        return response()->json($work_order_lines);
+    }
+
+    public function hangerLines (Filter $filter)
+    {
+        if (!request('date')) return $this->error('REQUEST DATE REQUIRED');
+
+        $work_order_lines = WorkOrder::with(['line', 'shift'])
+            ->filter($filter)->get();
+
+            $work_order_lines = $work_order_lines
+                ->groupBy(function($item, $key){ return $item["line_id"]."-".$item["stockist_from"]."-".$item["shift_id"]; })
+                ->values()
+                ->map(function ($rows) {
+                    return array_merge($rows->first()->toArray(), [
+                        "hanger_amount" => $rows->sum('hanger_amount'),
+                        "hanger_production" => $rows->sum('hanger_production'),
+                        "hanger_packing" => $rows->sum('hanger_packing')
+                        ]);
+
+                })
+                ->sortBy(function ($item) { return $item['shift_id'] ."-". $item['line_id']; })
+                ->values();
 
         return response()->json($work_order_lines);
     }

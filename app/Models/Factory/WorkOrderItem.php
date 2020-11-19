@@ -80,14 +80,32 @@ class WorkOrderItem extends Model
         return $this->morphMany('App\Models\Common\ItemStockable', 'base');
     }
 
+    public function work_production_items()
+    {
+        return $this->hasMany('App\Models\Factory\WorkProductionItem');
+    }
+
     public function unit()
     {
         return $this->belongsTo('App\Models\Reference\Unit');
     }
 
-    public function work_production_items()
+    public function getHangerAmountAttribute()
     {
-        return $this->hasMany('App\Models\Factory\WorkProductionItem');
+        if(!$this->item->load_capacity) return null;
+        return (double) $this->unit_amount / $this->item->load_capacity;
+    }
+
+    public function getHangerProductionAttribute()
+    {
+        if(!$this->item->load_capacity) return null;
+        return (double) $this->amount_process / $this->item->load_capacity;
+    }
+
+    public function getHangerPackingAttribute()
+    {
+        if(!$this->item->load_capacity) return null;
+        return (double) $this->amount_packing / $this->item->load_capacity;
     }
 
     public function getUnitAmountAttribute()
@@ -136,7 +154,7 @@ class WorkOrderItem extends Model
 
             if(round($this->amount_process) < round($this->amount_packing)) {
                 abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
-                abort(501, "PROCESS [$this->unit_process] PACKING [$this->amount_packing");
+                abort(501, "PROCESS [$this->unit_process] < PACKING [$this->amount_packing");
             }
         }
     }
