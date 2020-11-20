@@ -111,7 +111,7 @@ class WorkOrders extends ApiController
             ->filter($filter)->get();
 
             $work_order_lines = $work_order_lines
-                ->groupBy(function($item, $key){ return $item["line_id"]."-".$item["stockist_from"]."-".$item["shift_id"]; })
+                ->groupBy(function($item, $key){ return $item["line_id"]."-".$item["shift_id"]; })
                 ->values()
                 ->map(function ($rows) {
                     return array_merge($rows->first()->toArray(), [
