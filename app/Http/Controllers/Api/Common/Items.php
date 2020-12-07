@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Api\Common;
 
-use App\Filters\Common\Item as Filters;
+use App\Filters\Common\Item as Filter;
 use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
 use App\Models\Common\ItemStockable;
+use App\Models\Income\DeliveryInternalItem;
+use App\Models\Income\DeliveryOrderItem;
+use App\Models\Warehouse\IncomingGoodItem;
 
 class Items extends ApiController
 {
-    public function index(Filters $filters)
+    public function index(Filter $filter)
     {
 
         $collection = function ($item) {
@@ -30,29 +33,29 @@ class Items extends ApiController
 
         switch (request('mode')) {
           case 'all':
-            $items = Item::with(['item_prelines','item_units','unit'])->filter($filters)->get()->map($collection);
+            $items = Item::with(['item_prelines','item_units','unit'])->filter($filter)->get()->map($collection);
           break;
 
           case 'datagrid':
-            $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->filter($filters)->latest()->get();
+            $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->filter($filter)->latest()->get();
 
           break;
 
           case 'itemstock':
-            $items = Item::filter($filters)->get(['id'])->map->append('totals');
+            $items = Item::filter($filter)->get(['id'])->map->append('totals');
 
           break;
 
           case 'stockables':
-          $items = ItemStockable::whereHas('item', function ($q) use ($filters) {
-            return $q->filter($filters);
+          $items = ItemStockable::whereHas('item', function ($q) use ($filter) {
+            return $q->filter($filter);
           })->get();
 
           break;
 
           default:
             $items = Item::with(['item_prelines','item_units', 'unit', 'brand', 'customer', 'specification'])
-                ->filter($filters)->collect();
+                ->filter($filter)->collect();
 
             $items->getCollection()->transform($collection);
           break;
@@ -61,18 +64,149 @@ class Items extends ApiController
         return response()->json($items);
     }
 
-    public function stockables(Filters $filters)
+    public function delivery_cards()
+    {
+        $stockards = collect();
+        $date = request('date');
+
+        if (!$date) return $this->error('Filter "Date" is required!');
+
+        $incoming_good_items = IncomingGoodItem::
+          when(request('item_id'), function($q) {
+              return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('incoming_good', function($q) {
+                $date = explode(',', request('date'));
+                return $q->whereBetween('date', $date);
+            });
+          })
+          ->latest()->get()->map(function ($item) {
+            $item['date'] = $item->incoming_good->date;
+            $item['number'] = $item->incoming_good->fullnumber;
+            $item['unit'] = $item->unit;
+            $item['status'] = $item->status;
+
+            return $item;
+        });
+
+        $delivery_order_items = DeliveryOrderItem::
+          when(request('item_id'), function($q) {
+              return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('delivery_order', function($q) {
+                $date = explode(',', request('date'));
+                return $q->whereBetween('date', $date);
+                // return $q->whereBetween('date', $date[0], $date[1]);
+            });
+          })
+          ->latest()->get()->map(function ($item) {
+            $item['date'] = $item->delivery_order->date;
+            $item['number'] = $item->delivery_order->fullnumber;
+            $item['unit'] = $item->unit;
+            $item['status'] = $item->status;
+
+            return $item;
+        });
+
+        $delivery_internal_items = DeliveryInternalItem::
+          when(request('item_id'), function($q) {
+              return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('delivery_internal', function($q) {
+                $date = explode(',', request('date'));
+                return $q->whereBetween('date', $date);
+                // return $q->whereBetween('date', $date[0], $date[1]);
+            });
+          })
+          ->latest()->get()->map(function ($item) {
+            $item['date'] = $item->delivery_internal->date;
+            $item['number'] = $item->delivery_internal->fullnumber;
+            $item['unit'] = $item->unit;
+            $item['status'] = $item->status;
+
+            return $item;
+        });
+
+        $stockards = $stockards
+            ->merge($incoming_good_items, $delivery_order_items, $delivery_internal_items)
+            ->map(function($item) {
+                $item['quantity_in'] = $item->getTable() == 'incoming_good_items' ? $item['unit_amount'] : 0;
+
+                $item['quantity_out'] = $item->getTable() != 'incoming_good_items' ? $item['unit_amount'] : 0;
+
+                return $item;
+            });
+
+        $rows = $stockards
+            ->sortByDesc('created_at')
+            ->skip(request('skip', 0))
+            ->take(request('take', 20))
+            ->values();
+
+        $sum_incoming_good = IncomingGoodItem::
+          when(request('item_id'), function($q) {
+            return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('incoming_good', function($q) {
+              $date = explode(',', request('date'));
+              return $q->where('status', '<>', 'OPEN')->where('date', '<', $date[0]);
+            });
+          })
+          ->sum(\DB::raw('quantity * unit_rate'));
+
+
+        $sum_delivery_order = DeliveryOrderItem::
+          when(request('item_id'), function($q) {
+            return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('delivery_order', function($q) {
+              $date = explode(',', request('date'));
+              return $q->where('date', '<', $date[0]);
+            });
+          })
+          ->sum(\DB::raw('quantity * unit_rate'));
+
+
+        $sum_delivery_internal = DeliveryInternalItem::
+          when(request('item_id'), function($q) {
+            return $q->where('item_id', request('item_id'));
+          })
+          ->when($date, function($q) {
+            return $q->whereHas('delivery_internal', function($q) {
+              $date = explode(',', request('date'));
+              return $q->where('date', '<', $date[0]);
+            });
+          })
+          ->sum(\DB::raw('quantity'));
+
+        $saldo = ($sum_incoming_good - $sum_delivery_order - $sum_delivery_internal);
+
+        return response()->json([
+            'data' => $rows,
+            'count' => $stockards->count(),
+            'summary_incoming' => $stockards->sum('quantity_in'),
+            'summary_outgoing' => $stockards->sum('quantity_out'),
+            'begining' => $saldo
+        ]);
+    }
+
+    public function stockables(Filter $filter)
     {
         switch (request('mode')) {
           case 'all':
-            $items = ItemStockable::whereHas('item', function ($q) use ($filters) {
-                return $q->filter($filters);
+            $items = ItemStockable::whereHas('item', function ($q) use ($filter) {
+                return $q->filter($filter);
             })->get();
           break;
 
           default:
-            $items = ItemStockable::with('item.unit')->whereHas('item', function ($q) use ($filters) {
-                return $q->filter($filters);
+            $items = ItemStockable::with('item.unit')->whereHas('item', function ($q) use ($filter) {
+                return $q->filter($filter);
             })->latest()->collect();
 
             $items->getCollection()->transform(function($item) {

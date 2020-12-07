@@ -53,6 +53,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         Route::prefix('common')->name('common.')->group(function () {
             Route::post('items/{id}/sample-validation', 'Common\Items@sampleValidation');
             Route::get('items/stockables', 'Common\Items@stockables');
+            Route::get('items/delivery-cards', 'Common\Items@delivery_cards');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
         });
