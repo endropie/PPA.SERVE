@@ -81,7 +81,7 @@ class Items extends ApiController
                 return $q->whereBetween('date', $date);
             });
           })
-          ->latest()->get()->map(function ($item) {
+          ->oldest()->get()->map(function ($item) {
             $item['date'] = $item->incoming_good->date;
             $item['number'] = $item->incoming_good->fullnumber;
             $item['unit'] = $item->unit;
@@ -101,7 +101,7 @@ class Items extends ApiController
                 // return $q->whereBetween('date', $date[0], $date[1]);
             });
           })
-          ->latest()->get()->map(function ($item) {
+          ->oldest()->get()->map(function ($item) {
             $item['date'] = $item->delivery_order->date;
             $item['number'] = $item->delivery_order->fullnumber;
             $item['unit'] = $item->unit;
@@ -121,7 +121,7 @@ class Items extends ApiController
                 // return $q->whereBetween('date', $date[0], $date[1]);
             });
           })
-          ->latest()->get()->map(function ($item) {
+          ->oldest()->get()->map(function ($item) {
             $item['date'] = $item->delivery_internal->date;
             $item['number'] = $item->delivery_internal->fullnumber;
             $item['unit'] = $item->unit;
