@@ -107,7 +107,38 @@ class DeliveryLoads extends ApiController
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
 
-        if ($delivery_load->is_relationship) $this->error("Delivery (Load) has RELATIONSHIP, is not allowed to be $mode");
+        foreach ($delivery_load->delivery_orders as $delivery_order) {
+
+            if ($delivery_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
+            if ($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
+            if ($delivery_order->status != "OPEN") $this->error("SJDO $delivery_order->fullnumber is not OPEN, is not allowed to be $mode");
+
+            foreach ($delivery_order->delivery_order_items as $detail) {
+                $request_order_item = $detail->request_order_item;
+                $reconcile_item = $detail->reconcile_item;
+
+                $detail->item->distransfer($detail);
+
+                $detail->request_order_item()->dissociate();
+                $detail->save();
+
+                if ($request_order_item) {
+                    $request_order_item->calculate();
+                    if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
+                        $request_order_item->forceDelete();
+                    }
+                }
+
+                $detail->delete();
+                if ($reconcile_item) $reconcile_item->calculate();
+            }
+
+            $delivery_order->status = $mode;
+            $delivery_order->request_order()->dissociate();
+            $delivery_order->save();
+
+            $delivery_order->delete();
+        }
 
         if ($mode == "VOID") {
             if ($delivery_load->status == 'VOID') $this->error("Delivery (Load) is `$delivery_load->status`, is not allowed to be $mode");
