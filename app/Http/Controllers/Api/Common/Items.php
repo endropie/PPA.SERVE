@@ -131,17 +131,19 @@ class Items extends ApiController
         });
 
         $stockards = $stockards
-            ->merge($incoming_good_items, $delivery_order_items, $delivery_internal_items)
+            ->union($incoming_good_items)
+            ->union($delivery_order_items)
+            ->union($delivery_internal_items)
             ->map(function($item) {
+                $item['union_key'] = $item->getTable() ."-". $item['id'];
                 $item['quantity_in'] = $item->getTable() == 'incoming_good_items' ? $item['unit_amount'] : 0;
-
                 $item['quantity_out'] = $item->getTable() != 'incoming_good_items' ? $item['unit_amount'] : 0;
 
                 return $item;
             });
 
         $rows = $stockards
-            ->sortByDesc('created_at')
+            ->sortBy('date')
             ->skip(request('skip', 0))
             ->take(request('take', 20))
             ->values();
