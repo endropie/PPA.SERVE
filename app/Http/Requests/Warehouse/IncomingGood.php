@@ -41,7 +41,7 @@ class IncomingGood extends Request
             'date' => 'required',
             'time' => 'required',
             'transaction' => 'required|in:REGULER,RETURN,SAMPLE,INTERNAL',
-            'reference_number' => 'unique:incoming_goods,reference_number,'. $id .',id,customer_id,'. $this->get('customer_id'),
+            'registration' => 'unique:incoming_goods,registration,'. $id .',id',
 
             'incoming_good_items.*.quantity' => 'required',
             'incoming_good_items.*.unit_id' => 'required',
