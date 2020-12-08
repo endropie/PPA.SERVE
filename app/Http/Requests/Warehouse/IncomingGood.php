@@ -36,11 +36,12 @@ class IncomingGood extends Request
 
         return [
             'number' => ($id ? 'required|' : '') .'unique:incoming_goods,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
-            'indexed_number' => ($id ? 'required|' : '') .'unique:incoming_goods,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
+            'indexed_number' => ($id ? 'required|' : '') .'unique:incoming_goods,indexed_number,'. $id .',id,revise_number,'. $this->get('revise_number'),
             'customer_id' => ['required', $in_customer],
             'date' => 'required',
             'time' => 'required',
             'transaction' => 'required|in:REGULER,RETURN,SAMPLE,INTERNAL',
+            'reference_number' => 'unique:incoming_goods,reference_number,'. $id .',id,customer_id,'. $this->get('customer_id'),
 
             'incoming_good_items.*.quantity' => 'required',
             'incoming_good_items.*.unit_id' => 'required',
