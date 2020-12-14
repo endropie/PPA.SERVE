@@ -48,6 +48,13 @@ class DeliveryLoad extends Model
         return $this->belongsTo('App\Models\Reference\Vehicle');
     }
 
+    public function getCheckoutnumberAttribute()
+    {
+        if (!$checkout = $this->delivery_checkout) return null;
+
+        return $checkout->fullnumber;
+    }
+
     public function getFullnumberAttribute()
     {
         // if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;

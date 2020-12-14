@@ -89,7 +89,7 @@ class DeliveryLoads extends ApiController
             'delivery_load_items.unit'
         ])->withTrashed()->findOrFail($id);
 
-        $delivery_load->append(['has_relationship']);
+        $delivery_load->append(['checkout_number', 'has_relationship']);
 
         ## resource return as json
         $delivery_load->delivery_orders = $delivery_load->delivery_orders()->get()->map(function ($delivery, $key) {
