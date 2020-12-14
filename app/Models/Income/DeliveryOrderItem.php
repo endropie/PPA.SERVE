@@ -21,22 +21,11 @@ class DeliveryOrderItem extends Model
     protected $casts = [
         'unit_rate' => 'double',
         'quantity' => 'double',
-        'amount_reconcile' => 'double',
     ];
 
     public function delivery_order()
     {
         return $this->belongsTo('App\Models\Income\DeliveryOrder');
-    }
-
-    public function reconcile_items()
-    {
-        return $this->hasMany('App\Models\Income\DeliveryOrderItem', 'reconcile_item_id');
-    }
-
-    public function reconcile_item()
-    {
-        return $this->belongsTo('App\Models\Income\DeliveryOrderItem');
     }
 
     public function request_order_item()
@@ -73,28 +62,6 @@ class DeliveryOrderItem extends Model
                 if ($request_order_item->incoming_good_item) return $request_order_item->incoming_good_item->lots ?? '-';
             }
         }
-        return null;
-    }
-
-    public function calculate() {
-        if ($this->delivery_order->is_internal) {
-            $sum = (double) $this->reconcile_items->sum('unit_amount');
-            $this->amount_reconcile = $sum;
-            $this->save();
-        }
-    }
-
-    public function getReconcileItem($reconcile) {
-        if ($reconcile) {
-            foreach ($reconcile->delivery_order_items as $detail) {
-                $dif = (double) ($detail->unit_amount - $detail->amount_reconcile);
-                if ($detail->item_id == $this->item_id && $dif > 0) {
-                    if ($this->unit_amount > $dif)  abort(501, 'TOTAL UNIT FAILED');
-                    return $detail;
-                }
-            }
-        }
-
         return null;
     }
 }

@@ -115,7 +115,6 @@ class DeliveryLoads extends ApiController
 
             foreach ($delivery_order->delivery_order_items as $detail) {
                 $request_order_item = $detail->request_order_item;
-                $reconcile_item = $detail->reconcile_item;
 
                 $detail->item->distransfer($detail);
 
@@ -130,7 +129,6 @@ class DeliveryLoads extends ApiController
                 }
 
                 $detail->delete();
-                if ($reconcile_item) $reconcile_item->calculate();
             }
 
             $delivery_order->status = $mode;

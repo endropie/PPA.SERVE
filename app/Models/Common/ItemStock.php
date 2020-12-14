@@ -85,15 +85,13 @@ class ItemStock extends Model
             $deliveries = \App\Models\Income\DeliveryOrderItem::all();
             $DELIVERY = $deliveries->count();
             $deliveries->map(function($detail) {
-                if (!$detail->reconcile_item_id) {
-                    $detail->stockable()->whereNotIN('stockist', ['FG'])->delete();
-                    if (!$detail->delivery_order) dd($detail, $detail->stockable);
-                    $stockist = $detail->delivery_order->transaction == "RETURN"
-                        ? "PDO.RET" : "PDO.REG" ;
+                $detail->stockable()->whereNotIN('stockist', ['FG'])->delete();
+                if (!$detail->delivery_order) dd($detail, $detail->stockable);
+                $stockist = $detail->delivery_order->transaction == "RETURN"
+                    ? "PDO.RET" : "PDO.REG" ;
 
-                    $detail->item->transfer($detail, $detail->unit_amount, null, "VDO");
-                    $detail->item->transfer($detail, $detail->unit_amount, null, $stockist);
-                }
+                $detail->item->transfer($detail, $detail->unit_amount, null, "VDO");
+                $detail->item->transfer($detail, $detail->unit_amount, null, $stockist);
             });
 
         \DB::commit();
