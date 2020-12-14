@@ -91,6 +91,44 @@ class DeliveryOrders extends ApiController
         return response()->json($delivery_order);
     }
 
+    public function storeInternal(Request $request)
+    {
+        $this->DATABASE::beginTransaction();
+
+        ## Form validate is SAMPLE transaction only
+        $request->validate(['transaction' => 'not_in:SAMPLE']);
+
+        if ($customer = Customer::find($request->get('customer_id'))) {
+            $prefix_code = $customer->code ?? "C:$customer->id";
+        }
+        else $request->validate(['customer_id' => 'not_in:'.$request->get('customer_id')]);
+
+        if(!$request->number) $request->merge([
+            'number'=> $this->getNextSJDeliveryNumber($request->get('date')),
+            'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
+        ]);
+
+        $delivery_order = DeliveryOrder::create($request->input());
+
+        foreach ($request->delivery_order_items as $row) {
+            ## create DeliveryOrder items on the Delivery order revision!
+            $detail = $delivery_order->delivery_order_items()->create($row);
+            $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
+        }
+
+        $request->validate([
+            'internal_reason_id' => 'required',
+            'internal_reason_description' => 'required_if:internal_reason_id,null',
+        ]);
+
+        $delivery_order->internal_reason_id = $request->internal_reason_id;
+        $delivery_order->internal_reason_description = $request->internal_reason_description;
+        $delivery_order->save();
+
+        $this->DATABASE::commit();
+        return response()->json($delivery_order);
+    }
+
     public function show($id)
     {
         $delivery_order = DeliveryOrder::with([

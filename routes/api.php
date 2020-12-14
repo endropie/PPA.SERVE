@@ -79,6 +79,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('delivery-loads', 'Incomes\DeliveryLoads');
             Route::apiResource('delivery-verifies', 'Incomes\DeliveryVerifies');
             Route::apiResource('delivery-checkouts', 'Incomes\DeliveryCheckouts');
+
+            Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
+            Route::get('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@show');
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
