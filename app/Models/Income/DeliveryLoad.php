@@ -48,7 +48,7 @@ class DeliveryLoad extends Model
         return $this->belongsTo('App\Models\Reference\Vehicle');
     }
 
-    public function getCheckoutnumberAttribute()
+    public function getCheckoutNumberAttribute()
     {
         if (!$checkout = $this->delivery_checkout) return null;
 
