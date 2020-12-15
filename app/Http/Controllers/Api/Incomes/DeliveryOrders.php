@@ -104,7 +104,7 @@ class DeliveryOrders extends ApiController
         else $request->validate(['customer_id' => 'not_in:'.$request->get('customer_id')]);
 
         if(!$request->number) $request->merge([
-            'number'=> $this->getNextSJDeliveryNumber($request->get('date')),
+            'number'=> $this->getNextSJInternalNumber($request->get('date')),
             'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
         ]);
 

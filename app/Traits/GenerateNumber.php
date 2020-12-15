@@ -152,7 +152,7 @@ trait GenerateNumber
     {
         $modul = 'sj_internal';
         $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul, 'SJID');
+        $prefix = $this->prefixParser($modul, 'DI');
         $prefix = $this->dateParser($prefix, $date, '');
 
         $next = \App\Models\Income\DeliveryOrder::withTrashed()

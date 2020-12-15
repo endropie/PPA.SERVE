@@ -76,7 +76,7 @@ class Settings extends Seeder
             "sj_delivery.indexed_number_digit" => "4",
             "sj_delivery.indexed_number_interval" => "{Y-m}",
 
-            "sj_internal.number_prefix"     => "SJID",
+            "sj_internal.number_prefix"     => "DI",
             "sj_internal.number_interval"   => "{Y-m}",
             "sj_internal.number_digit"      => "5",
 
