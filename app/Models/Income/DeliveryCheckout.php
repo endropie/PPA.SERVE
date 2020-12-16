@@ -18,12 +18,12 @@ class DeliveryCheckout extends Model
 
     public function delivery_loads()
     {
-        return $this->hasMany('App\Models\Income\DeliveryLoad');
+        return $this->hasMany('App\Models\Income\DeliveryLoad')->withTrashed();
     }
 
     public function delivery_order_internals()
     {
-        return $this->hasMany('App\Models\Income\DeliveryOrder');
+        return $this->hasMany('App\Models\Income\DeliveryOrder')->withTrashed();
     }
 
     public function vehicle()

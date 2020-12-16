@@ -81,6 +81,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('delivery-checkouts', 'Incomes\DeliveryCheckouts');
 
             Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
+            Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');
+            Route::put('delivery-order-internals/{id}/confirmed', 'Incomes\DeliveryOrders@confirmation');
             Route::get('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@show');
         });
 
