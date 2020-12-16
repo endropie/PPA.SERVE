@@ -36,6 +36,19 @@ class DeliveryOrder extends Filter
         }
     }
 
+    public function has_checkout($value = '')
+    {
+        if (!strlen($value)) return $this->builder;
+        return $this->builder->when((boolean) $value,
+            function ($q) {
+                abort('502', 'INI TRUE');
+                return $q->whereNotNull('delivery_checkout_id');
+            },
+            function ($q) {
+                return $q->whereNull('delivery_checkout_id');
+            });
+    }
+
     public function invoicing($order = 'true')
     {
         return $this->builder->where('transaction', 'REGULER')

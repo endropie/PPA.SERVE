@@ -7,6 +7,7 @@ use App\Http\Controllers\ApiController;
 use App\Filters\Filter as Filter;
 use App\Models\Income\DeliveryCheckout;
 use App\Models\Income\DeliveryLoad;
+use App\Models\Income\DeliveryOrder;
 use App\Traits\GenerateNumber;
 
 class DeliveryCheckouts extends ApiController
@@ -42,8 +43,9 @@ class DeliveryCheckouts extends ApiController
         $request->validate([
             'vehicle_id' => 'required',
             'date' => 'required',
-            'delivery_checkout_loads.*.delivery_load_id' => 'required|distinct'
-            // 'delivery_checkout_loads.*.delivery_orders' => length
+            'delivery_checkout_loads' => count($request->delivery_checkout_internals) ? '' : 'required|min:1',
+            'delivery_checkout_loads.*.delivery_load_id' => 'required|distinct',
+            'delivery_checkout_internals.*.delivery_order_id' => 'required|distinct',
         ], [
             'delivery_checkout_loads.*.delivery_load_id.distinct' => 'The field has a duplicate value.'
         ]);
@@ -59,6 +61,12 @@ class DeliveryCheckouts extends ApiController
             $delivery_checkout->delivery_loads()->save($load);
         }
 
+        $rows = $request->delivery_checkout_internals;
+        for ($i=0; $i < count($rows); $i++) {
+            $internal = DeliveryOrder::find($rows[$i]['delivery_order_id']);
+            $delivery_checkout->delivery_order_internals()->save($internal);
+        }
+
         $this->DATABASE::commit();
         return response()->json($delivery_checkout);
     }
@@ -68,6 +76,7 @@ class DeliveryCheckouts extends ApiController
         $delivery_checkout = DeliveryCheckout::with([
             'vehicle',
             'delivery_loads.customer',
+            'delivery_order_internals.customer',
         ])->findOrFail($id);
 
         $delivery_checkout->append(['has_relationship']);

@@ -21,6 +21,11 @@ class DeliveryCheckout extends Model
         return $this->hasMany('App\Models\Income\DeliveryLoad');
     }
 
+    public function delivery_order_internals()
+    {
+        return $this->hasMany('App\Models\Income\DeliveryOrder');
+    }
+
     public function vehicle()
     {
         return $this->belongsTo('App\Models\Reference\Vehicle');
