@@ -251,7 +251,6 @@ class DeliveryLoads extends ApiController
             $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
         }
 
-        $delivery_order->delivery_order_items->each->calculate();
         $delivery_order->request_order()->associate($request_order);
         $delivery_order->save();
     }
