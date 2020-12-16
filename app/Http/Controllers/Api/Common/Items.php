@@ -70,16 +70,12 @@ class Items extends ApiController
         $date = request('date');
 
         if (!$date) return $this->error('Filter "Date" is required!');
+        if (!$item = Item::find(request('item_id'))) return $this->error('Filter "PART" is required!');
 
-        $incoming_good_items = IncomingGoodItem::
-          when(request('item_id'), function($q) {
-              return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('incoming_good', function($q) {
-                $date = explode(',', request('date'));
-                return $q->whereBetween('date', $date);
-            });
+        $incoming_good_items = IncomingGoodItem::where('item_id', $item->id)
+          ->whereHas('incoming_good', function($q) {
+            $date = explode(',', request('date'));
+            return $q->whereBetween('date', $date)->where('status', 'VALIDATED');
           })
           ->oldest()->get()->map(function ($item) {
             $item['date'] = $item->incoming_good->date;
@@ -90,16 +86,10 @@ class Items extends ApiController
             return $item;
         });
 
-        $delivery_order_items = DeliveryOrderItem::
-          when(request('item_id'), function($q) {
-              return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('delivery_order', function($q) {
-                $date = explode(',', request('date'));
-                return $q->whereBetween('date', $date);
-                // return $q->whereBetween('date', $date[0], $date[1]);
-            });
+        $delivery_order_items = DeliveryOrderItem::where('item_id', $item->id)
+          ->whereHas('delivery_order', function($q) {
+            $date = explode(',', request('date'));
+            return $q->whereBetween('date', $date);
           })
           ->oldest()->get()->map(function ($item) {
             $item['date'] = $item->delivery_order->date;
@@ -110,30 +100,9 @@ class Items extends ApiController
             return $item;
         });
 
-        $delivery_internal_items = DeliveryInternalItem::
-          when(request('item_id'), function($q) {
-              return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('delivery_internal', function($q) {
-                $date = explode(',', request('date'));
-                return $q->whereBetween('date', $date);
-                // return $q->whereBetween('date', $date[0], $date[1]);
-            });
-          })
-          ->oldest()->get()->map(function ($item) {
-            $item['date'] = $item->delivery_internal->date;
-            $item['number'] = $item->delivery_internal->fullnumber;
-            $item['unit'] = $item->unit;
-            $item['status'] = $item->status;
-
-            return $item;
-        });
-
         $stockards = $stockards
-            ->union($incoming_good_items)
-            ->union($delivery_order_items)
-            ->union($delivery_internal_items)
+            ->merge($incoming_good_items)
+            ->merge($delivery_order_items)
             ->map(function($item) {
                 $item['union_key'] = $item->getTable() ."-". $item['id'];
                 $item['quantity_in'] = $item->getTable() == 'incoming_good_items' ? $item['unit_amount'] : 0;
@@ -148,52 +117,42 @@ class Items extends ApiController
             ->take(request('take', 20))
             ->values();
 
-        $sum_incoming_good = IncomingGoodItem::
-          when(request('item_id'), function($q) {
-            return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('incoming_good', function($q) {
-              $date = explode(',', request('date'));
-              return $q->where('status', '<>', 'OPEN')->where('date', '<', $date[0]);
-            });
+        $sum_incoming_good = (double) IncomingGoodItem::where('item_id', $item->id)
+          ->whereHas('incoming_good', function($q) {
+            $date = explode(',', request('date'));
+            return $q->where('date', '>=', $date[0])->where('status', 'VALIDATED');
           })
           ->sum(\DB::raw('quantity * unit_rate'));
 
 
-        $sum_delivery_order = DeliveryOrderItem::
-          when(request('item_id'), function($q) {
-            return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('delivery_order', function($q) {
-              $date = explode(',', request('date'));
-              return $q->where('date', '<', $date[0]);
-            });
+        $sum_delivery_order = (double) DeliveryOrderItem::where('item_id', $item->id)
+          ->whereHas('delivery_order', function($q) {
+            $date = explode(',', request('date'));
+            return $q->where('date', '>=', $date[0]);
           })
           ->sum(\DB::raw('quantity * unit_rate'));
 
+        $e_delivery_order = DeliveryOrderItem::where('item_id', $item->id)
+          ->whereHas('delivery_order', function($q) {
+            $date = explode(',', request('date'));
+            return $q->where('date', '>=', $date[0]);
+          })->get();
 
-        $sum_delivery_internal = DeliveryInternalItem::
-          when(request('item_id'), function($q) {
-            return $q->where('item_id', request('item_id'));
-          })
-          ->when($date, function($q) {
-            return $q->whereHas('delivery_internal', function($q) {
-              $date = explode(',', request('date'));
-              return $q->where('date', '<', $date[0]);
-            });
-          })
-          ->sum(\DB::raw('quantity'));
+        $s_delivery_order = DeliveryOrderItem::where('item_id', $item->id)
+            ->whereHas('delivery_order', function($q) {
+                $date = explode(',', request('date'));
+                return $q->whereBetween('date', $date);
+            })->get();
 
-        $saldo = ($sum_incoming_good - $sum_delivery_order - $sum_delivery_internal);
+        $awal = ($item->totals['*'] - ($sum_incoming_good - $sum_delivery_order));
 
         return response()->json([
             'data' => $rows,
             'count' => $stockards->count(),
             'summary_incoming' => $stockards->sum('quantity_in'),
             'summary_outgoing' => $stockards->sum('quantity_out'),
-            'begining' => $saldo
+            'begining' => $awal,
+            'stock' => $item->totals['*'],
         ]);
     }
 
