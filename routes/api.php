@@ -84,6 +84,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');
             Route::put('delivery-order-internals/{id}/confirmed', 'Incomes\DeliveryOrders@confirmation');
             Route::get('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@show');
+            Route::delete('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@destroy');
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
