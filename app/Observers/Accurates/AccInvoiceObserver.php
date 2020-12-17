@@ -38,18 +38,18 @@ class AccInvoiceObserver
 
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
-            $price = (double) round($detail->item->price, 2);
+            $price = (double) round($detail->item->price, 7);
 
             if ($mode == 'SUMMARY') {
 
                 if ($detail->item->customer->exclude_service) {
                     $v = (100 + $detail->item->customer->sen_service) / 100;
-                    $priceMaterial = round(ceil($price / $v * 10000) / 10000, 2);
-                    $priceService  = round($price - $priceMaterial, 2);
+                    $priceMaterial = round(ceil($price / $v * 10000) / 10000, 7);
+                    $priceService  = round($price - $priceMaterial, 7);
                 }
                 else {
-                    $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
-                    $priceService  = round($price - $priceMaterial, 2);
+                    $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
+                    $priceService  = round($price - $priceMaterial, 7);
                 }
 
                 return [
@@ -64,25 +64,11 @@ class AccInvoiceObserver
             }
             else if ($mode == 'DETAIL') {
                 $length = $detailItems->count();
-                // $doublekey = (int) $key*2;
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
-                $priceService  = round($price - $priceMaterial, 2);
+                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
+                $priceService  = round($price - $priceMaterial, 7);
 
                 return [
-                    // "detailItem[$doublekey].itemNo" => 'ITEM-MATERIAL',
-                    // "detailItem[$doublekey].detailName" => (string) "[MATERIAL] ". $detailName,
-                    // "detailItem[$doublekey].detailNotes" => $detailNotes,
-                    // "detailItem[$doublekey].quantity" => (double) $quantity,
-                    // "detailItem[$doublekey].unitPrice" => (double) $priceMaterial,
-                    // "detailItem[$doublekey].itemUnitName" => (string) $unit,
-
-                    // "detailItem[". ($doublekey+1) ."].itemNo" => 'ITEM-JASA',
-                    // "detailItem[". ($doublekey+1) ."].detailName" => (string) "[JASA] ". $detailName,
-                    // "detailItem[". ($doublekey+1) ."].detailNotes" => $detailNotes,
-                    // "detailItem[". ($doublekey+1) ."].quantity" => (double) $quantity,
-                    // "detailItem[". ($doublekey+1) ."].unitPrice" => (double) $priceService,
-                    // "detailItem[". ($doublekey+1) ."].itemUnitName" => (string) $unit,
 
                     "detailItem[$key].itemNo" => 'ITEM-MATERIAL',
                     "detailItem[$key].detailName" => (string) "[MATERIAL] ". $detailName,
@@ -101,8 +87,8 @@ class AccInvoiceObserver
             }
             else if ($mode == 'SEPARATE') {
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 2);
-                $priceService  = round($price - $priceMaterial, 2);
+                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
+                $priceService  = round($price - $priceMaterial, 7);
                 $detailPrice = $serviceModel ? $priceService : $priceMaterial;
                 $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
                 $detailName = ($serviceModel ? '[JASA] ' : '[MATERIAL] '). $detailName;
