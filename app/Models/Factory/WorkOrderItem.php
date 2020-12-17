@@ -124,38 +124,34 @@ class WorkOrderItem extends Model
         return (double) $this->process * $this->unit_rate;
     }
 
-    public function calculate($param = null)
+    public function calculate($error = true)
     {
-        if(!$param || $param == 'process') {
-            // UPDATE AMOUNT PACKING
-            $total = (double) collect(
-                $this->work_order_item_lines
-                  ->filter(function($line) { return (boolean) $line->ismain; })
-                  ->map(function($line) {
-                    return (double) $line->work_production_items->sum('unit_amount');
-                  })
-            )->sum();
 
-            $this->amount_process = $total;
-            $this->save();
+        // UPDATE AMOUNT PACKING
+        $total = (double) collect(
+            $this->work_order_item_lines
+                ->filter(function($line) { return (boolean) $line->ismain; })
+                ->map(function($line) {
+                return (double) $line->work_production_items->sum('unit_amount');
+                })
+        )->sum();
 
-            if(round($this->unit_amount) < round($this->amount_process)) {
-                abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");
-            }
+        $this->amount_process = $total;
+        $this->save();
+
+        if($error && round($this->unit_amount) < round($this->amount_process)) {
+            abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");
         }
-        if(!$param || $param == 'packing') {
 
-            ## UPDATE AMOUNT PACKING
-            $finsih = (double) $this->packing_item_orders->sum('amount_finish');
-            $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
+        ## UPDATE AMOUNT PACKING
+        $finsih = (double) $this->packing_item_orders->sum('amount_finish');
+        $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
 
-            $this->amount_packing = $finsih + $faulty;
-            $this->save();
+        $this->amount_packing = $finsih + $faulty;
+        $this->save();
 
-            if(round($this->amount_process) < round($this->amount_packing)) {
-                abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
-                abort(501, "PROCESS [$this->unit_process] < PACKING [$this->amount_packing");
-            }
+        if($error && round($this->amount_process) < round($this->amount_packing)) {
+            abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
         }
     }
 }

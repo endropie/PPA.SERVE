@@ -183,8 +183,8 @@ class WorkProductions extends ApiController
             $detail->delete();
 
             if ($line) {
-                $line->calculate();
-                $line->work_order_item->calculate();
+                $line->calculate(false);
+                $line->work_order_item->calculate(false);
             }
         });
 
