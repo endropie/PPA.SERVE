@@ -5,34 +5,33 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Http\Requests\Request as BaseRequest;
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
-use App\Filters\Income\RequestOrder as Filters;
+use App\Filters\Income\RequestOrder as Filter;
+use App\Filters\Income\RequestOrderItem as FilterItem;
 use App\Models\Income\AccInvoice;
 use App\Models\Income\RequestOrder;
+use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
 class RequestOrders extends ApiController
 {
-    use GenerateNumber;
+        use GenerateNumber;
 
-    public function index(Filters $filters)
+    public function index(Filter $filter)
     {
-        $fields = request('fields');
-        $fields = $fields ? explode(',', $fields) : [];
-
         switch (request('mode')) {
             case 'all':
-                $request_orders = RequestOrder::filter($filters)->get();
+                $request_orders = RequestOrder::filter($filter)->latest()->get();
                 break;
 
             case 'datagrid':
-                $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filters)
+                $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filter)
                   ->latest()->get();
                 $request_orders->each->append(['is_relationship']);
                 break;
 
             default:
                 $request_orders = RequestOrder::with(['created_user'])
-                  ->filter($filters)
+                  ->filter($filter)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
                     $item->customer = $item->customer()->first()->only(['id', 'name', 'code']);
@@ -43,6 +42,29 @@ class RequestOrders extends ApiController
         }
 
         return response()->json($request_orders);
+    }
+
+
+    public function items(FilterItem $filter)
+    {
+        $request_order_items = RequestOrderItem::filter($filter)->latest()->get();
+
+        if ($date = request('delivery_date')) {
+            $request_order_items->map(function($detail) use ($date) {
+                $detail->item->item_units;
+                $detail->item->amount_delivery = [
+                    "FG" => $detail->item->totals["FG"],
+                    "VERIFY" => $detail->item->amount_delivery_verify($date),
+                    "TASK.REG" => $detail->item->amount_delivery_task($date, 'REGULER'),
+                    "TASK.RET" => $detail->item->amount_delivery_task($date, 'RETURN'),
+                    "LOAD.REG" => $detail->item->amount_delivery_load($date, 'REGULER'),
+                    "LOAD.RET" => $detail->item->amount_delivery_load($date, 'RETURN')
+                ];
+                return $detail;
+            });
+        }
+
+        return response()->json($request_order_items);
     }
 
     public function store(Request $request)

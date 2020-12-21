@@ -71,6 +71,12 @@ class DeliveryLoads extends ApiController
         {
             $this->storeRequestOrder($delivery_load->fresh());
         }
+        else if ($request->request_order && $delivery_load->order_mode != "ACCUMULATE")
+        {
+            $this->storeManualDeliveryOrder($delivery_load->fresh(), $request);
+            $delivery_load->is_manual = 1;
+            $delivery_load->save();
+        }
         else {
             $this->storeDeliveryOrder($delivery_load->fresh());
         }
@@ -255,6 +261,46 @@ class DeliveryLoads extends ApiController
         $delivery_order->save();
     }
 
+    public function storeManualDeliveryOrder($delivery_load, $request)
+    {
+        $request->validate([
+            'request_order_id' => 'required',
+            'delivery_load_items.*.request_order_item_id' => 'required',
+        ]);
+
+        $request_order = RequestOrder::findOrFail($request->request_order_id);
+
+        $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
+
+        $delivery_order = $delivery_load->delivery_orders()->create([
+            'number' => $this->getNextSJDeliveryNumber($delivery_load->date),
+            'indexed_number' => $this->getNextSJDeliveryIndexedNumber($delivery_load->date, $prefix_code),
+            'transaction' =>  $delivery_load->transaction,
+            'customer_id' => $delivery_load->customer_id,
+            'customer_name' => $delivery_load->customer_name,
+            'customer_phone' => $delivery_load->customer_phone,
+            'customer_address' => $delivery_load->customer_address,
+            'customer_note' => $delivery_load->customer_note,
+            'description' => $delivery_load->description,
+            'date' => $delivery_load->date,
+            'vehicle_id' => $delivery_load->vehicle_id
+        ]);
+
+        foreach ($request->delivery_load_items as $row) {
+            $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
+            $detail = $delivery_order->delivery_order_items()->create($row);
+            $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+
+            $detail->request_order_item()->associate($request_order_item);
+            $detail->save();
+            $request_order_item->calculate();
+        }
+
+        $delivery_order->request_order()->associate($request_order);
+        $delivery_order->save();
+
+    }
+
     public function storeDeliveryOrder($delivery_load)
     {
         $list = []; $over=[];
@@ -364,8 +410,7 @@ class DeliveryLoads extends ApiController
                 'customer_note' => $delivery_load->customer_note,
                 'description' => $delivery_load->description,
                 'date' => $delivery_load->date,
-                'vehicle_id' => $delivery_load->vehicle_id,
-                'rit' => $delivery_load->rit,
+                'vehicle_id' => $delivery_load->vehicle_id
             ]);
 
             foreach ($rows as $DTL => $row) {

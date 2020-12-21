@@ -67,6 +67,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('invoices/{id}/confirmed', 'Incomes\AccInvoices@confirmed');
             Route::post('invoices/{id}/reopened', 'Incomes\AccInvoices@reopened');
             Route::post('invoices/{id}/syncronized', 'Incomes\AccInvoices@syncronized');
+            Route::get('request-order-items', 'Incomes\RequestOrders@items');
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
