@@ -20,12 +20,12 @@ class Forecasts extends ApiController
                 break;
 
             case 'datagrid':
-                $forecasts = Forecast::with(['customer'])->filter($filters)->get();
+                $forecasts = Forecast::with(['customer'])->filter($filters)->latest()->get();
 
                 break;
 
             default:
-                $forecasts = Forecast::with(['customer'])->filter($filters)->collect();
+                $forecasts = Forecast::with(['customer'])->filter($filters)->latest()->collect();
                 break;
         }
 

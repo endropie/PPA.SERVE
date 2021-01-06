@@ -23,8 +23,8 @@ class Packings extends ApiController
             case 'datagrid':
                 $packings = Packing::with([
                     'packing_items',
-                    'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
-                    'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
+                    'packing_items.item',
+                    'customer',
                     'shift'
                 ])->filter($filter)->latest()->orderBy('id', 'DESC')->get();
 
@@ -33,19 +33,15 @@ class Packings extends ApiController
             default:
                 $packings = Packing::with([
                     'created_user',
-                    'packing_items',
-                    'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
-                    'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
+                    // 'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
+                    // 'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
+                    'packing_items.item',
+                    'customer',
                     'shift'
                 ])->filter($filter)->latest()->orderBy('id', 'DESC')->collect();
 
                 $packings->getCollection()->transform(function($row) {
                     $row->append(['is_relationship']);
-
-                    $row->packing_items->work_order_number = (
-                      $row->packing_items->work_order_item
-                        ?  $row->packing_items->work_order_item->work_order->number : null
-                    );
                     return $row;
                 });
                 break;

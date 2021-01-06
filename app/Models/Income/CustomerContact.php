@@ -6,17 +6,17 @@ use App\Models\Model;
 
 class CustomerContact extends Model
 {
-    
+
     protected $fillable = [
         'label', 'name', 'phone',
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $relationships = ['items'];
+    protected $relationships = [];
 
-    public function customer_contacts()
+    public function customer ()
     {
-        return $this->hasMany('App\Models\Income\CustomerContact');
-    }  
+        return $this->belongsTo('App\Models\Income\Customer');
+    }
 }

@@ -23,8 +23,11 @@ class RequestOrder extends Request
         }
         else $id = null;
 
+        $cid = $this->get('customer_id');
+
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:request_orders,NULL,' . $id,
+            'reference_number' => ($id ? 'required|string|' : '') .'max:191|unique:request_orders,NULL,'. $id .',id,customer_id,'. $cid,
             'customer_id' => 'required',
 
             'request_order_items.*.item_id' => 'required',

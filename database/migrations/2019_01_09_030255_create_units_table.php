@@ -17,6 +17,7 @@ class CreateUnitsTable extends Migration
             $table->increments('id');
             $table->string('code')->unique();
             $table->string('name');
+            $table->integer('decimal_in')->default(0);
             $table->timestamps();
         });
     }

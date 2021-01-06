@@ -3,25 +3,38 @@ namespace App\Models\Income;
 
 use App\Models\Model;
 use App\Filters\Filterable;
+use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class Customer extends Model
 {
-    use Filterable;
+    use Filterable, AccurateTrait;
+
+    protected $accurate_model = 'customer';
+
+    protected $accurate_push_attributes = [
+        'name' => 'name',
+        'customerNo' => 'code',
+        'notes' => 'description',
+    ];
+
+    protected $accurate_push_casts = [
+        'notes' => 'String',
+    ];
 
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
-        'bank_account', 'npwp', 'pkp', 'with_tax', 'with_pph', 'tax', 'pph_material', 'pph_service',
-        'invoice_mode', 'delivery_mode', 'order_mode', 'description', 'enable', 'order_manual_allowed', 'order_monthly_actived'
+        'bank_account', 'npwp', 'pkp', 'with_ppn', 'with_pph', 'ppn', 'sen_service', 'exclude_service', 'bounded_service', 'description', 'enable',
+        'invoice_mode', 'invoice_request_required', 'delivery_mode',
+        'delivery_manual_allowed', 'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
     ];
 
-    protected $appends = [ 'address_raw' ];
+    protected $appends = [ 'address_raw', 'is_invoice_request' ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [
-        'tax' => 'double',
-        'pph_material' => 'double',
-        'pph_service' => 'double',
+        'ppn' => 'double',
+        'sen_service' => 'double',
     ];
 
     protected $relationships = ['items'];
@@ -29,6 +42,11 @@ class Customer extends Model
     public function customer_contacts()
     {
         return $this->hasMany('App\Models\Income\CustomerContact');
+    }
+
+    public function customer_trips()
+    {
+        return $this->hasMany('App\Models\Income\CustomerTrip');
     }
 
     public function customer_items() {
@@ -48,5 +66,11 @@ class Customer extends Model
         $raw .= ($this->zipcode ? ' '. $this->zipcode : '');
 
         return $raw;
+    }
+
+    public function getIsInvoiceRequestAttribute() {
+        if ($this->order_mode != 'NONE') return false;
+
+        return $this->invoice_request_required;
     }
 }

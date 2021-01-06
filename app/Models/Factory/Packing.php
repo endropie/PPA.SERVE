@@ -13,7 +13,7 @@ class Packing extends Model
 
     protected $fillable = [
         'number', 'customer_id', 'date', 'shift_id', 'description',
-        'worktime', 'operator_id'
+        'worktime', 'begin_datetime', 'until_datetime', 'operator_id'
     ];
 
     protected $appends = ['fullnumber'];

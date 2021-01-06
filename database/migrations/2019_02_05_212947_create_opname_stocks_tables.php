@@ -34,8 +34,8 @@ class CreateOpnameStocksTables extends Migration
 
             $table->integer('item_id');
             $table->string('stockist');
-            $table->decimal('init_amount', 20,4)->default(0);
-            $table->decimal('final_amount', 20,4)->default(0);
+            $table->decimal('init_amount', 20, 2)->default(0);
+            $table->decimal('final_amount', 20, 2)->default(0);
 
             $table->bigInteger('opname_id')->unsigned();
             $table->bigInteger('created_by')->nullable();

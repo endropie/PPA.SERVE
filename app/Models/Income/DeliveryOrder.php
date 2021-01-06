@@ -22,8 +22,7 @@ class DeliveryOrder extends Model
     protected $hidden = [];
 
     protected $relationships = [
-        'request_order_closed',
-        'delivery_order_items.reconcile_items'
+        'request_order_closed'
     ];
 
     protected $casts = [
@@ -40,6 +39,11 @@ class DeliveryOrder extends Model
         return $this->hasMany('App\Models\Warehouse\OurgoingGood');
     }
 
+    public function acc_invoice()
+    {
+        return $this->belongsTo('App\Models\Income\AccInvoice');
+    }
+
     public function request_order()
     {
         return $this->belongsTo('App\Models\Income\RequestOrder');
@@ -48,11 +52,6 @@ class DeliveryOrder extends Model
     public function request_order_closed()
     {
         return $this->request_order()->where('status', 'CLOSED');
-    }
-
-    public function reconcile()
-    {
-        return $this->belongsTo('App\Models\Income\DeliveryOrder');
     }
 
     public function revise()
@@ -89,12 +88,6 @@ class DeliveryOrder extends Model
         return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
     }
 
-    public function getSummaryReconcilesAttribute() {
-        return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum(function($item) {
-            return (double) ($item->amount_reconcile / ($item->unit_rate?? 1));
-        });
-    }
-
     public function getHasRevisionAttribute()
     {
         return $this->revisions;
@@ -122,12 +115,5 @@ class DeliveryOrder extends Model
         return $revise->revise_number
             ? $revise->number ." R.". (int) $revise->revise_number
             : $revise->number;
-    }
-
-    public function getReconcileNumberAttribute()
-    {
-        $reconcile = app('App\Models\Income\DeliveryOrder')->find($this->reconcile_id);
-        if ($reconcile) return $reconcile->fullnumber;
-        return null;
     }
 }

@@ -2,44 +2,69 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
+use App\Http\Requests\Request as BaseRequest;
 use App\Http\Requests\Income\RequestOrder as Request;
 use App\Http\Controllers\ApiController;
-use App\Filters\Income\RequestOrder as Filters;
+use App\Filters\Income\RequestOrder as Filter;
+use App\Filters\Income\RequestOrderItem as FilterItem;
+use App\Models\Income\AccInvoice;
 use App\Models\Income\RequestOrder;
+use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
 
 class RequestOrders extends ApiController
 {
-    use GenerateNumber;
+        use GenerateNumber;
 
-    public function index(Filters $filters)
+    public function index(Filter $filter)
     {
-        $fields = request('fields');
-        $fields = $fields ? explode(',', $fields) : [];
-
         switch (request('mode')) {
             case 'all':
-                $request_orders = RequestOrder::filter($filters)->get();
+                $request_orders = RequestOrder::filter($filter)->latest()->get();
                 break;
 
             case 'datagrid':
-                $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filters)
+                $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filter)
                   ->latest()->get();
                 $request_orders->each->append(['is_relationship']);
                 break;
 
             default:
-                $request_orders = RequestOrder::with(['created_user', 'customer'])
-                  ->filter($filters)
+                $request_orders = RequestOrder::with(['created_user'])
+                  ->filter($filter)
                   ->latest()->collect();
                 $request_orders->getCollection()->transform(function($item) {
-                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery']);
+                    $item->customer = $item->customer()->first()->only(['id', 'name', 'code']);
+                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery', 'delivery_counter']);
                     return $item;
                 });
                 break;
         }
 
         return response()->json($request_orders);
+    }
+
+
+    public function items(FilterItem $filter)
+    {
+        $request_order_items = RequestOrderItem::filter($filter)->latest()->get();
+
+        if ($date = request('delivery_date')) {
+            $request_order_items->map(function($detail) use ($date) {
+                $detail->item->item_units;
+                $detail->item->amount_delivery = [
+                    "FG" => $detail->item->totals["FG"],
+                    "VERIFY" => $detail->item->amount_delivery_verify($date),
+                    "TASK.REG" => $detail->item->amount_delivery_task($date, 'REGULER'),
+                    "TASK.RET" => $detail->item->amount_delivery_task($date, 'RETURN'),
+                    "LOAD.REG" => $detail->item->amount_delivery_load($date, 'REGULER'),
+                    "LOAD.RET" => $detail->item->amount_delivery_load($date, 'RETURN')
+                ];
+                return $detail;
+            });
+        }
+
+        return response()->json($request_order_items);
     }
 
     public function store(Request $request)
@@ -67,10 +92,20 @@ class RequestOrders extends ApiController
             'customer',
             'request_order_items.item.item_units',
             'request_order_items.unit',
-            'delivery_orders'
+            // 'request_order_items.incoming_good_item',
+            // 'request_order_items.delivery_order_items',
+            // 'delivery_orders',
+            // 'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
         $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
+        $request_order->request_order_items->each->append('lots');
+
+        ## resource return as json
+        $request_order->delivery_orders = $request_order->delivery_orders()->get()->map(function ($delivery, $key) {
+            return $delivery->only(['id', 'fullnumber', 'status']);
+        });
+
 
         return response()->json($request_order);
     }
@@ -85,9 +120,9 @@ class RequestOrders extends ApiController
 
         $request_order = RequestOrder::findOrFail($id);
 
-        if ($request_order->status !== 'OPEN') {
-            $this->error('The data has not OPEN state, Not allowed to be changed');
-        }
+        if ($request_order->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be changed');
+
+        if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be changed!");
 
         $request_order->update($request->input());
 
@@ -138,6 +173,9 @@ class RequestOrders extends ApiController
         $request_order = RequestOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
+
+
+        if ($request_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
 
         if ($mode == "VOID") {
             if ($request_order->status == 'VOID') $this->error("The data $request_order->status state, is not allowed to be $mode");
@@ -209,4 +247,83 @@ class RequestOrders extends ApiController
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
+
+    public function createInvoice($id, BaseRequest $request)
+    {
+        $request->validate([
+            'date' => 'required',
+            'delivery_orders.*.id' => 'required'
+        ]);
+
+        // return response()->json($request->toArray(),501);
+        $this->DATABASE::beginTransaction();
+
+        $request_order = RequestOrder::findOrFail($id);
+        $invoice = $request_order->acc_invoices()->create([
+            'number' => $this->getNextAccInvoiceNumber(),
+            'date' => $request->date ?? now(),
+        ]);
+
+        foreach ($request->input('delivery_orders') as $row) {
+            $delivery_order = $request_order->delivery_orders()->find($row['id']);
+
+            if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
+            if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+
+            $delivery_order->acc_invoice()->associate($invoice);
+            $delivery_order->save();
+        }
+
+        $response = $invoice->accurate()->push();
+
+        if ($invoice->request_order->customer->invoice_mode == 'SEPARATE') {
+
+            $invoice2 = $request_order->acc_invoices()->create([
+                'number' => $invoice->number . ".JASA",
+                'date' => $request->date ?? now(),
+            ]);
+            $invoice2->material_invoice()->associate($invoice);
+            $invoice2->save();
+
+            $response2 = $invoice2->accurate()->push();
+
+            if (!$response2['s']) {
+                $this->DATABASE::rollback();
+                return response()->json(['message' => $response2['d'], 'success' => $response2['s']], 501);
+            }
+        }
+
+        if (!$response['s']) {
+            $this->DATABASE::rollback();
+            return response()->json(['message' => $response['d'], 'success' => $response['s']], 501);
+        }
+
+        $this->DATABASE::commit();
+        return response()->json($response);
+    }
+
+    public function forgetInvoice ($id)
+    {
+        $invoice = AccInvoice::findOrFail($id);
+        $forget = $invoice->accurate()->forget();
+
+        if ($invoice2 = $invoice->service_invoice) {
+            $invoice2->accurate()->forget();
+            $invoice2->delete();
+        }
+
+        $invoice->delete();
+
+        return $forget;
+    }
+
+    public function showInvoice($id)
+    {
+        $invoice = AccInvoice::with(['request_order.customer'])->findOrFail($id);
+
+        $invoice = $invoice->setAppends(['deliveries']);
+
+        return response()->json($invoice);
+    }
+
 }

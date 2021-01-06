@@ -1,12 +1,13 @@
 <?php
 namespace App\Models\Income;
 
+use App\Filters\Filterable;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RequestOrderItem extends Model
 {
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $fillable = [
         'item_id', 'unit_id', 'unit_rate', 'quantity', 'price'
@@ -51,19 +52,43 @@ class RequestOrderItem extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
     }
 
-    public function getTotalDeliveryOrderItemAttribute() {
-        return (double) $this->delivery_order_items->sum('unit_amount');
+    public function incoming_good_item()
+    {
+        return $this->hasOne('App\Models\Warehouse\IncomingGoodItem');
     }
 
-    public function getUnitAmountAttribute() {
+    public function getTotalDeliveryOrderItemAttribute()
+    {
+        return (double) $this->delivery_order_items()->get()->sum('unit_amount');
+    }
+
+    public function getUnitAmountAttribute()
+    {
         if($this->unit_rate <= 0) return false;
         return (double) $this->quantity * $this->unit_rate;
     }
 
-    public function calculate() {
+    public function getLotsAttribute ()
+    {
+        if(!$this->incoming_good_item()->first()) return null;
+        return $this->incoming_good_item()->first()->lots;
+    }
+
+    public function calculate()
+    {
         // Summary Delivery.
         $amount_delivery = $this->delivery_order_items->sum('unit_amount');
         $this->amount_delivery = $amount_delivery;
         $this->save();
+    }
+
+    static function boot ()
+    {
+        parent::boot();
+        static::created(function($model) {
+            if ($model->price === null) {
+                $model->price = $model->item->price;
+            }
+        });
     }
 }

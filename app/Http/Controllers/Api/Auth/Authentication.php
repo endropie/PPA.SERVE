@@ -109,6 +109,24 @@ class Authentication extends ApiController
         return response()->json(['success' => true, 'user' => $user], $this->successStatus);
     }
 
+    public function confirmPassword ()
+    {
+        $user = Auth::user();
+        $validator = Validator::make(request()->all(), [
+            'password' => ['required', function($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail('Enter Password is invalid.');
+                }
+            }],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors'=>$validator->errors()], 422);
+        }
+
+        return response()->json(['status' => true]);
+    }
+
     public function logout () {
 
         $token = request()->user()->token();

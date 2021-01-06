@@ -39,11 +39,11 @@ class WorkOrderItemLine extends Model
         return  (double) $this->work_order_item->quantity * $this->work_order_item->unit_rate;
     }
 
-    public function calculate () {
+    public function calculate ($error = true) {
 
         $this->amount_line = (double) $this->work_production_items->sum('unit_amount');
 
-        if($this->amount_line > $this->unit_amount) {
+        if($error && $this->amount_line > $this->unit_amount) {
             abort(501, "AMOUNT TOTAL [#". $this->id ."] INVALID");
         }
         $this->save();

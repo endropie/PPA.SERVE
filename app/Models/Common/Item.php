@@ -5,28 +5,52 @@ namespace App\Models\Common;
 use App\Models\Model;
 use App\Filters\Filterable;
 use App\Models\DataSamples;
+use App\Models\WithUserBy;
+use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class Item extends Model
 {
-    use Filterable, DataSamples;
+    use Filterable, WithUserBy, DataSamples, AccurateTrait;
 
     protected $allowTransferDisabled;
+
+    protected $accurate_model = "item";
+
+    protected $accurate_push_attributes = [
+        'name' => 'part_name',
+        'no' => 'code',
+        'unitPrice' => 'price'
+    ];
+
+    static function boot()
+    {
+        parent::boot();
+        static::registerModelEvent('accurate.pushing', function($model, $record) {
+            return array_merge($record, [
+                'tax1Name' => 'Pajak Pertambahan Nilai',
+                'tax3Name' => 'Jasa Teknik',
+                'itemType' => 'SERVICE'
+            ]);
+        });
+    }
 
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
         'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'price',
         'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable',
-        'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'sample'
+        'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'estimate_begin_date',
+        'project', 'project_number', 'sample'
     ];
 
-    protected $appends = ['customer_code', 'totals'];
+    protected $appends = ['part_subname', 'customer_code', 'totals'];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['updated_at'];
 
     protected $casts = [
         'sa_dm' => 'double',
         'weight' => 'double',
         'price' => 'double',
+        'depicts' => 'array'
     ];
 
     protected $relationships = [
@@ -66,6 +90,18 @@ class Item extends Model
 
     public function delivery_order_items() {
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
+    }
+
+    public function delivery_task_items() {
+        return $this->hasMany('App\Models\Income\DeliveryTaskItem');
+    }
+
+    public function delivery_verify_items() {
+        return $this->hasMany('App\Models\Income\DeliveryVerifyItem');
+    }
+
+    public function delivery_load_items() {
+        return $this->hasMany('App\Models\Income\DeliveryLoadItem');
     }
 
     public function units()
@@ -128,6 +164,18 @@ class Item extends Model
         return $this->belongsTo(\App\Models\Reference\Size::class);
     }
 
+    public function getPartSubnameAttribute()
+    {
+        $mode = setting()->get('item.subname_mode', null);
+        if ($mode == 'PART_NUMBER') {
+            return $this->part_number;
+        }
+        if ($mode == 'SPECIFICATION') {
+            return $this->specification ? $this->specification->name : null;
+        }
+        return null;
+    }
+
     public function getUnitConvertionsAttribute()
     {
         $units = collect([]);
@@ -152,7 +200,38 @@ class Item extends Model
 
     public function getCustomerCodeAttribute()
     {
-        return $this->customer ? $this->customer->code : null;
+        $customer = $this->customer()->first();
+
+        if (!$customer) return null;
+        return $customer->code;
+    }
+
+    public function amount_delivery_verify ($date = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_verify_items()->where('date', $date)->get()->sum('unit_amount');
+    }
+
+    public function amount_delivery_task ($date = null, $trans = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_task_items()->whereHas('delivery_task', function ($q) use ($trans, $date) {
+            return $q->where('date', $date)
+                     ->when($trans !== null, function($q) use ($trans) {
+                         return $q->where('transaction', $trans);
+                     });
+        })->get()->sum('unit_amount');
+    }
+
+    public function amount_delivery_load ($date = null, $trans = null)
+    {
+        if (!$date) return 0;
+        return (double) $this->delivery_load_items()->whereHas('delivery_load', function ($q) use ($trans, $date) {
+            return $q->where('date', $date)
+                    ->when($trans !== null, function($q) use ($trans) {
+                        return $q->where('transaction', $trans);
+                    });;
+        })->get()->sum('unit_amount');
     }
 
     public function stock($stockist)

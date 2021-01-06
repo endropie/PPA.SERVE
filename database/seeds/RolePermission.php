@@ -19,19 +19,20 @@ class RolePermission extends Seeder
 			// Auth
 			'users' => ['c','r','u','d'],
 			'roles' => ['c','r','u','d'],
-			'permissions' => ['c','r','u','d'],
+            'permissions' => ['c','r','u','d'],
 			// Common
-			'items' => ['c','r','u','d','price','sample','reference'],
+			'customers' => ['c','r','u','d','push'],
+			'items' => ['c','r','u','d','price','sample','reference','push'],
 			'employees' => ['c','r','u','d','reference'],
 			// Factories
 			'packings' => ['c','r','u','d','close','void'],
-			'work-orders' => ['c','r','u','d','close','revision','void'],
+			'work-orders' => ['c','r','u','d','close','revision','void','validation'],
 			'work-productions' => ['c','r','u','d','close','void'],
 			'work-process' => ['r','confirm'],
 			// Incomes
-			'customers' => ['c','r','u','d'],
 			'forecasts' => ['c','r','u','d','close','void'],
-			'request-orders' => ['c','r','u','d','close','revision','void'],
+			'request-orders' => ['c','r','u','d','close','revision','void', 'push'],
+            'acc-invoices' => ['c','r','u','d','confirm', 'reopen'],
 			// Warehouses
             'opname-stocks' => ['c','r','u','d','validation','revision','void'],
             'opname-vouchers' => ['c','r','u','d','validation','revision','void'],
@@ -40,7 +41,14 @@ class RolePermission extends Seeder
             'outgoing-verifications' => ['c','r','u','d'],
 			'outgoing-goods' => ['c','r','d','void'],
 			'pre-deliveries' => ['c','r','u','d','close','revision','void'],
-			'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
+            'sj-delivery-orders' => ['c','r','u','d','confirm','revision','void'],
+            'sj-delivery-internals' => ['c','r','u','d','confirm','revision','void'],
+            'delivery-internals' => ['c','r','u','d','confirm','revision','void'],
+			'delivery-tasks' => ['c','r','u','d','void'],
+			'delivery-verifies' => ['c','r','d','void'],
+            'delivery-loads' => ['c','r','void'],
+            'delivery-checkouts' => ['c','r','void'],
+			'deportation-goods' => ['c','r','u','d','validation','revision','void'],
 			'schedule-boards' => ['c','r','u','d','void'],
 			// Reference
 			'brands'		=> ['c','r','u','d'],
@@ -64,6 +72,8 @@ class RolePermission extends Seeder
 			'common'    => ['items', 'employees'],
             'marketing' => ['customers', 'forecasts', 'request-orders' ],
 
+            'invoice.collect' => ['acc-invoices'],
+
             'work.order' => ['work-orders'],
             'work.production' => ['work-productions'],
             'work.process' => ['work-process'],
@@ -72,12 +82,18 @@ class RolePermission extends Seeder
             'outgoing.verify' => ['outgoing-verifications'],
             'outgoing.good' => ['outgoing-goods'],
             'sj.delivery' => ['sj-delivery-orders'],
+            'sj.internal' => ['sj-delivery-internals'],
             'pre.delivery' => ['pre-deliveries'],
+            'delivery.internal' => ['delivery-internals'],
+            'delivery.task' => ['delivery-tasks'],
+            'delivery.verify' => ['delivery-verifies'],
+            'delivery.load' => ['delivery-loads'],
+            'delivery.checkout' => ['delivery-checkouts'],
 
             'incoming.good' => ['incoming-goods'],
             'opname.voucher' => ['opname-vouchers'],
             'opname.stock' => ['opname-stocks'],
-
+            'deportation.good' => ['deportation-goods'],
 
 			'reference' => [
 				'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes',
@@ -104,7 +120,7 @@ class RolePermission extends Seeder
 			$pass = Hash::make($key.'ppa');
 			// Ex: username: user.reference@ppa.com password: referenceppa
 
-            $user = User::firstOrCreate(['email' => $name .'@ppa.com'], ['name' => $name, 'password' => $pass]);
+            $user = User::firstOrCreate(['email' => strtolower($name .'@ppa.com')], ['name' => $name, 'password' => $pass]);
             $user->assignRole($profileRole->name);
 
             $label = "user.$key";

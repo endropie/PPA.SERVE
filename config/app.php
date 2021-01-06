@@ -165,9 +165,10 @@ return [
         /*
          * Package Service Providers...
          */
-        // Barryvdh\Cors\ServiceProvider::class,
+
+        Endropie\AccurateClient\AccurateProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
-        Laravel\Passport\PassportServiceProvider::class,
+        // Laravel\Passport\PassportServiceProvider::class,
         Akaunting\Setting\Provider::class,
         Bkwld\Cloner\ServiceProvider::class,
 
@@ -236,7 +237,7 @@ return [
         'Arr' => Illuminate\Support\Arr::class,
         'Str' => Illuminate\Support\Str::class,
         'Setting' => Akaunting\Setting\Facade::class,
-
+        'Accurate' => Endropie\AccurateClient\Facade::class,
     ],
 
 ];

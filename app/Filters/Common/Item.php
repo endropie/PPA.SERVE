@@ -13,6 +13,22 @@ class Item extends Filter
         parent::__construct($request);
     }
 
+    public function delivery_date ($value = '') {
+        // if (!strlen($value)) return $this->builder;
+        return $this->builder->whereHas('delivery_task_items', function($q) use($value) {
+            return $q->whereHas('delivery_task', function($q) use ($value){
+                return $q->where('date', $value);
+            });
+        });
+    }
+
+    public function delivery_verify_date ($value = '') {
+        // if (!strlen($value)) return $this->builder;
+        return $this->builder->whereHas('delivery_verify_items', function($q) use($value) {
+            return $q->where('date', $value);
+        });
+    }
+
     public function or_ids($value = '') {
         if (!strlen($value)) return $this->builder;
 
@@ -20,10 +36,27 @@ class Item extends Filter
         return $this->builder->orWhereIn('id', $value);
     }
 
-    public function sampled($value = '') {
-        if (!strlen($value)) return $this->builder;
+    public function sample_in($value = '') {
+        if (!strlen($value) || $value == 'REGULER') return $this->builder;
 
-        return $this->builder->sampled();
+        return $this->builder->sampled()
+            ->when($value === 'SAMPLE:DEPICT', function($q) {
+                return $q->whereNull('sample_depicted_at')->where('project', 'NEW');
+            })
+            ->when($value === 'SAMPLE:ENGINERY', function($q) {
+                return $q->whereNull('sample_enginered_at')->where(function($q) {
+                    return $q->orWhere('project', 'MIGRATE')
+                             ->orWhere(function ($q) {
+                                return $q->where('project', 'NEW')->whereNotNull('sample_depicted_at');
+                            });
+                });
+            })
+            ->when($value === 'SAMPLE:PRICE', function($q) {
+                return $q->whereNull('sample_priced_at')->whereNotNull('sample_enginered_at');
+            })
+            ->when($value === 'SAMPLE:VALIDATE', function($q) {
+                return $q->whereNull('sample_validated_at')->whereNotNull('sample_enginered_at')->whereNotNull('sample_priced_at');
+            });
     }
 
     public function has_stocks($value = '') {

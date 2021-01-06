@@ -21,6 +21,9 @@ class WorkOrder extends Filter
                         $q->where('amount_process', '>', 0);
                     });
                 break;
+            case 'ON:DIRECT':
+                return $this->builder->where('status','OPEN')->whereNotNull('stockist_direct');
+                break;
             case 'HAS:PRODUCTED':
                 return $this->builder->stateHas('PRODUCTED');
                 break;

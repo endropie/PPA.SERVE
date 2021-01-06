@@ -13,7 +13,7 @@ class WorkOrder extends Model
     use Filterable, SoftDeletes, WithUserBy, WithStateable;
 
     protected $fillable = [
-        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'mode_line', 'description',
+        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'stockist_direct', 'mode_line', 'description',
     ];
 
     protected $appends = ['fullnumber'];
@@ -68,6 +68,20 @@ class WorkOrder extends Model
 
     public function getTotalPackingAttribute() {
         return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_packing');
+    }
+
+    public function getHangerAmountAttribute() {
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_amount');
+    }
+
+    public function getHangerProductionAttribute() {
+
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_production');
+    }
+
+    public function getHangerPackingAttribute() {
+        // abort(502, $this->number. "=>". $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing'));
+        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing');
     }
 
     public function getHasProductedAttribute() {

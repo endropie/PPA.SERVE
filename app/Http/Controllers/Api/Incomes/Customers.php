@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
-use App\Filters\Filter as Filter;
+// use App\Filters\Filter as Filter;
+use App\Filters\Income\Customer as Filter;
 use App\Http\Requests\Income\Customer as Request;
 use App\Http\Controllers\ApiController;
 
@@ -32,9 +33,6 @@ class Customers extends ApiController
 
     public function store(Request $request)
     {
-        $request->merge( ['tax' => (float) $request->tax]);
-        $request->merge( ['pph_service' => (float) $request->pph_service ]);
-        $request->merge( ['pph_material' => (float) $request->pph_material ]);
         $customer = Customer::create($request->all());
 
         return response()->json($customer);
@@ -42,7 +40,7 @@ class Customers extends ApiController
 
     public function show($id)
     {
-        $customer = Customer::with(['customer_contacts'])->findOrFail($id);
+        $customer = Customer::with(['customer_contacts','customer_trips'])->findOrFail($id);
         $customer->is_editable = (!$customer->is_related);
 
         return response()->json($customer);
@@ -51,9 +49,6 @@ class Customers extends ApiController
     public function update(Request $request, $id)
     {
         $customer = Customer::findOrFail($id);
-        $request->merge( ['tax' => (float) $request->tax]);
-        $request->merge( ['pph_service' => (float) $request->pph_service ]);
-        $request->merge( ['pph_material' => (float) $request->pph_material ]);
         $customer->update($request->input());
 
         // Delete all contacts on before the customer updated!
@@ -66,6 +61,16 @@ class Customers extends ApiController
             $customer->customer_contacts()->create($pre[$i]);
         }
 
+        // Delete all trips on before the customer updated!
+        $customer->customer_trips()->delete();
+
+        $trips = $request->customer_trips;
+        for ($i=0; $i < count($trips); $i++) {
+
+            // create trips on the customer updated!
+            $customer->customer_trips()->create($trips[$i]);
+        }
+
         return response()->json($customer);
     }
 
@@ -75,5 +80,20 @@ class Customers extends ApiController
         $customer->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function push ($id)
+    {
+        if ($id === 'all') {
+            $customers = Customer::whereNull('accurate_model_id')->get();
+            return $customers->map(function($customer) {
+                $push = $customer->accurate()->push();
+                return collect($push)->except('r');
+            });
+        }
+        else {
+            $customer = Customer::findOrFail($id);
+            return $customer->accurate()->push();
+        }
     }
 }

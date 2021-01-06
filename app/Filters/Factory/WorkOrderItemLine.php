@@ -65,9 +65,12 @@ class WorkOrderItemLine extends Filter
                 return $q->whereHas('work_order', function($q) {
                     if ($date = request('date', null)) $q->where('date', $date);
                     if ($shift_id = request('shift_id', null)) $q->where('shift_id', $shift_id);
-                    if ($ondate = request('ondate', null)) $q->where('date', '<=', $ondate);
-                    if ($onshift = request('onshift', null)) $q->where('shift_id', '<=', $onshift);
-                    return $q->where('status', '<>', 'CLOSED')->stateHasNot('PRODUCTED');
+                    if ($ondate = request('ondate', null)) {
+                        $begin = date_format(date_modify(date_create($ondate), "-1 days"), "Y-m-d");
+                        $until = date_format(date_modify(date_create($ondate), "+1 days"), "Y-m-d");
+                        $q->whereBetween('date', [$begin, $until]);
+                    }
+                    return $q->whereNull('stockist_direct')->where('status', '<>', 'CLOSED')->stateHasNot('PRODUCTED');
                 });
             });
     }

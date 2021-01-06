@@ -29,11 +29,15 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::middleware([
         'auth:api',
         ])->group( function(){
+        Route::post('uploads/file', 'Uploads@storeFile');
+        Route::delete('uploads/file', 'Uploads@destroyFile');
+        // Route::post('uploads/exist', 'Uploads@existFile');
 
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::middleware(['auth:api'])->group( function(){
                 Route::name('user')->post('/', 'Auth\Authentication@user');
                 Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken');
+                Route::name('confirm-password')->post('/confirm-password', 'Auth\Authentication@confirmPassword');
                 Route::name('change-password')->post('/change-password', 'Auth\Authentication@setChangePassword');
                 Route::name('logout')->post('logout', 'Auth\Authentication@logout');
             });
@@ -47,20 +51,46 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         });
 
         Route::prefix('common')->name('common.')->group(function () {
+            Route::post('items/{id}/sample-validation', 'Common\Items@sampleValidation');
             Route::get('items/stockables', 'Common\Items@stockables');
+            Route::get('items/delivery-cards', 'Common\Items@delivery_cards');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
         });
 
         Route::prefix('incomes')->name('incomes.')->group(function () {
+            Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
+            Route::put('delivery-internals/{id}/confirmed', 'Incomes\DeliveryInternals@confirmed');
+            Route::put('delivery-internals/{id}/revised', 'Incomes\DeliveryInternals@revised');
+            Route::put('delivery-loads/{id}/save-vehicle', 'Incomes\DeliveryLoads@vehicleUpdated');
+            Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');
+            Route::post('invoices/{id}/confirmed', 'Incomes\AccInvoices@confirmed');
+            Route::post('invoices/{id}/reopened', 'Incomes\AccInvoices@reopened');
+            Route::post('invoices/{id}/syncronized', 'Incomes\AccInvoices@syncronized');
+            Route::get('request-order-items', 'Incomes\RequestOrders@items');
+
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
+            Route::apiResource('invoices', 'Incomes\AccInvoices');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
+            Route::apiResource('delivery-internals', 'Incomes\DeliveryInternals');
+            Route::apiResource('delivery-tasks', 'Incomes\DeliveryTasks');
+            Route::apiResource('delivery-loads', 'Incomes\DeliveryLoads');
+            Route::apiResource('delivery-verifies', 'Incomes\DeliveryVerifies');
+            Route::apiResource('delivery-checkouts', 'Incomes\DeliveryCheckouts');
+
+            Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
+            Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');
+            Route::put('delivery-order-internals/{id}/confirmed', 'Incomes\DeliveryOrders@confirmation');
+            Route::get('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@show');
+            Route::delete('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@destroy');
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
+            Route::get('incoming-goods/items', 'Warehouses\IncomingGoods@items');
+
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');
             Route::apiResource('opnames', 'Warehouses\Opnames');
@@ -68,10 +98,13 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('opname-vouchers', 'Warehouses\OpnameVouchers');
             Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
             Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
+            Route::apiResource('deportation-goods', 'Warehouses\DeportationGoods');
         });
 
         Route::prefix('factories')->name('factories.')->group(function () {
             Route::get('work-orders/items', 'Factories\WorkOrders@items');
+            Route::get('work-orders/lines', 'Factories\WorkOrders@lines');
+            Route::get('work-orders/hanger-lines', 'Factories\WorkOrders@hangerLines');
 
             Route::apiResource('work-productions', 'Factories\WorkProductions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
@@ -80,6 +113,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
         Route::prefix('transports')->name('transports.')->group(function () {
             Route::apiResource('schedule-boards', 'Transports\ScheduleBoards');
+            Route::apiResource('trip-boards', 'Transports\Tripboards');
         });
 
         Route::prefix('references')->name('references.')->group(function () {

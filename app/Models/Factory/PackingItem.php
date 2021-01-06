@@ -12,7 +12,7 @@ class PackingItem extends Model
     protected $touches = ['packing'];
 
     protected $fillable = [
-        'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id', 'work_order_item_id'
+        'item_id', 'quantity', 'unit_id', 'unit_rate', 'type_fault_id'
     ];
 
     protected $appends = ['unit_amount', 'unit_total'];
@@ -38,11 +38,6 @@ class PackingItem extends Model
     {
         return $this->belongsTo('App\Models\Factory\Packing');
     }
-
-    // public function work_order_item()
-    // {
-    //     return $this->belongsTo('App\Models\Factory\WorkOrderItem');
-    // }
 
     public function item()
     {
