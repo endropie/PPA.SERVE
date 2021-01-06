@@ -75,7 +75,6 @@ class PackingItem extends Model
 
         foreach ($this->packing_item_orders as $item)  {
             if ($work_order_item = $item->work_order_item) {
-                print("$item->id => $work_order_item->id => ". $work_order_item->work_order->id ."\n");
                 if ($work_order_item->work_order_packed) abort(501, "INVALID. Packing has Relationship.");
                 $item->forceDelete();
                 $work_order_item->calculate();
@@ -93,6 +92,7 @@ class PackingItem extends Model
         $work_order_items = WorkOrderItem::where('item_id', $this->item_id)
             ->whereRaw('amount_process > amount_packing')
             ->whereHas('work_order', function($q) use ($mode) {
+                $q->whereNull('main_id');
                 return ($mode == "RESET") ? $q : $q->stateHasNot('PACKED');
             })
             ->get()
@@ -133,11 +133,8 @@ class PackingItem extends Model
         if ((round($finish) + round($faulty)) != 0) abort(501, "TOTAL [$finish + $faulty] PACKING ORDER INVALID");
 
         $created = $this->packing_item_orders()->createMany($collection->toArray());
-        foreach ($created as $item) {
-            // print_r($item->toArray());
-            // print("\n");
-            // print("CALCULATE [$item->id] \n");
-            $item->work_order_item->calculate();
+        foreach ($created as $packing_item_order) {
+            $packing_item_order->work_order_item->calculate();
         }
 
         return $created;

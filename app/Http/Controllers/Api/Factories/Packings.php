@@ -50,117 +50,6 @@ class Packings extends ApiController
         return response()->json($packings);
     }
 
-    public function multistore(Request $request)
-    {
-        $this->error('SORY, PLEASE, REFRESH & TRY LATER!');
-
-        $this->DATABASE::beginTransaction();
-        if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
-
-        $totals = (double) $request->input('packing_items.quantity') * $request->input('packing_items.unit_rate');
-
-        $faults = $request->input('packing_items.type_fault_id', false)
-            ? collect($request->input('packing_items.packing_item_faults', []))
-            : collect([]);
-
-        $partials = collect([]);
-
-        $work_order_items = WorkOrderItem::where('item_id', $request->input('packing_items.item_id'))
-            ->whereRaw('amount_process > amount_packing')
-            ->whereHas('work_order', function($q) {
-              return $q->stateHasNot('PACKED');
-            })
-            ->orderBy('id')
-            ->get();
-
-        foreach ($work_order_items as $detail) {
-            if ($detail->item_id !== $request->input('packing_items.item_id')) continue;
-
-            $new = ['id' => $detail->id, 'quantity' => 0, 'total' => 0];
-            $detail->available = $detail->amount_process - $detail->amount_packing;
-            if ( $totals > 0 && $detail->available > 0 && $detail->item_id == request('packing_items.item_id'))
-            {
-                $amount = $detail->available > $totals ? $totals : $detail->available;
-                $new = array_merge($new, ['quantity' => $amount, 'total' => $amount]);
-                $totals -= $amount;
-                $detail->available -= $amount;
-            }
-            if ( $totals <= 0 && $detail->available > 0 && $faults->sum('quantity') > 0)
-            {
-                $new = array_merge($new, ['faults' => array()]);
-                foreach ($faults as $key => $fault) {
-                    if($detail->available <= 0) break;
-                    if ( $detail->available > 0) {
-                        $amount = $detail->available > $fault['quantity'] ? $fault['quantity'] : $detail->available;
-                        $new['faults'][] = ['fault_id' => $fault['fault_id'], 'quantity' => $amount];
-                        $new['total'] = (double) $new['total'] + $amount;
-                    }
-
-                    $faults->transform(function($item, $itemkey) use($key, $amount) {
-                        if ($key == $itemkey) $item['quantity'] -= $amount;
-                        return $item;
-                    });
-
-                    $detail->available -= $amount;
-                }
-            }
-            if (!empty($new) && (double) $new['total'] > 0) {
-                $partials->push($new);
-            }
-        }
-
-        if ($partials->count() <= 0) $this->error("WORK ORDER Not Available. Not allowed to be Created!");
-
-        $packings = collect([]);
-        foreach ($partials as $key => $partial) {
-
-            if ($partial['total'] <= 0) continue;
-
-            ## Create the Packing Goods.
-            $packing = Packing::create($request->all());
-
-            $row = $request->packing_items;
-            ## Packing Items only 1 row detail (relation = $model->hasOne)
-            if($row) {
-                ## Create the Packing item. Note: with "hasOne" Relation.
-                $row = array_merge($request->packing_items, [
-                    'quantity' => ($partial['quantity'] / ($row['unit_rate'] ?? 1)),
-                    'work_order_item_id' => $partial['id'],
-                ]);
-
-                $detail = $packing->packing_items()->create($row);
-
-                ## Calculate stock on after the Packing items Created!
-                $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
-
-                if (count($partial['faults'] ?? []) > 0)
-                {
-                    $faults = $partial['faults'];
-                    for ($i=0; $i < count($faults); $i++) {
-                        $fault = $faults[$i];
-                        if($fault['fault_id'] || $fault['quantity'] ) {
-                            ## create fault on the Packing Goods Created!
-                            $detail->packing_item_faults()->create($fault);
-                        }
-                    }
-                }
-
-                ## Calculate "NC" stock on after the Item Faults Created!
-                $NC = (double) $detail->packing_item_faults()->sum('quantity');
-                if ($NC > 0) {
-                    $detail->item->transfer($detail, $NC, 'NC', 'WIP');
-                }
-
-                $detail->work_order_item->calculate();
-            }
-
-            $packings->push($packing);
-        }
-
-        $this->DATABASE::commit();
-        return response()->json($packings);
-    }
-
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
@@ -195,8 +84,6 @@ class Packings extends ApiController
 
             $detail->setPackingItemOrder();
         }
-
-        // $this->error('LOLOS');
 
         $this->DATABASE::commit();
         return response()->json($packing);
@@ -234,7 +121,7 @@ class Packings extends ApiController
         if($packing->is_relationship) $this->error('The data has RELATIONSHIP, is not allowed to be updated!');
         if($packing->status != "OPEN") $this->error("The data on $packing->satus state , is not allowed to be updated!");
 
-        $packing->update($request->input());
+        $packing->update($request->all());
 
         $row = $request->packing_items;
         ## Packing Items only 1 row detail (relation = $model->hasOne)
@@ -269,6 +156,8 @@ class Packings extends ApiController
             $newDetail->setPackingItemOrder();
         }
 
+        // $this->error('LOLOS');
+
         $this->DATABASE::commit();
         return response()->json($packing);
     }
@@ -281,7 +170,6 @@ class Packings extends ApiController
         $mode = strtoupper(request('mode') ?? 'DELETED');
         if($packing->is_relationship) $this->error("[$packing->number] has RELATIONSHIP, is not allowed to be $mode!");
         if($mode == "DELETED" && $packing->status != "OPEN") $this->error("[$packing->number] $packing->status state, is not allowed to be $mode!");
-
 
         $packing->status = $mode;
         $packing->save();

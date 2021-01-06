@@ -18,8 +18,8 @@ class WorkProduction extends Model
     protected $hidden = ['updated_at'];
 
     protected $relationships = [
-        'work_production_items.work_order_item_line.work_order_item.work_order_closed',
-        'work_production_items.work_order_item_line.work_order_item.work_order_producted',
+        'work_production_items.work_order_item.work_order_closed',
+        'work_production_items.work_order_item.work_order_producted',
     ];
 
     public function work_production_items()
@@ -35,6 +35,15 @@ class WorkProduction extends Model
     public function shift()
     {
         return $this->belongsTo('App\Models\Reference\Shift');
+    }
+
+    public function isExistFullnumber()
+    {
+        return (boolean) self::where('number', $this->number)
+            ->where('revise_id', $this->revise_id)
+            ->where('revise_number', $this->revise_number)
+            ->where('id', "!=", $this->id)
+            ->count();
     }
 
     public function getFullnumberAttribute()
