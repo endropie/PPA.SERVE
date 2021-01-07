@@ -113,6 +113,11 @@ class DeliveryOrders extends ApiController
         foreach ($request->delivery_order_items as $row) {
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
+
+            if (round($detail->unit_amount) > round($detail->item->stock('FG')->total)) {
+                return $this->error("AMOUNT PART #". $detail->item->id ." [". $detail->item->part_name ."] IS NOT VALID");
+            }
+
             $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
         }
 
