@@ -5,11 +5,12 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryTask extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'date', 'trip_time', 'transaction', 'customer_id', 'description'

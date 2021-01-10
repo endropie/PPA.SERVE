@@ -92,7 +92,8 @@ class IncomingGoods extends ApiController
 
         }
 
-        // DB::Commit => Before return function!
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($incoming_good);
     }
@@ -140,6 +141,8 @@ class IncomingGoods extends ApiController
             if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
         }
 
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($incoming_good);
     }
@@ -169,7 +172,10 @@ class IncomingGoods extends ApiController
 
         $incoming_good->delete();
 
-        // DB::Commit => Before return function!
+
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
@@ -196,6 +202,8 @@ class IncomingGoods extends ApiController
         $incoming_good->description = $request->input('description', null);
         $incoming_good->status = 'REJECTED';
         $incoming_good->save();
+
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been rejected!");
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);
@@ -227,9 +235,13 @@ class IncomingGoods extends ApiController
             $detail = $incoming_good->incoming_good_items()->create($row);
         }
 
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been created!\nOn Restoration [$revise->fullnumber]");
+
         $revise->revise_id = $incoming_good->id;
         $revise->save();
         $revise->delete();
+
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been restored!");
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);
@@ -265,6 +277,8 @@ class IncomingGoods extends ApiController
 
         $incoming_good->status = 'VALIDATED';
         $incoming_good->save();
+
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been validated!");
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);
@@ -316,16 +330,20 @@ class IncomingGoods extends ApiController
         $incoming_good->status = $revise->status;
         $incoming_good->save();
 
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been created!\nOn Revision [$revise->fullnumber]");
+
         $revise->status = 'REVISED';
         $revise->revise_id = $incoming_good->id;
         $revise->save();
         $revise->delete();
 
+        $revise->setCommentLog("Incoming [$revise->fullnumber] has been revised!");
+
         $this->DATABASE::commit();
         return response()->json($incoming_good);
     }
 
-    private function reviseRequestOrder($revise, $incoming_good) {
+    protected function reviseRequestOrder($revise, $incoming_good) {
 
         $exclude_details = collect(request('incoming_good_items'))->map(function ($item) { return $item['id']; });
 
@@ -375,7 +393,6 @@ class IncomingGoods extends ApiController
             $detail->save();
         }
 
-
         $revise->request_order()->associate(null);
         $revise->save();
     }
@@ -390,7 +407,7 @@ class IncomingGoods extends ApiController
 
             $actived = $incoming_good->customer->order_monthly_actived ? date("Y-m-t", strtotime($incoming_good->date)) : null;
 
-            $model = RequestOrder::create([
+            $request_order = RequestOrder::create([
                 'number'        => $number,
                 'date'          => $incoming_good->reference_date,
                 'actived_date' => $actived,
@@ -402,13 +419,13 @@ class IncomingGoods extends ApiController
                                   ."\nNO: $incoming_good->number"
                                   ."\nREF: $incoming_good->reference_number",
             ]);
-            $incoming_good->request_order()->associate($model);
+            $incoming_good->request_order()->associate($request_order);
             $incoming_good->save();
 
             $rows = $incoming_good->incoming_good_items;
             foreach ($rows as $row) {
                 $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=>$row['valid'], 'price'=>0])->toArray();
-                $detail = $model->request_order_items()->create($fields);
+                $detail = $request_order->request_order_items()->create($fields);
                 ## Setup unit price
                 $detail->price = ($detail->item && $detail->item->price)
                     ? $detail->unit_rate * $detail->item->price : 0;
@@ -418,48 +435,9 @@ class IncomingGoods extends ApiController
                 $row->request_order_item()->associate($detail);
                 $row->save();
             }
-        }
-    }
 
-    // NOT CREATE PREDELIVERY 07/08
-    private function storePreDelivery($incoming_good) {
+            $request_order->setCommentLog("Sales order [$request_order->fullnumber] has been created!\nOn Validate [$incoming_good->fullnumber]");
 
-        $incoming_good = $incoming_good->fresh();
-
-        if ($incoming_good->order_mode === 'NONE') {
-
-            $number = $this->getNextPreDeliveryNumber($incoming_good->date);
-
-            $model = PreDelivery::create([
-                'number'        => $number,
-                'date'          => $incoming_good->date,
-                'customer_id'   => $incoming_good->customer_id,
-                'customer_name'   => $incoming_good->customer->name,
-                'customer_phone'   => $incoming_good->customer->phone,
-                'customer_address'   => $incoming_good->customer->address,
-
-                'transaction'   => $incoming_good->transaction,
-                'order_mode'    => $incoming_good->order_mode,
-                'plan_begin_date'  => $incoming_good->date,
-                'plan_until_date'  => $incoming_good->date,
-                'reference_number' => $incoming_good->reference_number,
-                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING: $incoming_good->number",
-            ]);
-
-
-            $incoming_good->pre_delivery_id = $model->id;
-            $incoming_good->save();
-
-            $rows = $incoming_good->incoming_good_items;
-            foreach ($rows as $row) {
-                $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate', 'quantity'])->toArray();
-                $detail = $model->pre_delivery_items()->create($fields);
-
-                // COMPUTE ITEMSTOCK !!
-                $STOCKIST = $incoming_good->transaction == 'RETURN' ? 'PDO.RET' : 'PDO.REG';
-
-                $detail->item->transfer($detail, $detail->unit_amount, $STOCKIST);
-            }
         }
     }
 }

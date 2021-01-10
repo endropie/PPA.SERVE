@@ -67,6 +67,8 @@ class DeliveryCheckouts extends ApiController
             $delivery_checkout->delivery_order_internals()->save($internal);
         }
 
+        $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_checkout);
     }
@@ -92,6 +94,8 @@ class DeliveryCheckouts extends ApiController
 
         $delivery_checkout = DeliveryCheckout::findOrFail($id);
 
+        $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been updated !");
+
         $this->DATABASE::commit();
         return response()->json($delivery_checkout);
     }
@@ -105,6 +109,9 @@ class DeliveryCheckouts extends ApiController
         $mode = strtoupper(request('mode') ?? 'DELETED');
 
         $delivery_checkout->delete();
+
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been $action !");
 
         $this->DATABASE::commit();
 

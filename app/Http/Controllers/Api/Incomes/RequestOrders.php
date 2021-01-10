@@ -82,6 +82,8 @@ class RequestOrders extends ApiController
 
         }
 
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -160,7 +162,8 @@ class RequestOrders extends ApiController
             }
         }
 
-        // DB::Commit => Before return function!
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -202,7 +205,9 @@ class RequestOrders extends ApiController
 
         $request_order->delete();
 
-        // DB::Commit => Before return function!
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
@@ -231,6 +236,8 @@ class RequestOrders extends ApiController
 
         $request_order->status = 'CLOSED';
         $request_order->save();
+
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been closed!");
 
         $this->DATABASE::commit();
         return response()->json($request_order);

@@ -48,7 +48,8 @@ class Forecasts extends ApiController
             $forecast->forecast_items()->create($item[$i]);
         }
 
-        // DB::Commit => Before return function!
+        $forecast->setCommentLog("Forecast [$forecast->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($forecast);
     }
@@ -77,10 +78,10 @@ class Forecasts extends ApiController
             $row = $rows[$i];
             // create item row on the request orders updated!
             $forecast->forecast_items()->create($row);
-
         }
 
-        // DB::Commit => Before return function!
+        $forecast->setCommentLog("Forecast [$forecast->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($forecast);
     }
@@ -94,7 +95,9 @@ class Forecasts extends ApiController
         $forecast->forecast_items()->delete();
         $forecast->delete();
 
-        // DB::Commit => Before return function!
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $forecast->setCommentLog("Forecast [$forecast->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }

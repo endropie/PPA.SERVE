@@ -66,6 +66,8 @@ class DeliveryTasks extends ApiController
             $delivery_task->save();
         }
 
+        $delivery_task->setCommentLog("PDO [$delivery_task->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_task);
     }
@@ -119,6 +121,8 @@ class DeliveryTasks extends ApiController
             }
         }
 
+        $delivery_task->setCommentLog("PDO [$delivery_task->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_task);
     }
@@ -153,6 +157,9 @@ class DeliveryTasks extends ApiController
         }
 
         $delivery_task->delete();
+
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $delivery_task->setCommentLog("PDO [$delivery_task->fullnumber] has been $action !");
 
         $this->DATABASE::commit();
 

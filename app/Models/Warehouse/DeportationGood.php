@@ -5,10 +5,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Models\WithUserBy;
 use App\Filters\Filterable;
+use App\Traits\HasCommentable;
 
 class DeportationGood extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'date', 'customer_id', 'description', 'revise_number'

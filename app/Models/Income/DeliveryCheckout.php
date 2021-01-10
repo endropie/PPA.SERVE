@@ -5,10 +5,11 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 
 class DeliveryCheckout extends Model
 {
-    use Filterable, WithUserBy;
+    use Filterable, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'date', 'vehicle_id', 'description'
