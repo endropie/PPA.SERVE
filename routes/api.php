@@ -19,6 +19,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         return response()->json(setting()->all());
     });
 
+    Route::apiResource('commentables', 'Commentables')->only(['index']);
+
     Route::prefix('landing')->name('landing.')->group(function () {
         Route::name('schedule-boards')->get('schedule-boards', 'Transports\ScheduleBoards@landing');
     });
