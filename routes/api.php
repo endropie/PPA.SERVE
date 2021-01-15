@@ -58,6 +58,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::get('items/delivery-cards', 'Common\Items@delivery_cards');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
+            Route::apiResource('rutes', 'Common\Rutes');
         });
 
         Route::prefix('incomes')->name('incomes.')->group(function () {

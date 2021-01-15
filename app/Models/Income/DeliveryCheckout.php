@@ -12,10 +12,14 @@ class DeliveryCheckout extends Model
     use Filterable, WithUserBy, HasCommentable;
 
     protected $fillable = [
-        'date', 'vehicle_id', 'description'
+        'date', 'vehicle_id', 'rute_id', 'rute_amount', 'description'
     ];
 
     protected $appends = ['fullnumber'];
+
+    protected $casts = [
+        'rute_amount' => 'double',
+    ];
 
     public function delivery_loads()
     {
