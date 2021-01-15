@@ -31,7 +31,7 @@ class DeliveryLoad extends Model
 
     public function delivery_orders ()
     {
-        return $this->hasMany('App\Models\Income\DeliveryOrder')->withTrashed();
+        return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
 
     public function delivery_checkout ()
