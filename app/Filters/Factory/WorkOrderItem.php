@@ -19,6 +19,30 @@ class WorkOrderItem extends Filter
         });
     }
 
+    public function date($value) {
+        return $this->builder->whereHas('work_order',  function($q) use($value) {
+            return $q->where('date', $value);
+        });
+    }
+
+    public function line_id($value) {
+        return $this->builder->whereHas('work_order',  function($q) use($value) {
+            return $q->where('line_id', $value);
+        });
+    }
+
+    public function stockist_from($value) {
+        return $this->builder->whereHas('work_order',  function($q) use($value) {
+            return $q->where('stockist_from', $value);
+        });
+    }
+
+    public function shift_id($value) {
+        return $this->builder->whereHas('work_order',  function($q) use($value) {
+            return $q->where('shift_id', $value);
+        });
+    }
+
     public function has_amount_production($value) {
         return $this->builder
             ->whereRaw('(quantity * unit_rate) > amount_process')

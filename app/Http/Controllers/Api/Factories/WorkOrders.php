@@ -43,7 +43,7 @@ class WorkOrders extends ApiController
         return response()->json($work_orders);
     }
 
-    public function items(Filter $filter)
+    public function items(FilterItem $filter)
     {
         switch (request('mode')) {
             case 'all':
@@ -51,7 +51,7 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_order_items = WorkOrderItem::filter($filter)->latest()->collect();
+                $work_order_items = WorkOrderItem::with(['work_order.shift', 'item', 'unit'])->filter($filter)->latest()->collect();
 
                 $work_order_items->getCollection()->transform(function($row) {
                     return $row;
@@ -61,6 +61,30 @@ class WorkOrders extends ApiController
         }
 
         return response()->json($work_order_items);
+    }
+
+    public function lines (Filter $filter)
+    {
+        if (!request('date')) return $this->error('REQUEST DATE REQUIRED');
+
+        $work_order_lines = WorkOrder::with(['line', 'shift'])
+            ->filter($filter)->get();
+
+            $work_order_lines = $work_order_lines
+                ->groupBy(function($item, $key){ return $item["line_id"]."-".$item["shift_id"]; })
+                ->values()
+                ->map(function ($rows) {
+                    return array_merge($rows->first()->toArray(), [
+                        "summary_amount" => $rows->sum('total_amount'),
+                        "summary_production" => $rows->sum('total_production'),
+                        "summary_packing" => $rows->sum('total_packing')
+                        ]);
+
+                })
+                ->sortBy(function ($item) { return $item['shift_id'] ."-". $item['line_id']; })
+                ->values();
+
+        return response()->json($work_order_lines);
     }
 
     public function hangerLines (Filter $filter)
