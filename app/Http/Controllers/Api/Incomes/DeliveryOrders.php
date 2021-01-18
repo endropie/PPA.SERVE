@@ -536,10 +536,11 @@ class DeliveryOrders extends ApiController
         ## New delivery order of partitions
         foreach ($request->partitions as $key => $partition) {
             ## Auto generate number of revision
-            $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
+            $number = $this->getNextSJDeliveryNumber($revise->date);
 
             $request->merge([
-                'revise_number'=> ($max + 1),
+                'number' => $number,
+                'revise_number'=> null,
                 'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);

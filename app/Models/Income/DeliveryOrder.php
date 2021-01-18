@@ -113,7 +113,7 @@ class DeliveryOrder extends Model
         $revise = app('App\Models\Income\DeliveryOrder')->withTrashed()->find($this->revise_id);
         if (!$revise) return null;
 
-        return $revise->revise_number
+        return $revise->revise_id && $revise->revise_number
             ? $revise->number ." R.". (int) $revise->revise_number
             : $revise->number;
     }
