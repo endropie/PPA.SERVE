@@ -196,7 +196,7 @@ class AccInvoices extends ApiController
 
         $acc_invoice = AccInvoice::findOrFail($id);
 
-        if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be RE-OPEN');
+        // if ($acc_invoice->status !== 'INVOICED') $this->error('The data has INVOICED state, Not allowed to be DELETED');
 
         if ($acc_invoice->accurate_model_id)
         {
