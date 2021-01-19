@@ -26,7 +26,7 @@ class Rute extends Request
 
         return [
             'name' => ($id ? 'required|string|' : '') .'max:191|unique:rutes,NULL,' . $id,
-            'cost' => 'required',
+            'cost' => '',
             'rute_customers' => 'required|array|min:1',
             'rute_customers.*.customer_id' => 'required',
             'rute_customers.*.code' => 'required',

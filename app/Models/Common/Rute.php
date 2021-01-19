@@ -10,7 +10,7 @@ class Rute extends Model
 {
     use Filterable, HasCommentable, SoftDeletes;
 
-    protected $fillable = ['name', 'cost', 'description'];
+    protected $fillable = ['name', 'description'];
 
     protected $hidden = ['updated_at'];
 
