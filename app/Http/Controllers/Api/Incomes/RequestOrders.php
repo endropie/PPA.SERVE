@@ -255,6 +255,36 @@ class RequestOrders extends ApiController
         return response()->json($request_order);
     }
 
+    public function setLockDetail($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order_item = RequestOrderItem::findOrFail($id);
+
+        if ($request_order_item->request_order->status !== 'OPEN') $this->error("The data has not OPEN status, is not allowed to be LOCK!");
+
+        $request_order_item->is_autoload = 1;
+        $request_order_item->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order_item);
+    }
+
+    public function setUnlockDetail($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order_item = RequestOrderItem::findOrFail($id);
+
+        if ($request_order_item->request_order->status !== 'OPEN') $this->error("The data has not OPEN status, is not allowed to be LOCK!");
+
+        $request_order_item->is_autoload = 0;
+        $request_order_item->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order_item);
+    }
+
     public function createInvoice($id, BaseRequest $request)
     {
         $request->validate([

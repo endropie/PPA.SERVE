@@ -313,7 +313,8 @@ class DeliveryLoads extends ApiController
     protected function storeDeliveryOrder($delivery_load)
     {
         $list = []; $over=[];
-        $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
+        $request_order_items = RequestOrderItem::where('is_autoload', 0)
+            ->whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($delivery_load) {
                 $order_mode = $delivery_load->transaction == 'RETURN' ? 'NONE' : $delivery_load->order_mode;
                 return $query->where('status', 'OPEN')

@@ -71,6 +71,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('invoices/{id}/reopened', 'Incomes\AccInvoices@reopened');
             Route::post('invoices/{id}/syncronized', 'Incomes\AccInvoices@syncronized');
             Route::get('request-order-items', 'Incomes\RequestOrders@items');
+            Route::put('request-order-items/{id}/lock', 'Incomes\RequestOrders@setLockDetail');
+            Route::put('request-order-items/{id}/unlock', 'Incomes\RequestOrders@setUnlockDetail');
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
