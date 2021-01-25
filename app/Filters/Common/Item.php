@@ -13,6 +13,22 @@ class Item extends Filter
         parent::__construct($request);
     }
 
+    public function request_order_id ($value = '') {
+        if (!strlen($value)) return $this->builder;
+        return $this->builder->whereHas('request_order_items', function($q) use($value) {
+            return $q->where('request_order_id', $value);
+        });
+    }
+
+    public function invoice_id ($value = '') {
+        if (!strlen($value)) return $this->builder;
+        return $this->builder->whereHas('delivery_order_items', function($q) use($value) {
+            return $q->whereHas('delivery_order', function($q) use ($value){
+                return $q->where('acc_invoice_id', $value);
+            });
+        });
+    }
+
     public function delivery_date ($value = '') {
         // if (!strlen($value)) return $this->builder;
         return $this->builder->whereHas('delivery_task_items', function($q) use($value) {
