@@ -68,8 +68,9 @@ class AccInvoices extends ApiController
             foreach ($request->input('delivery_orders') as $row) {
                 $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->find($row['id']);
 
-                if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
-                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                if (!$delivery_order) return $this->error('Delivery undefined! [ID: #'. $row['id'] .']');
+                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                if ($delivery_order->is_internal) $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');
 
                 $delivery_order->acc_invoice_id = $acc_invoice->id;
                 $delivery_order->save();
@@ -172,10 +173,13 @@ class AccInvoices extends ApiController
                 foreach ($request_order->delivery_orders as $delivery_order)
                 {
                     if ($delivery_order->acc_invoice && $delivery_order->acc_invoice->id != $id) {
-                        return $this->error('Delivery has been invoiced [SJDO: '. $delivery_order->fullnumber .']');
+                        return $this->error('Delivery has been invoiced ['. $delivery_order->fullnumber .']');
                     }
                     if ($delivery_order->status !== 'CONFIRMED') {
-                        return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                        return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                    }
+                    if ($delivery_order->is_internal) {
+                        return $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');
                     }
 
                     $delivery_order->acc_invoice_id = $acc_invoice->id;
