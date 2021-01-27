@@ -62,7 +62,7 @@ class CategoryItemPrices extends ApiController
 
         $category_item_price->update($request->input());
 
-        $category_item_price->setCommentLog("CategoryItemPrice [$category_item_price->name] has been updated!");
+        $category_item_price->setCommentLog("Category Price [$category_item_price->name] has been updated!");
 
         $this->DATABASE::commit();
 
@@ -82,8 +82,6 @@ class CategoryItemPrices extends ApiController
         $category_item_price->setCommentLog("CategoryItemPrice [$category_item_price->name] has been deleted!");
 
         $this->DATABASE::commit();
-
-        $this->error('LOLOS');
 
         return response()->json(['success' => true]);
     }
