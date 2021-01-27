@@ -24,8 +24,9 @@ class Customer extends Model
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
         'bank_account', 'npwp', 'pkp', 'with_ppn', 'with_pph', 'ppn', 'sen_service', 'exclude_service', 'bounded_service', 'description', 'enable',
-        'invoice_mode', 'invoice_request_required', 'delivery_mode',
-        'delivery_manual_allowed', 'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
+        'invoice_mode', 'invoice_request_required', 'invoice_category_price',
+        'delivery_mode', 'delivery_manual_allowed',
+        'order_mode', 'order_manual_allowed', 'order_monthly_actived', 'order_lots'
     ];
 
     protected $appends = [ 'address_raw', 'is_invoice_request' ];
@@ -51,6 +52,10 @@ class Customer extends Model
 
     public function customer_items() {
         return $this->hasMany('App\Models\Common\Item');
+    }
+
+    public function category_item_prices() {
+        return $this->hasMany('App\Models\Common\CategoryItemPrice');
     }
 
     public function province()

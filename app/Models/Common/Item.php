@@ -37,7 +37,7 @@ class Item extends Model
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
         'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'price',
-        'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'description', 'enable',
+        'category_item_price_id', 'type_item_id', 'size_id', 'unit_id', 'category_item_price_id', 'description', 'enable',
         'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'estimate_begin_date',
         'project', 'project_number', 'sample'
     ];
@@ -117,6 +117,11 @@ class Item extends Model
     public function item_units()
     {
         return $this->hasMany('App\Models\Common\ItemUnit');
+    }
+
+    public function category_item_price ()
+    {
+        return $this->belongsTo('App\Models\Common\CategoryItemPrice');
     }
 
     public function item_stocks()

@@ -60,6 +60,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
             Route::apiResource('rutes', 'Common\Rutes');
+            Route::apiResource('category-item-prices', 'Common\CategoryItemPrices');
         });
 
         Route::prefix('incomes')->name('incomes.')->group(function () {

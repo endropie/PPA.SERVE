@@ -12,33 +12,41 @@ class AccInvoiceObserver
         $mode = $model->customer->invoice_mode;
         $serviceModel = (boolean) ($record['is_model_service'] ?? false);
 
+        $isPriceCategory = $model->customer->invoice_category_price;
+
         $detailItems = $model->delivery_items
-        ->sortBy(function ($detail) {
-            return $detail['item']['code'];
+        ->sortBy(function ($detail) use ($isPriceCategory) {
+            return $detail['item'][ $isPriceCategory ? 'category_item_price_id' : 'code'];
         })
-        ->groupBy('item_id')
+        ->groupBy($isPriceCategory ? 'category_item_price_id' : 'item_id')
         ->values();
 
-        $detailItems = $detailItems->map(function ($details, $key) use ($mode, $serviceModel, $detailItems) {
+
+        $detailItems = $detailItems->map(function ($details, $key) use ($mode, $serviceModel, $isPriceCategory, $detailItems) {
 
             $quantity = collect($details)->sum('quantity');
             $detail = $details->first();
 
-            $detailName = $detail->item->part_name;
+            if ($isPriceCategory && !$detail->item->category_item_price) abort(501, "INVOICED FAILED. ". $detail->item->part_name ." [#". $detail->item->id ."] not has category price");
+
+            $detailName = $isPriceCategory ? $detail->item->category_item_price->name : $detail->item->part_name;
             $subnameMode = setting()->get('item.subname_mode', null);
             $subnameLabel = setting()->get('item.subname_label', null);
-            $detailNotes = !$subnameMode ? null : (string) $subnameLabel ." ". $detail->item->part_subname;
+            $detailNotes = !$subnameMode || $isPriceCategory ? null : (string) $subnameLabel ." ". $detail->item->part_subname;
 
             $unit = ucfirst($detail->item->unit->code);
 
             $useTax1 = (boolean) $detail->item->customer->with_ppn;
             $useTax3 = (boolean) $detail->item->customer->with_pph;
 
-            if ($detail->item->part_name != $detail->item->part_number) $detailName .= " (".$detail->item->part_number.")";
+            // if ($detail->item->part_name != $detail->item->part_number) $detailName .= " (".$detail->item->part_number.")";
 
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
-            $price = (double) round($detail->item->price, 7);
+            $price = (double) ($isPriceCategory
+                ? round($detail->item->category_item_price->price, 7)
+                : round($detail->item->price, 7)
+            );
 
             if ($mode == 'SUMMARY') {
 

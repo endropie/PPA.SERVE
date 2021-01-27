@@ -291,7 +291,7 @@ class Items extends ApiController
         $this->DATABASE::beginTransaction();
         $with = [
             'customer','brand','category_item', 'type_item', 'size', 'unit',
-            'item_stockables'
+            'item_stockables', 'category_item_price'
         ];
         $item = Item::withSampled()->with(array_merge($with, ['item_prelines.line', 'item_units']))->findOrFail($id);
         $item->is_editable = (!$item->is_related);
