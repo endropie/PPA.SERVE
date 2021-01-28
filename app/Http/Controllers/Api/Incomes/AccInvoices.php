@@ -246,14 +246,10 @@ class AccInvoices extends ApiController
 
         if ($acc_invoice->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be INVOICED');
 
-        // $this->error('ACCURATE PUSHER');
-
         $response = $acc_invoice->accurate()->push();
         if (!$response['s']) {
             return $this->error($response['d']);
         }
-
-        $this->error('-- END ACCURATE PUSHER --');
 
         $acc_invoice->invoiced_number = $response['r']['number'];
         $acc_invoice->save();
