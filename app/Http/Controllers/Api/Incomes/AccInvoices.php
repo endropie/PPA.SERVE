@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
+use App\Filters\Filter;
 use App\Http\Requests\Request as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\AccInvoice as Filters;
@@ -109,11 +110,11 @@ class AccInvoices extends ApiController
         return response()->json($acc_invoice);
     }
 
-    public function show($id)
+    public function show($id, Filter $filter)
     {
-        $acc_invoice = AccInvoice::with(['customer','request_orders','delivery_orders'])->findOrFail($id);
+        $acc_invoice = AccInvoice::filter($filter)->findOrFail($id);
 
-        $acc_invoice->setAppends(['deliveries', 'has_relationship']);
+        $acc_invoice->setAppends(['has_relationship']);
 
         return response()->json($acc_invoice);
     }
