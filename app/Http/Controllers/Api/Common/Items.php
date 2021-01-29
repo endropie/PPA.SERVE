@@ -72,16 +72,28 @@ class Items extends ApiController
 
         if (!$invoice = AccInvoice::find(request('invoice_id'))) return $this->error('Filter "INVOICE" is required!');
         if (!$item = Item::find(request('item_id'))) return $this->error('Filter "PART" is required!');
-        $request_order = request('request_order_id') ?  RequestOrder::findOrFail(request('request_order_id')) : null;
+        $request_order = request('request_order_id') ? RequestOrder::findOrFail(request('request_order_id')) : null;
 
         $incoming_good_items = IncomingGoodItem::where('item_id', $item->id)
         ->whereHas('request_order_item', function($q) use ($invoice, $request_order) {
             return $q
-            ->when($request_order, function($q) use ($request_order) {
-                $q->where('request_order_id', $request_order->id);
-            })
-            ->whereHas('request_order', function($q) use ($invoice) {
-              return $q->where('acc_invoice_id', $invoice->id);
+            ->when($request_order,
+                function($q) use ($request_order) {
+                    return $q->where('request_order_id', $request_order->id);
+                },
+                function($q) use ($invoice) {
+                    $q->when($invoice->request_orders->count(),
+                        function($q) use ($invoice) {
+                            return $q->whereIn('request_order_id', $invoice->request_orders->pluck('id'));
+                        },
+                        function($q) use ($invoice) {
+                            return $q->whereHas('delivery_order_items', function($q) use ($invoice) {
+                                return $q->whereHas('delivery_order', function($q) use ($invoice) {
+                                return $q->where('acc_invoice_id', $invoice->id);
+                                });
+                            });
+                        }
+                    );
             });
           })
           ->oldest()->get()->map(function ($item) {
