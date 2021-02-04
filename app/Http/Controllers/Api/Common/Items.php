@@ -7,8 +7,10 @@ use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
 use App\Models\Common\ItemStockable;
+use App\Models\Income\AccInvoice;
 use App\Models\Income\DeliveryInternalItem;
 use App\Models\Income\DeliveryOrderItem;
+use App\Models\Income\RequestOrder;
 use App\Models\Warehouse\IncomingGoodItem;
 
 class Items extends ApiController
@@ -62,6 +64,88 @@ class Items extends ApiController
         }
 
         return response()->json($items);
+    }
+
+    public function invoice_cards()
+    {
+        $stockards = collect();
+
+        if (!$invoice = AccInvoice::find(request('invoice_id'))) return $this->error('Filter "INVOICE" is required!');
+        if (!$item = Item::find(request('item_id'))) return $this->error('Filter "PART" is required!');
+        $request_order = request('request_order_id') ? RequestOrder::findOrFail(request('request_order_id')) : null;
+
+        $incoming_good_items = IncomingGoodItem::where('item_id', $item->id)
+        ->whereHas('request_order_item', function($q) use ($invoice, $request_order) {
+            return $q
+            ->when($request_order,
+                function($q) use ($request_order) {
+                    return $q->where('request_order_id', $request_order->id);
+                },
+                function($q) use ($invoice) {
+                    $q->when($invoice->request_orders->count(),
+                        function($q) use ($invoice) {
+                            return $q->whereIn('request_order_id', $invoice->request_orders->pluck('id'));
+                        },
+                        function($q) use ($invoice) {
+                            return $q->whereHas('delivery_order_items', function($q) use ($invoice) {
+                                return $q->whereHas('delivery_order', function($q) use ($invoice) {
+                                return $q->where('acc_invoice_id', $invoice->id);
+                                });
+                            });
+                        }
+                    );
+            });
+          })
+          ->oldest()->get()->map(function ($item) {
+            $item['date'] = $item->incoming_good->date;
+            $item['number'] = $item->incoming_good->fullnumber;
+            $item['indexed_number'] = $item->incoming_good->indexed_number;
+            $item['unit'] = $item->unit;
+            $item['status'] = $item->status;
+
+            return $item;
+        });
+
+        $delivery_order_items = DeliveryOrderItem::where('item_id', $item->id)
+          ->whereHas('delivery_order', function($q) use ($invoice, $request_order) {
+            return $q
+            ->when($request_order, function($q) use ($request_order) {
+                $q->where('request_order_id', $request_order->id);
+            })
+            ->where('acc_invoice_id', $invoice->id);
+          })
+          ->oldest()->get()->map(function ($item) {
+            $item['date'] = $item->delivery_order->date;
+            $item['number'] = $item->delivery_order->fullnumber;
+            $item['indexed_number'] = $item->delivery_order->indexed_number;
+            $item['unit'] = $item->unit;
+            $item['status'] = $item->status;
+
+            return $item;
+        });
+
+        $stockards = $stockards
+            ->merge($incoming_good_items)
+            ->merge($delivery_order_items)
+            ->map(function($item) {
+                $item['union_key'] = $item->getTable() ."-". $item['id'];
+                $item['quantity_in'] = $item->getTable() == 'incoming_good_items' ? $item['unit_amount'] : 0;
+                $item['quantity_out'] = $item->getTable() != 'incoming_good_items' ? $item['unit_amount'] : 0;
+
+                return $item;
+            });
+
+        $rows = $stockards
+            ->sortBy('date')
+            ->values();
+
+
+        return response()->json([
+            'summary_incoming' => $stockards->sum('quantity_in'),
+            'summary_outgoing' => $stockards->sum('quantity_out'),
+            'data' => $rows,
+            'count' => $stockards->count()
+        ]);
     }
 
     public function delivery_cards()
@@ -219,7 +303,7 @@ class Items extends ApiController
         $this->DATABASE::beginTransaction();
         $with = [
             'customer','brand','category_item', 'type_item', 'size', 'unit',
-            'item_stockables'
+            'item_stockables', 'category_item_price'
         ];
         $item = Item::withSampled()->with(array_merge($with, ['item_prelines.line', 'item_units']))->findOrFail($id);
         $item->is_editable = (!$item->is_related);

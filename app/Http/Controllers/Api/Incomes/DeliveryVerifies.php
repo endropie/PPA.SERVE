@@ -61,6 +61,8 @@ class DeliveryVerifies extends ApiController
             ["quantity.lte" => "Maximum ". $delivery_verify_item->maxNewVerifyAmount() .". Part: ". $label]
         );
 
+        $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id [$label] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_verify_item);
     }
@@ -95,6 +97,8 @@ class DeliveryVerifies extends ApiController
                 ["multi_items.$key.quantity" => "numeric|gt:0|lte:". $delivery_verify_item->maxNewVerifyAmount() ],
                 ["multi_items.$key.quantity.lte" => "Maximum ". $delivery_verify_item->maxNewVerifyAmount() .". Part: ". $label ]
             );
+
+            $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id [$label] has been created!");
         }
 
         $this->DATABASE::commit();
@@ -135,6 +139,8 @@ class DeliveryVerifies extends ApiController
 
         $delivery_verify_item->update($request->input());
 
+        $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_verify_item);
     }
@@ -148,16 +154,21 @@ class DeliveryVerifies extends ApiController
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
 
-        if ($delivery_verify_item->validateDestroyVerified() != true) {
+        if ($delivery_verify_item->validateDestroyVerified() != true)
+        {
             $this->error("The `". $delivery_verify_item->item->part_name ."` not allowed to be $mode");
         }
 
-        if($mode == "VOID") {
+        if($mode == "VOID")
+        {
             $delivery_verify_item->status = "VOID";
             $delivery_verify_item->save();
         }
 
         $delivery_verify_item->delete();
+
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id has been $action !");
 
         $this->DATABASE::commit();
 

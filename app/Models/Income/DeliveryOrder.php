@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 
 class DeliveryOrder extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'indexed_number', 'revise_number', 'customer_id', 'description', 'is_internal',
@@ -112,7 +113,7 @@ class DeliveryOrder extends Model
         $revise = app('App\Models\Income\DeliveryOrder')->withTrashed()->find($this->revise_id);
         if (!$revise) return null;
 
-        return $revise->revise_number
+        return $revise->revise_id && $revise->revise_number
             ? $revise->number ." R.". (int) $revise->revise_number
             : $revise->number;
     }

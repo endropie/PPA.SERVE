@@ -5,11 +5,12 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryLoad extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'transaction', 'order_mode', 'date', 'trip_time', 'is_untriped', 'vehicle_id', 'description',
@@ -30,7 +31,7 @@ class DeliveryLoad extends Model
 
     public function delivery_orders ()
     {
-        return $this->hasMany('App\Models\Income\DeliveryOrder')->withTrashed();
+        return $this->hasMany('App\Models\Income\DeliveryOrder');
     }
 
     public function delivery_checkout ()

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Factories;
 use App\Filters\Factory\WorkProduction as Filters;
 use App\Http\Requests\Factory\WorkProduction as Request;
 use App\Http\Controllers\ApiController;
+use App\Models\Factory\WorkOrderItem;
 use App\Models\Factory\WorkProduction;
-use App\Models\Factory\WorkOrderItemLine;
 use App\Traits\GenerateNumber;
 
 class WorkProductions extends ApiController
@@ -44,23 +44,25 @@ class WorkProductions extends ApiController
 
         $multiple = $request->input('isMultiple', false) ? $request->input('multiple', 1) : 1;
         $works = collect();
+        $number =  $this->getNextWorkProductionNumber();
 
         while ($multiple > 0) {
 
-            $number =  $this->getNextWorkProductionNumber();
-            $request->merge(['number'=> $number]);
+            $request->merge(['number'=> $number . ($request->input('isMultiple', false) ? ".$multiple" : "")]);
 
             $work_production = WorkProduction::create($request->all());
 
             $rows = $request->work_production_items;
+
+
             for ($i=0; $i < count($rows); $i++) {
                 $row = $rows[$i];
                 ## create Part item on the WIP Created!
                 $detail = $work_production->work_production_items()->create($row);
 
-                if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+                if($work_order_item = WorkOrderItem::find($row['work_order_item_id'])) {
 
-                    if($work_order = $line->work_order_item->work_order) {
+                    if($work_order = $work_order_item->work_order) {
                         if ($work_order->status == 'CLOSED') {
                             $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
                         }
@@ -69,17 +71,19 @@ class WorkProductions extends ApiController
                         }
                     }
 
-                    $detail->work_order_item_line()->associate($line);
+                    $detail->work_order_item()->associate($work_order_item);
                     $detail->save();
 
-                    $line->calculate();
-                    if ($line->ismain) {
-                        $FROM = $line->work_order_item->work_order->stockist_from;
+                    $work_order_item->calculate();
+                    if (!$work_order_item->work_order->main_id) {
+                        $FROM = $work_order_item->work_order->stockist_from;
                         $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                         $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
-                        $line->work_order_item->calculate();
+                        $work_order_item->calculate();
                     }
                 }
+
+                if ($work_production->isExistFullnumber()) $this->error('GENERATE NUMBER CONFLICT!');
             }
 
             $works->push($work_production);
@@ -118,9 +122,8 @@ class WorkProductions extends ApiController
 
             $detail->item->distransfer($detail);
 
-            if($line = $detail->work_order_item_line) {
-                $line->work_order_item->calculate();
-            }
+            if($detail->work_order_item) $detail->work_order_item->calculate(false);
+
             $detail->forceDelete();
         });
 
@@ -132,9 +135,9 @@ class WorkProductions extends ApiController
             ## create Part item on the WIP Created!
             $detail = $work_production->work_production_items()->create($row);
 
-            if($line = WorkOrderItemLine::find($row['work_order_item_line_id'])) {
+            if($work_order_item = WorkOrderItem::find($row['work_order_item_id'])) {
 
-                if($work_order = $line->work_order_item->work_order) {
+                if($work_order = $work_order_item->work_order) {
                     if ($work_order->status == 'CLOSED') {
                         $this->error("[$work_order->number] has CLOSED state. Not Allowed to be UPDATED!");
                     }
@@ -143,18 +146,20 @@ class WorkProductions extends ApiController
                     }
                 }
 
-                $detail->work_order_item_line()->associate($line);
+                $detail->work_order_item()->associate($work_order_item);
                 $detail->save();
 
-                $line->calculate();
-                if ($line->ismain) {
-                    $FROM = $line->work_order_item->work_order->stockist_from;
+                $work_order_item->calculate();
+                if (!$work_order_item->work_order->main_id) {
+                    $FROM = $work_order_item->work_order->stockist_from;
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                     $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
-                    $line->work_order_item->calculate();
+                    $work_order_item->calculate();
                 }
             }
         }
+
+        if ($work_production->isExistFullnumber()) $this->error('GENERATE NUMBER CONFLICT!');
 
         $this->DATABASE::commit();
         return response()->json($work_production);
@@ -175,17 +180,15 @@ class WorkProductions extends ApiController
 
         $work_production->work_production_items->each( function ($detail) {
 
-            $line = $detail->work_order_item_line;
+            $work_order_item = $detail->work_order_item;
 
             $detail->item->distransfer($detail);
-            $detail->work_order_item_line()->associate(null);
+            $detail->work_order_item()->associate(null);
             $detail->save();
             $detail->delete();
 
-            if ($line) {
-                $line->calculate(false);
-                $line->work_order_item->calculate(false);
-            }
+            if ($work_order_item) $work_order_item->calculate(false);
+
         });
 
         $work_production->delete();

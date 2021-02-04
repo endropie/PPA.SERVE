@@ -82,6 +82,8 @@ class RequestOrders extends ApiController
 
         }
 
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -160,7 +162,8 @@ class RequestOrders extends ApiController
             }
         }
 
-        // DB::Commit => Before return function!
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -202,7 +205,9 @@ class RequestOrders extends ApiController
 
         $request_order->delete();
 
-        // DB::Commit => Before return function!
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
@@ -232,6 +237,8 @@ class RequestOrders extends ApiController
         $request_order->status = 'CLOSED';
         $request_order->save();
 
+        $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been closed!");
+
         $this->DATABASE::commit();
         return response()->json($request_order);
     }
@@ -246,6 +253,36 @@ class RequestOrders extends ApiController
 
         $this->DATABASE::commit();
         return response()->json($request_order);
+    }
+
+    public function setLockDetail($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order_item = RequestOrderItem::findOrFail($id);
+
+        if ($request_order_item->request_order->status !== 'OPEN') $this->error("The data has not OPEN status, is not allowed to be LOCK!");
+
+        $request_order_item->is_autoload = 1;
+        $request_order_item->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order_item);
+    }
+
+    public function setUnlockDetail($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $request_order_item = RequestOrderItem::findOrFail($id);
+
+        if ($request_order_item->request_order->status !== 'OPEN') $this->error("The data has not OPEN status, is not allowed to be LOCK!");
+
+        $request_order_item->is_autoload = 0;
+        $request_order_item->save();
+
+        $this->DATABASE::commit();
+        return response()->json($request_order_item);
     }
 
     public function createInvoice($id, BaseRequest $request)

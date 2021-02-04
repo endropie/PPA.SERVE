@@ -5,10 +5,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Model;
 use App\Models\WithUserBy;
 use App\Filters\Filterable;
+use App\Traits\HasCommentable;
 
 class IncomingGood extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'registration', 'date', 'time', 'transaction', 'order_mode',

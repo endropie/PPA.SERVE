@@ -19,6 +19,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         return response()->json(setting()->all());
     });
 
+    Route::apiResource('commentables', 'Commentables')->only(['index']);
+
     Route::prefix('landing')->name('landing.')->group(function () {
         Route::name('schedule-boards')->get('schedule-boards', 'Transports\ScheduleBoards@landing');
     });
@@ -54,8 +56,11 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('items/{id}/sample-validation', 'Common\Items@sampleValidation');
             Route::get('items/stockables', 'Common\Items@stockables');
             Route::get('items/delivery-cards', 'Common\Items@delivery_cards');
+            Route::get('items/invoice-cards', 'Common\Items@invoice_cards');
             Route::apiResource('items', 'Common\Items');
             Route::apiResource('employees', 'Common\Employees');
+            Route::apiResource('rutes', 'Common\Rutes');
+            Route::apiResource('category-item-prices', 'Common\CategoryItemPrices');
         });
 
         Route::prefix('incomes')->name('incomes.')->group(function () {
@@ -68,6 +73,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::post('invoices/{id}/reopened', 'Incomes\AccInvoices@reopened');
             Route::post('invoices/{id}/syncronized', 'Incomes\AccInvoices@syncronized');
             Route::get('request-order-items', 'Incomes\RequestOrders@items');
+            Route::put('request-order-items/{id}/lock', 'Incomes\RequestOrders@setLockDetail');
+            Route::put('request-order-items/{id}/unlock', 'Incomes\RequestOrders@setUnlockDetail');
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');

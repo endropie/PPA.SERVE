@@ -31,11 +31,6 @@ class WorkOrderItem extends Model
 
     protected $relationships = [];
 
-    public function work_order_item_lines()
-    {
-        return $this->hasMany('App\Models\Factory\WorkOrderItemLine')->withTrashed();
-    }
-
     public function packing_items()
     {
         return $this->belongsToMany('App\Models\Factory\PackingItem', 'packing_item_orders');
@@ -127,28 +122,18 @@ class WorkOrderItem extends Model
     public function calculate($error = true)
     {
 
-        // UPDATE AMOUNT PACKING
-        $total = (double) collect(
-            $this->work_order_item_lines
-                ->filter(function($line) { return (boolean) $line->ismain; })
-                ->map(function($line) {
-                return (double) $line->work_production_items->sum('unit_amount');
-                })
-        )->sum();
+        $total = (double) $this->work_production_items->sum('unit_amount');
+        $finsih = (double) $this->packing_item_orders->sum('amount_finish');
+        $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
 
         $this->amount_process = $total;
+        $this->amount_packing = $finsih + $faulty;
         $this->save();
+
 
         if($error && round($this->unit_amount) < round($this->amount_process)) {
             abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");
         }
-
-        ## UPDATE AMOUNT PACKING
-        $finsih = (double) $this->packing_item_orders->sum('amount_finish');
-        $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
-
-        $this->amount_packing = $finsih + $faulty;
-        $this->save();
 
         if($error && round($this->amount_process) < round($this->amount_packing)) {
             abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");

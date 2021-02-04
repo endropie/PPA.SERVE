@@ -51,7 +51,7 @@ class DeliveryOrder extends Filter
 
     public function invoicing($order = 'true')
     {
-        return $this->builder->where('transaction', 'REGULER')
+        return $this->builder->where('transaction', 'REGULER')->where('is_internal', 0)
             ->where(function($q) {
                 return $q->whereNull('acc_invoice_id')
                 ->when(request('or_acc_invoice_id'), function($q) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Incomes;
 
+use App\Filters\Filter;
 use App\Http\Requests\Request as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Income\AccInvoice as Filters;
@@ -68,8 +69,9 @@ class AccInvoices extends ApiController
             foreach ($request->input('delivery_orders') as $row) {
                 $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->find($row['id']);
 
-                if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
-                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                if (!$delivery_order) return $this->error('Delivery undefined! [ID: #'. $row['id'] .']');
+                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                if ($delivery_order->is_internal) $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');
 
                 $delivery_order->acc_invoice_id = $acc_invoice->id;
                 $delivery_order->save();
@@ -108,11 +110,11 @@ class AccInvoices extends ApiController
         return response()->json($acc_invoice);
     }
 
-    public function show($id)
+    public function show($id, Filter $filter)
     {
-        $acc_invoice = AccInvoice::with(['customer','request_orders','delivery_orders'])->findOrFail($id);
+        $acc_invoice = AccInvoice::filter($filter)->findOrFail($id);
 
-        $acc_invoice->setAppends(['deliveries', 'has_relationship']);
+        $acc_invoice->setAppends(['has_relationship']);
 
         return response()->json($acc_invoice);
     }
@@ -172,10 +174,13 @@ class AccInvoices extends ApiController
                 foreach ($request_order->delivery_orders as $delivery_order)
                 {
                     if ($delivery_order->acc_invoice && $delivery_order->acc_invoice->id != $id) {
-                        return $this->error('Delivery has been invoiced [SJDO: '. $delivery_order->fullnumber .']');
+                        return $this->error('Delivery has been invoiced ['. $delivery_order->fullnumber .']');
                     }
                     if ($delivery_order->status !== 'CONFIRMED') {
-                        return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                        return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                    }
+                    if ($delivery_order->is_internal) {
+                        return $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');
                     }
 
                     $delivery_order->acc_invoice_id = $acc_invoice->id;
@@ -196,7 +201,7 @@ class AccInvoices extends ApiController
 
         $acc_invoice = AccInvoice::findOrFail($id);
 
-        if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be RE-OPEN');
+        // if ($acc_invoice->status !== 'INVOICED') $this->error('The data has INVOICED state, Not allowed to be DELETED');
 
         if ($acc_invoice->accurate_model_id)
         {

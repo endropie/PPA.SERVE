@@ -87,6 +87,8 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->create($row);
         }
 
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_order);
     }
@@ -113,6 +115,11 @@ class DeliveryOrders extends ApiController
         foreach ($request->delivery_order_items as $row) {
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
+
+            if (round($detail->unit_amount) > round($detail->item->stock('FG')->total)) {
+                return $this->error("AMOUNT PART #". $detail->item->id ." [". $detail->item->part_name ."] IS NOT VALID");
+            }
+
             $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
         }
 
@@ -124,6 +131,8 @@ class DeliveryOrders extends ApiController
         $delivery_order->internal_reason_id = $request->internal_reason_id;
         $delivery_order->internal_reason_description = $request->internal_reason_description;
         $delivery_order->save();
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!");
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
@@ -179,6 +188,8 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->updateOrCreate(['id' => $row['id']], $row);
         }
 
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_order);
     }
@@ -218,6 +229,9 @@ class DeliveryOrders extends ApiController
         $delivery_order->save();
 
         $delivery_order->delete();
+
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been $action !");
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
@@ -264,6 +278,8 @@ class DeliveryOrders extends ApiController
         $delivery_order->save();
 
         if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been confirmed!");
 
         $this->DATABASE::commit();
         return $this->show($delivery_order->id);
@@ -362,11 +378,10 @@ class DeliveryOrders extends ApiController
             }
 
             $delivery_order->request_order_id = $partition["request_order_id"];
-            // $delivery_order->outgoing_good_id = $request->outgoing_good_id;
-            // $delivery_order->delivery_load_id = $request->delivery_load_id;
             $delivery_order->revise_id = $revise->id;
             $delivery_order->save();
 
+            $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn revision $revise->fullnumber.");
         }
 
         $revise->request_order()->dissociate();
@@ -375,6 +390,8 @@ class DeliveryOrders extends ApiController
         $revise->reason_description = $request->get('reason_description', null);
         $revise->save();
         $revise->delete();
+
+        $revise->setCommentLog("SJ Delivery [$revise->fullnumber] has been revised!");
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
@@ -472,10 +489,10 @@ class DeliveryOrders extends ApiController
         }
 
         $delivery_order->request_order_id = $request->request_order_id;
-        // $delivery_order->outgoing_good_id = $request->outgoing_good_id;
-        // $delivery_order->delivery_load_id = $request->delivery_load_id;
         $delivery_order->revise_id = $revise->id;
         $delivery_order->save();
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn revision [$revise->fullnumber]");
 
         $revise->request_order()->dissociate();
         $revise->status = 'REVISED';
@@ -483,6 +500,8 @@ class DeliveryOrders extends ApiController
         $revise->reason_description = $request->get('reason_description', null);
         $revise->save();
         $revise->delete();
+
+        $revise->setCommentLog("SJ Delivery [$revise->fullnumber] has been revised!");
 
         $this->DATABASE::commit();
 
@@ -517,10 +536,11 @@ class DeliveryOrders extends ApiController
         ## New delivery order of partitions
         foreach ($request->partitions as $key => $partition) {
             ## Auto generate number of revision
-            $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
+            $number = $this->getNextSJDeliveryNumber($revise->date);
 
             $request->merge([
-                'revise_number'=> ($max + 1),
+                'number' => $number,
+                'revise_number'=> null,
                 'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);
@@ -569,6 +589,7 @@ class DeliveryOrders extends ApiController
             $delivery_order->revise_id = $revise->id;
             $delivery_order->save();
 
+            $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn revision [$revise->fullnumber]");
         }
 
         $revise->status = 'REVISED';
@@ -576,6 +597,8 @@ class DeliveryOrders extends ApiController
         $revise->reason_description = $request->get('reason_description', null);
         $revise->save();
         $revise->delete();
+
+        $revise->setCommentLog("SJ Delivery [$revise->fullnumber] has been revised!");
 
         $this->DATABASE::commit();
         return response()->json($delivery_order);
@@ -592,6 +615,8 @@ class DeliveryOrders extends ApiController
         if ($request_order->order_mode == "NONE" && $unconfirm->count() == 0 && $delivered) {
             $request_order->status = 'CLOSED';
             $request_order->save();
+
+            $request_order->setCommentLog("SO [$request_order->fullnumber] has been closed!");
         }
     }
 }

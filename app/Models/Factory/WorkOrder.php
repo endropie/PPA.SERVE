@@ -13,14 +13,15 @@ class WorkOrder extends Model
     use Filterable, SoftDeletes, WithUserBy, WithStateable;
 
     protected $fillable = [
-        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'stockist_direct', 'mode_line', 'description',
+        'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'stockist_direct', 'mode_line', 'description', 'main_id'
     ];
 
     protected $appends = ['fullnumber'];
 
     protected $relationships = [
         'work_order_items.packing_item_orders',
-        'work_order_items.work_order_item_lines.work_production_items',
+        'work_order_items.work_production_items',
+        'sub_work_orders.work_order_items.work_production_items',
     ];
 
     protected $hidden = ['updated_at'];
@@ -29,9 +30,12 @@ class WorkOrder extends Model
         return $this->hasMany('App\Models\Factory\WorkOrderItem')->withTrashed();
     }
 
-    public function work_order_item_lines() {
-        return $this->hasManyThrough('App\Models\Factory\WorkOrderItemLine', 'App\Models\Factory\WorkOrderItem')
-                    ->withTrashed();
+    public function sub_work_orders() {
+        return $this->hasMany('App\Models\Factory\WorkOrder', 'main_id');
+    }
+
+    public function work_production_items() {
+        return $this->hasManyThrough('App\Models\Factory\WorkProductionItem', 'App\Models\Factory\WorkProduction');
     }
 
     public function line() {

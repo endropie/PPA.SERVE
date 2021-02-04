@@ -32,6 +32,17 @@ class RequestOrder extends Filter
             });
     }
 
+    public function delivery_invoice_id($value) {
+        return $this->builder
+            ->whereHas('request_order_items', function($q) use($value) {
+                return $q->whereHas('delivery_order_items', function($q) use($value) {
+                    $invoice = \App\Models\Income\AccInvoice::find($value);
+                    $ids = $invoice ? $invoice->acc_invoice_items->pluck('id') : [];
+                    return $q->whereIn('id', $ids);
+                });
+            });
+    }
+
     public function sort_counter_invoiced($order = '') {
         return $this->builder->select('request_orders.*',
             \DB::raw("(SELECT COUNT(*) FROM delivery_orders WHERE request_orders.id = delivery_orders.request_order_id AND delivery_orders.acc_invoice_id IS NOT NULL) as fieldsort"))

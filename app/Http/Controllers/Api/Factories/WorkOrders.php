@@ -4,20 +4,16 @@ namespace App\Http\Controllers\Api\Factories;
 
 use App\Filters\Factory\WorkOrder as Filter;
 use App\Filters\Factory\WorkOrderItem as FilterItem;
-use App\Filters\Factory\WorkOrderItemLine as FilterItemLine;
 use App\Http\Requests\Factory\WorkOrder as Request;
 use App\Http\Controllers\ApiController;
-use App\Models\Factory\PackingItem;
 use App\Models\Factory\WorkOrder;
 use App\Models\Factory\WorkOrderItem;
-use App\Models\Factory\WorkOrderItemLine;
-use App\Models\Factory\WorkProductionItem;
 use App\Traits\GenerateNumber;
 class WorkOrders extends ApiController
 {
     use GenerateNumber;
 
-    public function index(Filter $filter, FilterItem $filterItem, FilterItemLine $filterItemLine)
+    public function index(Filter $filter, FilterItem $filterItem)
     {
         switch (request('mode')) {
             case 'all':
@@ -26,17 +22,12 @@ class WorkOrders extends ApiController
 
             case 'datagrid':
             $work_orders = WorkOrder::with(['line',
-              'work_order_items.item',
-              'work_order_items.work_order_item_lines'
+              'work_order_items.item'
             ])->filter($filter)->get();
             break;
 
             case 'items':
             $work_orders = WorkOrderItem::with(['item','work_order'])->filter($filterItem)->get();
-            break;
-
-            case 'lines':
-            $work_orders = WorkOrderItemLine::with(['work_order_item.item','work_order_item.work_order'])->filter($filterItemLine)->get();
             break;
 
             default:
@@ -52,7 +43,7 @@ class WorkOrders extends ApiController
         return response()->json($work_orders);
     }
 
-    public function items(Filter $filter, FilterItemLine $filter_item_line)
+    public function items(FilterItem $filter)
     {
         switch (request('mode')) {
             case 'all':
@@ -60,9 +51,7 @@ class WorkOrders extends ApiController
             break;
 
             default:
-                $work_order_items = WorkOrderItemLine::with(['line', 'work_order_item.work_order.shift', 'work_order_item.item', 'work_order_item.unit'])
-                  ->filter($filter_item_line)
-                  ->latest()->collect();
+                $work_order_items = WorkOrderItem::with(['work_order.shift', 'item', 'unit'])->filter($filter)->latest()->collect();
 
                 $work_order_items->getCollection()->transform(function($row) {
                     return $row;
@@ -82,9 +71,7 @@ class WorkOrders extends ApiController
             ->filter($filter)->get();
 
             $work_order_lines = $work_order_lines
-                ->groupBy(function($item, $key){
-                    return $item["line_id"]."-".$item["stockist_from"]."-".$item["shift_id"];
-                })
+                ->groupBy(function($item, $key){ return $item["line_id"]."-".$item["shift_id"]; })
                 ->values()
                 ->map(function ($rows) {
                     return array_merge($rows->first()->toArray(), [
@@ -94,11 +81,8 @@ class WorkOrders extends ApiController
                         ]);
 
                 })
-                ->sortBy(function ($item) {
-                    return $item['shift_id'] ."-". $item['line_id'];
-                })
+                ->sortBy(function ($item) { return $item['shift_id'] ."-". $item['line_id']; })
                 ->values();
-
 
         return response()->json($work_order_lines);
     }
@@ -143,16 +127,11 @@ class WorkOrders extends ApiController
             if (!$work_order->stockist_direct) {
                 $FROM = $work_order->stockist_from;
                 $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
-
-                $row_lines = $row['work_order_item_lines'];
-                if($row_lines) {
-                    for ($j=0; $j < count($row_lines); $j++) {
-                        $row_line = $row_lines[$j];
-                        if($j == 0) $row_line["ismain"] = 1;
-                        $detail->work_order_item_lines()->create($row_line);
-                    }
-                }
             }
+        }
+
+        if (!$work_order->stockist_direct) {
+            $this->storeSublines($work_order);
         }
 
         $this->DATABASE::commit();
@@ -163,15 +142,12 @@ class WorkOrders extends ApiController
     {
         switch (request('mode')) {
             case 'prelines':
-                $with = ['work_order_item_lines.line'];
+                $with = [];
                 break;
 
             default:
                 $with = [
-                    'work_order_items.work_order_item_lines.line',
-                    'work_order_items.work_order_item_lines.work_production_items.work_production',
-                    'work_order_items.work_order_item_lines',
-                    // 'work_order_items.packing_items.packing',
+                    'work_order_items.work_production_items.work_production',
                     'work_order_items.packing_item_orders.packing_item.packing',
                 ];
                 break;
@@ -213,8 +189,6 @@ class WorkOrders extends ApiController
 
         foreach ($work_order->work_order_items as $detail) {
             $detail->item->distransfer($detail);
-
-            $detail->work_order_item_lines()->forceDelete();
             $detail->forceDelete();
         }
 
@@ -223,21 +197,15 @@ class WorkOrders extends ApiController
 
             $detail = $work_order->work_order_items()->create($row);
 
-
             if (!$work_order->stockist_direct) {
                 ## Calculate stock on after Detail item updated!
                 $FROM = $work_order->stockist_from;
                 $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
-
-                $row_lines = $row['work_order_item_lines'];
-                if($row_lines) {
-                    for ($j=0; $j < count($row_lines); $j++) {
-                        $row_line = $row_lines[$j];
-                        if($j == 0) $row_line["ismain"] = 1;
-                        $detail->work_order_item_lines()->create($row_line);
-                    }
-                }
             }
+        }
+
+        if (!$work_order->stockist_direct) {
+            $this->storeSublines($work_order);
         }
 
         $this->DATABASE::commit();
@@ -258,81 +226,18 @@ class WorkOrders extends ApiController
 
         foreach ($work_order->work_order_items as $detail) {
             $detail->item->distransfer($detail);
-            $detail->work_order_item_lines()->delete();
             $detail->delete();
+        }
+
+        foreach ($work_order->sub_work_orders as $sub_work_order) {
+            $sub_work_order->work_order_items()->delete();
+            $sub_work_order->delete();
         }
 
         $work_order->delete();
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
-    }
-
-    public function revision(Request $request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $revise = WorkOrder::findOrFail($id);
-
-        if ($revise->trashed()) $this->error("[$revise->number] has trashed. Not Allowed to REVISION!");
-        if ($revise->is_relationship) $this->error("[$revise->number] has relationship. Not Allowed to REVISION!");
-
-        $revise = WorkOrder::findOrFail($id);
-        foreach ($revise->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
-            $detail->work_order_item_lines()->delete();
-            $detail->delete();
-        }
-
-        if($request->number) {
-            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
-            $request->merge(['revise_number' => ($max + 1)]);
-        }
-
-        $work_order = WorkOrder::create($request->all());
-        if($request->number) {
-            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
-            $work_order->revise_number = ($max + 1);
-            $work_order->save();
-
-            $work_order->moveState('OPEN');
-        }
-
-        $rows = $request->work_order_items ?? [];
-
-        foreach ($work_order->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
-
-            $detail->work_order_item_lines()->forceDelete();
-            $detail->forceDelete();
-        }
-
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-
-            $detail = $work_order->work_order_items()->create($row);
-
-
-            if (!$work_order->stockist_direct) {
-                ## Calculate stock on after Detail item updated!
-                $FROM = $work_order->stockist_from;
-                $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
-
-                $row_lines = $row['work_order_item_lines'] ?? [];
-                for ($j=0; $j < count($row_lines); $j++) {
-                    $row_line = $row_lines[$j];
-                    $detail->work_order_item_lines()->create($row_line);
-                }
-            }
-        }
-
-        $revise->moveState('REVISED');
-        $revise->revise_id = $work_order->id;
-        $revise->save();
-        $revise->delete();
-
-        $this->DATABASE::commit();
-        return response()->json($work_order);
     }
 
     public function reopen(Request $request, $id)
@@ -400,16 +305,20 @@ class WorkOrders extends ApiController
         if ($work_order->trashed()) $this->error("[$work_order->number] has trashed. Not Allowed to be CLOSED!");
         if ($work_order->status == 'CLOSED') $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CLOSED!");
         if($work_order->total_production <= 0) $this->error("WO [#$work_order->number] has not Production. Not allowed to be CLOSED!");
-        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
 
-        if ($work_order->status == 'OPEN') $this->stockRestore($work_order);
+        if (!$work_order->main_id)
+        {
+            if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
 
-        if (!$work_order->has_producted) {
-            $work_order->moveState('PRODUCTED');
-        }
+            if ($work_order->status == 'OPEN') $this->stockRestore($work_order);
 
-        if (!$work_order->has_packed) {
-            $work_order->moveState('PACKED');
+            if (!$work_order->has_producted) {
+                $work_order->moveState('PRODUCTED');
+            }
+
+            if (!$work_order->has_packed) {
+                $work_order->moveState('PACKED');
+            }
         }
 
         $work_order->moveState('CLOSED');
@@ -445,121 +354,8 @@ class WorkOrders extends ApiController
         return response()->json($work_order);
     }
 
-    public function revisionWithRelation(Request $request, $id)
+    protected function stockRestore($work_order)
     {
-        $this->DATABASE::beginTransaction();
-        $revise = WorkOrder::findOrFail($id);
-
-        $revise = WorkOrder::findOrFail($id);
-        foreach ($revise->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
-            $detail->delete();
-        }
-
-        if($request->number) {
-            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
-            $request->merge(['revise_number' => ($max + 1)]);
-        }
-
-        $work_order = WorkOrder::create($request->all());
-        if($request->number) {
-            $max = (int) WorkOrder::where('number', $request->number)->max('revise_number');
-            $work_order->revise_number = ($max + 1);
-            $work_order->save();
-
-            $work_order->moveState($revise->status);
-        }
-
-        $rows = $request->work_order_items ?? [];
-
-        foreach ($work_order->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
-
-            $detail->work_order_item_lines()->forceDelete();
-            $detail->forceDelete();
-        }
-
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-
-            $detail = $work_order->work_order_items()->create($row);
-            $detail->process = $row['process'];
-            $detail->save();
-            ## Calculate stock on after Detail item updated!
-            $FROM = $work_order->stockist_from;
-            $detail->item->transfer($detail, $detail->unit_process, 'WIP', $FROM);
-
-            $row_lines = $row['work_order_item_lines'] ?? [];
-            for ($j=0; $j < count($row_lines); $j++) {
-                $row_line = $row_lines[$j];
-                $line = $detail->work_order_item_lines()->create($row_line);
-                $row_productions = $row_line['work_production_items'] ?? [];
-                foreach ($row_productions as $row_production) {
-                    $work_production_item = WorkProductionItem::find($row_production['id']);
-                    $work_production_item->item_id = $detail->item_id;
-                    $work_production_item->work_order_item_line()->associate($line);
-                    $work_production_item->save();
-                }
-            }
-
-
-            $row_packing_items = $row['packing_items'] ?? [];
-            foreach ($row_packing_items as $row_packing_item) {
-                $packing_item = PackingItem::find($row_packing_item["id"]);
-                $packing_item->item->distransfer($packing_item);
-                $packing_item->update(['item_id' => $detail->item_id]);
-                $packing_item = $packing_item->fresh();
-
-                $packing_item->item->transfer($packing_item, $packing_item->unit_total, 'FG', 'WIP');
-                $NC = (double) $packing_item->packing_item_faults()->sum('quantity');
-                if ($NC > 0) $packing_item->item->transfer($packing_item, $NC, 'NC', 'WIP');
-                $packing_item->unit_faulty = $NC * $packing_item->unit_rate;
-                $packing_item->save();
-
-                $packing_item->work_order_item()->associate($detail);
-                $packing_item->save();
-            }
-
-            $detail->calculate();
-        }
-
-        ## Delete [soft] relation when nnnnot has relation!
-        $revise->work_order_items->each(function($detail) {
-            $detail->work_order_item_lines->each(function($work_order_item_line) {
-                $work_order_item_line->work_production_items->each(function($work_production_item) {
-                    $work_production_item->item->distransfer($work_production_item);
-                    $work_production_item->work_order_item_line()->associate(null);
-                    $work_production_item->save();
-                    $work_production_item->forceDelete();
-                });
-            });
-
-            $detail->packing_items->each(function($packing_item) {
-                if ($packing_item) {
-                    $packing_item->work_order_item()->associate(null);
-                    $packing_item->save();
-
-                    $packing_item->item->distransfer($packing_item);
-                    $packing_item->packing->delete();
-                    $packing_item->packing_item_faults()->delete();
-                    $packing_item->delete();
-                }
-            });
-
-
-            $detail->calculate();
-        });
-
-        $revise->moveState('REVISED');
-        $revise->revise_id = $work_order->id;
-        $revise->save();
-        $revise->delete();
-
-        $this->DATABASE::commit();
-        return response()->json($work_order);
-    }
-
-    protected function stockRestore($work_order) {
         foreach ($work_order->work_order_items as  $detail) {
             ## Calculate Over Stock Quantity at item processed!
             $amount_process = round($detail->amount_process);
@@ -570,5 +366,41 @@ class WorkOrders extends ApiController
                 $detail->item->transfer($detail, $OVER, null, 'WO'.$FROM);
             }
         }
+    }
+
+    protected function storeSublines($work_order)
+    {
+        if ($work_order->sub_work_orders->count())
+        {
+            ## REMOVE SUB WORK ORDERS
+            foreach ($work_order->sub_work_orders as $sub_work_order) {
+                foreach ($sub_work_order->work_order_items as $work_order_item) {
+                    $work_order_item->item->distransfer($work_order_item);
+                    $work_order_item->forceDelete();
+                }
+                $sub_work_order->forceDelete();
+            }
+        }
+
+        $work_order->refresh();
+
+        if ($work_order->stockist_direct) return $this->error("STORE SUBLINE FAILED. [WO IS FG DIRECT]");
+
+        foreach ($work_order->work_order_items as $work_order_item) {
+
+            $sublines = $work_order_item->item->item_prelines()->where('ismain', 0)->get();
+            foreach ($sublines as $subline) {
+                $sub_work_order = WorkOrder::firstOrcreate(['main_id' => $work_order->id, 'line_id' => $subline->line_id],
+                    array_merge($work_order->toArray(), [
+                        'main_id' => $work_order->id,
+                        'line_id' => $subline->line_id,
+                        'number' => $work_order->number . "-$subline->line_id",
+                    ])
+                );
+                $sub_work_order_item = $sub_work_order->work_order_items()->create($work_order_item->toArray());
+            }
+
+        }
+
     }
 }

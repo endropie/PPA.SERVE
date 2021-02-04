@@ -4,11 +4,12 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryVerifyItem extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'customer_id', 'date', 'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
@@ -16,7 +17,7 @@ class DeliveryVerifyItem extends Model
 
     protected $appends = ['unit_amount'];
 
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['updated_at'];
 
     protected $casts = [
         'unit_rate' => 'double',

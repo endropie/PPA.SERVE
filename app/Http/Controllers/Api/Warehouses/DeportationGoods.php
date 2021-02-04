@@ -57,7 +57,8 @@ class DeportationGoods extends ApiController
 
         }
 
-        // DB::Commit => Before return function!
+        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($deportation_good);
     }
@@ -104,6 +105,8 @@ class DeportationGoods extends ApiController
             if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
         }
 
+        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been updated!");
+
         $this->DATABASE::commit();
         return response()->json($deportation_good);
     }
@@ -133,7 +136,9 @@ class DeportationGoods extends ApiController
 
         $deportation_good->delete();
 
-        // DB::Commit => Before return function!
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $deportation_good->setCommentLog("Sales Order [$deportation_good->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
@@ -161,6 +166,8 @@ class DeportationGoods extends ApiController
         $deportation_good->status = 'REJECTED';
         $deportation_good->save();
 
+        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been Rejected!");
+
         $this->DATABASE::commit();
         return response()->json($deportation_good);
     }
@@ -185,6 +192,8 @@ class DeportationGoods extends ApiController
         $deportation_good->status = 'VALIDATED';
         $deportation_good->validated_by = $request->user()->id;
         $deportation_good->save();
+
+        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been validated!");
 
         $this->DATABASE::commit();
         return response()->json($deportation_good);
@@ -236,10 +245,14 @@ class DeportationGoods extends ApiController
         $deportation_good->status = $revise->status;
         $deportation_good->save();
 
+        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been created.\nOn Revision [$revise->fullnumber]!");
+
         $revise->status = 'REVISED';
         $revise->revise_id = $deportation_good->id;
         $revise->save();
         $revise->delete();
+
+        $revise->setCommentLog("Deportation [$revise->fullnumber] has been revised!");
 
         $this->DATABASE::commit();
         return response()->json($deportation_good);

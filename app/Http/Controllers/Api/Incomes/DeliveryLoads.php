@@ -81,6 +81,8 @@ class DeliveryLoads extends ApiController
             $this->storeDeliveryOrder($delivery_load->fresh());
         }
 
+        $delivery_load->setCommentLog("Delivery LOAD [$delivery_load->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($delivery_load);
     }
@@ -163,6 +165,9 @@ class DeliveryLoads extends ApiController
 
         $delivery_load->delete();
 
+        $action = ($mode == "VOID") ? 'voided' : 'deleted';
+        $delivery_load->setCommentLog("Delivery LOAD [$delivery_load->fullnumber] has been $action !");
+
         $this->DATABASE::commit();
 
         return response()->json(['success' => true]);
@@ -186,7 +191,7 @@ class DeliveryLoads extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function storeRequestOrder($delivery_load)
+    protected function storeRequestOrder($delivery_load)
     {
 
         $request_order = RequestOrder::where('customer_id', $delivery_load->customer_id)
@@ -259,9 +264,11 @@ class DeliveryLoads extends ApiController
 
         $delivery_order->request_order()->associate($request_order);
         $delivery_order->save();
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nFrom LOADING [$delivery_load->fullNumber].");
     }
 
-    public function storeManualDeliveryOrder($delivery_load, $request)
+    protected function storeManualDeliveryOrder($delivery_load, $request)
     {
         $request->validate([
             'request_order_id' => 'required',
@@ -299,12 +306,15 @@ class DeliveryLoads extends ApiController
         $delivery_order->request_order()->associate($request_order);
         $delivery_order->save();
 
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
     }
 
-    public function storeDeliveryOrder($delivery_load)
+    protected function storeDeliveryOrder($delivery_load)
     {
         $list = []; $over=[];
-        $request_order_items = RequestOrderItem::whereRaw('(quantity * unit_rate) > amount_delivery')
+        $request_order_items = RequestOrderItem::where('is_autoload', 0)
+            ->whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($delivery_load) {
                 $order_mode = $delivery_load->transaction == 'RETURN' ? 'NONE' : $delivery_load->order_mode;
                 return $query->where('status', 'OPEN')
@@ -359,7 +369,7 @@ class DeliveryLoads extends ApiController
         foreach ($outer as $key => $amount) {
             if (round($amount) > 0) {
                 $item = Item::find($key);
-                $label = ($item->part_number ?? $key);
+                $label = "#$key $item->part_name $item->part_subnameDELI";
                 $this->error("OVER LOADING BY PO [$label:$amount]");
             }
         }
@@ -393,6 +403,8 @@ class DeliveryLoads extends ApiController
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
                 $detail->save();
             }
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
         }
 
         foreach ($list as $RO => $rows) {
@@ -425,6 +437,8 @@ class DeliveryLoads extends ApiController
 
             $delivery_order->request_order()->associate($request_order);
             $delivery_order->save();
+
+            $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
         }
     }
 }

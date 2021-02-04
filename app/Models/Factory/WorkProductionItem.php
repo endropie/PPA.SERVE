@@ -29,9 +29,9 @@ class WorkProductionItem extends Model
         return $this->belongsTo('App\Models\Factory\WorkProduction');
     }
 
-    public function work_order_item_line()
+    public function work_order_item()
     {
-        return $this->belongsTo('App\Models\Factory\WorkOrderItemLine');
+        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
     }
 
     public function stockable()
