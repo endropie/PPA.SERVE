@@ -41,7 +41,7 @@ class IncomingGood extends Request
             'date' => 'required',
             'time' => 'required',
             'transaction' => 'required|in:REGULER,RETURN,SAMPLE,INTERNAL',
-            'registration' => 'unique:incoming_goods,registration,'. $id .',id',
+            'registration' => 'unique:incoming_goods,registration,'. $id .',id,revise_number,'.request('revise_number'),
 
             'incoming_good_items.*.quantity' => 'required',
             'incoming_good_items.*.unit_id' => 'required',

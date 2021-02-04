@@ -347,7 +347,20 @@ class IncomingGoods extends ApiController
 
         $exclude_details = collect(request('incoming_good_items'))->map(function ($item) { return $item['id']; });
 
-        $request_order = $incoming_good->request_order;
+        $request_order = $revise->request_order;
+
+        if ($request_order) {
+            $request_order->update([
+                'date'          => $incoming_good->reference_date,
+                'reference_number' => $incoming_good->reference_number,
+                'transaction'    => $incoming_good->transaction,
+                'order_mode'    => $incoming_good->order_mode,
+                'description'   => $request_order->description
+                                  ."\nNONE P/O. AUTO REVISION PO BASED ON INCOMING "
+                                  ."\nNO: $incoming_good->fullnumber "
+                                  ."\nREF: $incoming_good->reference_number ",
+            ]);
+        }
 
         $details = $revise->incoming_good_items ?? [];
         foreach ($details as $detail) {
@@ -379,15 +392,16 @@ class IncomingGoods extends ApiController
 
         $details = $incoming_good->incoming_good_items;
         foreach ($details as $detail) {
-            $request_order_item = $detail->request_order_item;
 
-            $field = collect($detail)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=> $detail->valid]);
-
-            $request_order_item = RequestOrderItem::updateOrCreate(['id' => $detail->request_order_item_id], $field->toArray());
             ## Setup unit price
-            $request_order_item->price = ($detail->item && $request_order_item->item->price)
+            $price = ($detail->item && $request_order_item->item->price)
                 ? $request_order_item->unit_rate * $request_order_item->item->price : 0;
-            $request_order_item->save();
+
+            $fields = collect($detail)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=> $detail->valid, 'price' => $price]);
+
+            $request_order_item = ($detail->request_order_item_id)
+                ? RequestOrderItem::updateOrCreate(['id' => $detail->request_order_item_id], $fields->toArray())
+                : $request_order->request_order_items()->create($fields->toArray());
 
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
@@ -415,9 +429,9 @@ class IncomingGoods extends ApiController
                 'reference_number' => $incoming_good->reference_number,
                 'transaction'    => $incoming_good->transaction,
                 'order_mode'    => $incoming_good->order_mode,
-                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING"
-                                  ."\nNO: $incoming_good->number"
-                                  ."\nREF: $incoming_good->reference_number",
+                'description'   => "NONE P/O. AUTO CREATE PO BASED ON INCOMING "
+                                  ."\nNO: $incoming_good->fullnumber "
+                                  ."\nREF: $incoming_good->reference_number ",
             ]);
             $incoming_good->request_order()->associate($request_order);
             $incoming_good->save();
