@@ -47,6 +47,7 @@
     },
     "autoload": {
         "psr-4": {
+            "Endropie\\AccurateClient\\": "packages/endropie/accurate-client/src/",
             "App\\": "app/"
         },
         "classmap": [
