@@ -39,7 +39,7 @@ class AccInvoiceObserver
             $useTax1 = (boolean) $detail->item->customer->with_ppn;
             $useTax3 = (boolean) $detail->item->customer->with_pph;
 
-            // if ($detail->item->part_name != $detail->item->part_number) $detailName .= " (".$detail->item->part_number.")";
+            if (!$isPriceCategory && $detail->item->part_name != $detail->item->part_number) $detailName .= " (".$detail->item->part_number.")";
 
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
