@@ -102,7 +102,7 @@ class DeliveryOrder extends Model
     }
 
     public function getRequestReferenceNumberAttribute() {
-        if ($request_order = app('App\Models\Income\requestOrder')->find($this->request_order_id)) {
+        if ($request_order = app('App\Models\Income\RequestOrder')->find($this->request_order_id)) {
             return (string) $request_order->reference_number;
         }
         return null;
