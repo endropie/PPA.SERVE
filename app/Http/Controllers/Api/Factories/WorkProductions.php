@@ -80,6 +80,9 @@ class WorkProductions extends ApiController
                         $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                         $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
                         $work_order_item->calculate();
+
+                        $detail->item->refresh();
+                        if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                     }
                 }
 
@@ -155,6 +158,9 @@ class WorkProductions extends ApiController
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                     $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
                     $work_order_item->calculate();
+
+                    $detail->item->refresh();
+                    if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                 }
             }
         }

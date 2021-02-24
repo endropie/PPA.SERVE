@@ -203,6 +203,20 @@ class Item extends Model
         return array_merge($stocks, ['*' => $all]);
     }
 
+    public function getTotalWorkOrderAttribute()
+    {
+        return $this->hasMany('App\Models\Factory\WorkOrderItem')
+            ->whereHas('work_order', function($q) {
+                return $q->where('status', 'OPEN')->whereNull('main_id');
+            })->get()
+            ->groupBy(function ($item) {
+                return $item->work_order->stockist_from;
+            })
+            ->map(function ($items) {
+                return $items->sum('unit_amount');
+            });
+    }
+
     public function getCustomerCodeAttribute()
     {
         $customer = $this->customer()->first();

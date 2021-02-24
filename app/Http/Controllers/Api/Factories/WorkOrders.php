@@ -127,6 +127,11 @@ class WorkOrders extends ApiController
             if (!$work_order->stockist_direct) {
                 $FROM = $work_order->stockist_from;
                 $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
+
+                $detail->item->refresh();
+                if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
+                    $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
+                }
             }
         }
 
@@ -180,6 +185,7 @@ class WorkOrders extends ApiController
 
         $work_order = WorkOrder::findOrFail($id);
 
+        if($work_order->main_id) $this->error("[$work_order->number] is Subline, is not allowed to be Updated!");
         if($work_order->is_relationship) $this->error("[$work_order->number] has RELATIONSHIP, is not allowed to be Updated!");
         if($work_order->status != "OPEN") $this->error("[$work_order->number] not OPEN state, is not allowed to be Updated!");
 
@@ -201,6 +207,10 @@ class WorkOrders extends ApiController
                 ## Calculate stock on after Detail item updated!
                 $FROM = $work_order->stockist_from;
                 $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
+                $detail->item->refresh();
+                if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
+                    $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
+                }
             }
         }
 
@@ -246,8 +256,8 @@ class WorkOrders extends ApiController
 
         $work_order = WorkOrder::findOrFail($id);
 
-        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
-        if($work_order->status == 'OPEN') $this->error("WO [#$work_order->number] has state 'OPEN'. Not allowed to be PRODUCTED!");
+        if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
+        if($work_order->status == 'OPEN') $this->error("SPK [#$work_order->number] has state 'OPEN'. Not allowed to be PRODUCTED!");
 
         $FROM = $work_order->stockist_from;
         $work_order->work_order_items->each(function($detail) use ($FROM) {
@@ -268,9 +278,9 @@ class WorkOrders extends ApiController
 
         $work_order = WorkOrder::findOrFail($id);
 
-        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
-        if($work_order->status !== 'OPEN') $this->error("WO [#$work_order->number] has state $work_order->status. Not allowed to be PRODUCTED!");
-        if($work_order->total_production <= 0) $this->error("WO [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
+        if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
+        if($work_order->status !== 'OPEN') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PRODUCTED!");
+        if($work_order->total_production <= 0) $this->error("SPK [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
 
         $this->stockRestore($work_order);
 
@@ -286,9 +296,9 @@ class WorkOrders extends ApiController
 
         $work_order = WorkOrder::findOrFail($id);
 
-        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be PACKED!");
-        if($work_order->status !== 'PRODUCTED') $this->error("WO [#$work_order->number] has state $work_order->status. Not allowed to be PACKED!");
-        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be PACKED!");
+        if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PACKED!");
+        if($work_order->status !== 'PRODUCTED') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PACKED!");
+        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("SPK [#$work_order->number] Total Packing not valid. Not allowed to be PACKED!");
 
         $work_order->moveState('PACKED');
 
@@ -304,11 +314,11 @@ class WorkOrders extends ApiController
 
         if ($work_order->trashed()) $this->error("[$work_order->number] has trashed. Not Allowed to be CLOSED!");
         if ($work_order->status == 'CLOSED') $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CLOSED!");
-        if($work_order->total_production <= 0) $this->error("WO [#$work_order->number] has not Production. Not allowed to be CLOSED!");
+        if($work_order->total_production <= 0) $this->error("SPK [#$work_order->number] has not Production. Not allowed to be CLOSED!");
 
         if (!$work_order->main_id)
         {
-            if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("WO [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
+            if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("SPK [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
 
             if ($work_order->status == 'OPEN') $this->stockRestore($work_order);
 
@@ -333,8 +343,8 @@ class WorkOrders extends ApiController
 
         $work_order = WorkOrder::findOrFail($id);
 
-        if($work_order->trashed()) $this->error("WO [#$work_order->number] has trashed. Not allowed to be VALIDATED!");
-        if($work_order->status != 'OPEN') $this->error("WO [#$work_order->number] has state 'OPEN'. Not allowed to be VALIDATED!");
+        if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be VALIDATED!");
+        if($work_order->status != 'OPEN') $this->error("SPK [#$work_order->number] has state 'OPEN'. Not allowed to be VALIDATED!");
 
         $FROM = $work_order->stockist_from;
         $DIRECT = $work_order->stockist_direct;

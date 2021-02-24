@@ -30,6 +30,9 @@ class Items extends ApiController
                     "LOAD.RET" => $item->amount_delivery_load($date, 'RETURN')
                 ];
             }
+            if (request('appends')) {
+                $item->append(explode(',', request('appends')));
+            }
             return $item;
         };
 
