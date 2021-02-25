@@ -15,7 +15,7 @@ class CreateWorkProductionsTables extends Migration
     {
         Schema::create('work_productions', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('number');
+            $table->string('number')->unique();
             $table->integer('line_id')->unsigned();
             $table->date('date');
             $table->integer('shift_id')->unsigned();
@@ -24,9 +24,6 @@ class CreateWorkProductionsTables extends Migration
 
             $table->text('description')->nullable();
             $table->string('status')->default('OPEN');
-
-            $table->integer('revise_id')->unsigned()->nullable();
-            $table->string('revise_number')->nullable();
 
             $table->integer('created_by')->nullable();
             $table->timestamps();
