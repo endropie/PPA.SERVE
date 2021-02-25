@@ -15,7 +15,7 @@ class CreateSchemaDeliveryTables extends Migration
     {
         Schema::create('delivery_tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('number');
+            $table->string('number')->unique();
             $table->enum('transaction', ['REGULER', 'RETURN']);
             $table->date('date');
             $table->time('trip_time');
@@ -60,7 +60,7 @@ class CreateSchemaDeliveryTables extends Migration
 
         Schema::create('delivery_loads', function (Blueprint $table) {
             $table->id();
-            $table->string('number');
+            $table->string('number')->unique();
             $table->date('date');
             $table->time('trip_time')->nullable();
             $table->enum('transaction', ['REGULER', 'RETURN']);

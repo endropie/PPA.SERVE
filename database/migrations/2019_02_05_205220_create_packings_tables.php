@@ -16,7 +16,7 @@ class CreatePackingsTables extends Migration
 
         Schema::create('packings', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('number');
+            $table->string('number')->unique();
             $table->integer('customer_id');
             $table->date('date');
             $table->integer('shift_id');
