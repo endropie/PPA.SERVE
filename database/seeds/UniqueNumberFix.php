@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Factory\Packing;
 use App\Models\Factory\WorkProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,17 @@ class UniqueNumberFix extends Seeder
                 $row->save();
             }
             echo "DOUBLE $production->number (". ($i+1) ." of ". $double->count() .")\n";
+        }
+
+        $double = DB::table('packings')->select('number')->groupBy('number')->havingRaw('COUNT(number) > 1')->get();
+
+        foreach ($double as $i => $packing) {
+            $rows = Packing::where('number', $packing->number)->get();
+            foreach ($rows as $key => $row) {
+                $row->number .= ".". ($key+1);
+                $row->save();
+            }
+            echo "DOUBLE $packing->number (". ($i+1) ." of ". $double->count() .")\n";
         }
 
         // DB::rollback(); print("DB::ROLLBACK\n");
