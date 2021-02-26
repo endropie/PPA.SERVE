@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Factory\Packing;
 use App\Models\Factory\WorkProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -9,42 +10,31 @@ class UniqueNumberFix extends Seeder
 	public function run()
     {
         // DB::beginTransaction();
+        $double = DB::table('work_productions')->select('number')->groupBy('number')->havingRaw('COUNT(number) > 1')->get();
 
-        $total = (int) WorkProduction::count();
-        $size = 5;
-        $limit = ($total / $size)+1;
-
-        echo "LIMIT $limit\n";
-
-        for ($i=0; $i < $limit; $i++) {
-
-            foreach (WorkProduction::offset($size*$i)->take($size)->get() as $production) {
-
-                $production->refresh();
-
-                $get = WorkProduction::where('id', '<>', $production->id)
-                    ->where('number', $production->number)
-                    ->get();
-
-                foreach ($get as $key => $row) {
-                    $row->number .= ".". ($key+2);
-                    $row->save();
-
-                    echo "PRO $row->number\n";
-                }
-
-                $get->number .= ".". (1);
-                $get->save();
-
-                echo "PRO $production->id [". $get->count() ." ]\n";
+        foreach ($double as $i => $production) {
+            $rows = WorkProduction::where('number', $production->number)->get();
+            foreach ($rows as $key => $row) {
+                $row->number .= ".". ($key+1);
+                $row->save();
             }
-        };
+            echo "DOUBLE $production->number (". ($i+1) ." of ". $double->count() .")\n";
+        }
+
+        $double = DB::table('packings')->select('number')->groupBy('number')->havingRaw('COUNT(number) > 1')->get();
+
+        foreach ($double as $i => $packing) {
+            $rows = Packing::where('number', $packing->number)->get();
+            foreach ($rows as $key => $row) {
+                $row->number .= ".". ($key+1);
+                $row->save();
+            }
+            echo "DOUBLE $packing->number (". ($i+1) ." of ". $double->count() .")\n";
+        }
 
         // DB::rollback(); print("DB::ROLLBACK\n");
 
         // DB::commit(); print("DB::COMMIT\n");
-
-        print("$size > $total ->(". ($total+$size) .")\n");
     }
 
 }
