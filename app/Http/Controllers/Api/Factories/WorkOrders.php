@@ -169,6 +169,11 @@ class WorkOrders extends ApiController
 
         $work_order->append(['is_relationship', 'has_relationship', 'has_producted', 'has_packed']);
 
+        $work_order->work_order_items->map(function($detail) {
+            $detail->item->append('total_work_order');
+            return $detail;
+        });
+
         return response()->json($work_order);
     }
 
