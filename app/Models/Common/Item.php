@@ -213,7 +213,7 @@ class Item extends Model
                 return $item->work_order->stockist_from;
             })
             ->map(function ($items) {
-                return $items->sum('unit_amount');
+                return $items->sum('unit_amount') - $items->sum('amount_process');
             });
     }
 
