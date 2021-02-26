@@ -8,7 +8,7 @@ class UniqueNumberFix extends Seeder
 {
 	public function run()
     {
-        DB::beginTransaction();
+        // DB::beginTransaction();
         $double = DB::table('work_productions')->select('number')->groupBy('number')->havingRaw('COUNT(number) > 1')->get();
 
         foreach ($double as $i => $production) {
@@ -22,7 +22,7 @@ class UniqueNumberFix extends Seeder
 
         // DB::rollback(); print("DB::ROLLBACK\n");
 
-        DB::commit(); print("DB::COMMIT\n");
+        // DB::commit(); print("DB::COMMIT\n");
     }
 
 }
