@@ -8,44 +8,21 @@ class UniqueNumberFix extends Seeder
 {
 	public function run()
     {
-        // DB::beginTransaction();
+        DB::beginTransaction();
+        $double = DB::table('work_productions')->select('number')->groupBy('number')->havingRaw('COUNT(number) > 1')->get();
 
-        $total = (int) WorkProduction::count();
-        $size = 1000;
-        $limit = ($total / $size)+1;
-
-        echo "LIMIT $limit\n";
-
-        for ($i=0; $i < $limit; $i++) {
-
-            foreach (WorkProduction::offset($size*$i)->take($size)->get() as $production) {
-
-                $production->refresh();
-
-                $get = WorkProduction::where('id', '<>', $production->id)
-                    ->where('number', $production->number)
-                    ->get();
-
-                foreach ($get as $key => $row) {
-                    $row->number .= ".". ($key+2);
-                    $row->save();
-                }
-
-                if ($get->count()) {
-                    $get->number .= ".". (1);
-                    $get->save();
-                    echo "PRO $production->id [". $get->count() ." ]\n";
-                }
+        foreach ($double as $i => $production) {
+            $rows = WorkProduction::where('number', $production->number)->get();
+            foreach ($rows as $key => $row) {
+                $row->number .= ".". ($key+1);
+                $row->save();
             }
-
-            echo "ROW [". ($limit*$i) ." => ". ($limit*($i + 1)) ." ]\n";
+            echo "DOUBLE $production->number (". ($i+1) ." of ". $double->count() .")\n";
         }
 
         // DB::rollback(); print("DB::ROLLBACK\n");
 
-        // DB::commit(); print("DB::COMMIT\n");
-
-        print("$size > $total ->(". ($total+$size) .")\n");
+        DB::commit(); print("DB::COMMIT\n");
     }
 
 }
