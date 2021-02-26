@@ -11,7 +11,7 @@ class UniqueNumberFix extends Seeder
         // DB::beginTransaction();
 
         $total = (int) WorkProduction::count();
-        $size = 5;
+        $size = 1000;
         $limit = ($total / $size)+1;
 
         echo "LIMIT $limit\n";
@@ -29,16 +29,17 @@ class UniqueNumberFix extends Seeder
                 foreach ($get as $key => $row) {
                     $row->number .= ".". ($key+2);
                     $row->save();
-
-                    echo "PRO $row->number\n";
                 }
 
-                $get->number .= ".". (1);
-                $get->save();
-
-                echo "PRO $production->id [". $get->count() ." ]\n";
+                if ($get->count()) {
+                    $get->number .= ".". (1);
+                    $get->save();
+                    echo "PRO $production->id [". $get->count() ." ]\n";
+                }
             }
-        };
+
+            echo "ROW [". ($limit*$i) ." => ". ($limit*($i + 1)) ." ]\n";
+        }
 
         // DB::rollback(); print("DB::ROLLBACK\n");
 
