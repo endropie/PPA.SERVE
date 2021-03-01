@@ -85,6 +85,12 @@ class Packings extends ApiController
             $detail->setPackingItemOrder();
         }
 
+        $over = $packing->packing_items->packing_item_orders->filter(function ($order) {
+            return round($order->work_order_item->amount_process) < round($order->work_order_item->amount_packing);
+        })->count();
+
+        if($over) $this->error("SPK Detail invalid, Try later.");
+
         $this->DATABASE::commit();
         return response()->json($packing);
     }
