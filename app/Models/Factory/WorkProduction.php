@@ -40,16 +40,12 @@ class WorkProduction extends Model
     public function isExistFullnumber()
     {
         return (boolean) self::where('number', $this->number)
-            ->where('revise_id', $this->revise_id)
-            ->where('revise_number', $this->revise_number)
-            ->where('id', "!=", $this->id)
+            ->where('id', "<>", $this->id)
             ->count();
     }
 
     public function getFullnumberAttribute()
     {
-        if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;
-
         return $this->number;
     }
 }
