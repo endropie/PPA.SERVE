@@ -28,9 +28,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::name('login')->post('login', 'Auth\Authentication@login');
     Route::name('register')->post('register', 'Auth\Authentication@register');
 
-    Route::middleware([
-        'auth:api',
-        ])->group( function(){
+    $noauth = request()->has('noauth') && env('APP_ENV', 'local') == 'local';
+    Route::middleware(($noauth ? [] : ['auth:api']))->group( function(){
         Route::post('uploads/file', 'Uploads@storeFile');
         Route::delete('uploads/file', 'Uploads@destroyFile');
         // Route::post('uploads/exist', 'Uploads@existFile');

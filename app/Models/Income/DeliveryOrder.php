@@ -18,7 +18,7 @@ class DeliveryOrder extends Model
         'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
 
-    protected $appends = ['fullnumber', 'fullnumber_index', 'fullnumber_revise'];
+    protected $appends = ['fullnumber', 'fullnumber_index', 'fullnumber_revise', 'request_reference_number'];
 
     protected $hidden = [];
 
@@ -99,6 +99,13 @@ class DeliveryOrder extends Model
         if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;
 
         return $this->number;
+    }
+
+    public function getRequestReferenceNumberAttribute() {
+        if ($request_order = app('App\Models\Income\RequestOrder')->find($this->request_order_id)) {
+            return (string) $request_order->reference_number;
+        }
+        return null;
     }
 
     public function getFullnumberIndexAttribute()

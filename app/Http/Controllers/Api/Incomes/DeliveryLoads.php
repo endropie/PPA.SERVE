@@ -144,6 +144,8 @@ class DeliveryLoads extends ApiController
             $delivery_order->save();
 
             $delivery_order->delete();
+
+            $delivery_load->setCommentLog("Delivery (SJDO) [$delivery_order->fullnumber] has been $mode on LOAD[$delivery_load->fullnumber]!");
         }
 
         if ($mode == "VOID") {

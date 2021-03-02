@@ -37,7 +37,7 @@ class Item extends Model
     protected $fillable = [
         'code', 'customer_id', 'brand_id', 'specification_id', 'part_name', 'part_alias',  'part_number',
         'load_type', 'load_capacity', 'packing_duration', 'sa_dm', 'weight', 'price',
-        'category_item_price_id', 'type_item_id', 'size_id', 'unit_id', 'category_item_price_id', 'description', 'enable',
+        'category_item_id', 'type_item_id', 'size_id', 'unit_id', 'category_item_price_id', 'description', 'enable',
         'estimate_monthly_amount', 'estimate_sadm', 'estimate_price', 'estimate_begin_date',
         'project', 'project_number', 'sample'
     ];
@@ -201,6 +201,20 @@ class Item extends Model
             if (array_search($key, ['FM','WIP','FG','NC','NCR']) > -1) $all += $stocks[$key];
         }
         return array_merge($stocks, ['*' => $all]);
+    }
+
+    public function getTotalWorkOrderAttribute()
+    {
+        return $this->hasMany('App\Models\Factory\WorkOrderItem')
+            ->whereHas('work_order', function($q) {
+                return $q->where('status', 'OPEN')->whereNull('main_id');
+            })->get()
+            ->groupBy(function ($item) {
+                return $item->work_order->stockist_from;
+            })
+            ->map(function ($items) {
+                return $items->sum('unit_amount') - $items->sum('amount_process');
+            });
     }
 
     public function getCustomerCodeAttribute()

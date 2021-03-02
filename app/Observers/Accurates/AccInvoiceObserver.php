@@ -44,20 +44,20 @@ class AccInvoiceObserver
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
             $price = (double) ($isPriceCategory
-                ? round($detail->item->category_item_price->price, 7)
-                : round($detail->item->price, 7)
+                ? $this->number_normalize($detail->item->category_item_price->price, 7)
+                : $this->number_normalize($detail->item->price, 7)
             );
 
             if ($mode == 'SUMMARY') {
 
                 if ($detail->item->customer->exclude_service) {
                     $v = (100 + $detail->item->customer->sen_service) / 100;
-                    $priceMaterial = round(ceil($price / $v * 10000) / 10000, 7);
-                    $priceService  = round($price - $priceMaterial, 7);
+                    $priceMaterial = $this->number_normalize($price / $v, 7, true);
+                    $priceService  = $this->number_normalize($price - $priceMaterial);
                 }
                 else {
-                    $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
-                    $priceService  = round($price - $priceMaterial, 7);
+                    $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
+                    $priceService  = $this->number_normalize($price - $priceMaterial, 7);
                 }
 
                 return [
@@ -73,8 +73,8 @@ class AccInvoiceObserver
             else if ($mode == 'DETAIL') {
                 $length = $detailItems->count();
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
-                $priceService  = round($price - $priceMaterial, 7);
+                $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
+                $priceService  = $this->number_normalize($price - $priceMaterial, 7);
 
                 return [
 
@@ -95,8 +95,8 @@ class AccInvoiceObserver
             }
             else if ($mode == 'SEPARATE') {
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = round(ceil($price * (1 - $senService) * 10000) / 10000, 7);
-                $priceService  = round($price - $priceMaterial, 7);
+                $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
+                $priceService  = $this->number_normalize($price - $priceMaterial, 7);
                 $detailPrice = $serviceModel ? $priceService : $priceMaterial;
                 $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
                 $detailName = ($serviceModel ? '[JASA] ' : '[MATERIAL] '). $detailName;
@@ -123,12 +123,14 @@ class AccInvoiceObserver
             else {
                 abort(501, "Invoice mode [". $detail->item->customer->invoice_mode ."] failed" );
             }
+
+
         });
 
         if ($mode == 'SUMMARY')
         {
             $key = $detailItems->count();
-            $sum = (double) $detailItems->sum('SUMMARY_JASA');
+            $sum = (double) $this->number_normalize($detailItems->sum('SUMMARY_JASA'), 7);
             $detailItems = $detailItems->push([
                 "detailItem[$key].itemNo" => 'ITEM-JASA-TOTAL',
                 "detailItem[$key].detailName" => 'JASA Part',
@@ -150,5 +152,13 @@ class AccInvoiceObserver
         ]);
 
         return array_merge($record, $detailItems);
+    }
+
+    protected function number_normalize($value, $max = 7, $ROUNDUP = false)
+    {
+        $pow = (double) pow(10, $max);
+        return strlen(explode('.', (string) $value)[1] ?? "") > $max && $ROUNDUP
+            ? round(ceil($value * $pow) / $pow, $max)
+            : round(($value * $pow) / $pow, $max);
     }
 }

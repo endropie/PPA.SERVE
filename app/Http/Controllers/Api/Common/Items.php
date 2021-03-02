@@ -8,7 +8,6 @@ use App\Http\Controllers\ApiController;
 use App\Models\Common\Item;
 use App\Models\Common\ItemStockable;
 use App\Models\Income\AccInvoice;
-use App\Models\Income\DeliveryInternalItem;
 use App\Models\Income\DeliveryOrderItem;
 use App\Models\Income\RequestOrder;
 use App\Models\Warehouse\IncomingGoodItem;
@@ -29,6 +28,9 @@ class Items extends ApiController
                     "LOAD.REG" => $item->amount_delivery_load($date, 'REGULER'),
                     "LOAD.RET" => $item->amount_delivery_load($date, 'RETURN')
                 ];
+            }
+            if (request('appends')) {
+                $item->append(explode(',', request('appends')));
             }
             return $item;
         };

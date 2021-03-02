@@ -93,6 +93,15 @@ class Item extends Filter
         });
     }
 
+    public function mode_line($value = 'ALL') {
+        $value = strtoupper($value);
+        if (!in_array($value, ['SINGLE', 'MULTI'])) return $this->builder;
+        return $this->builder->whereHas('item_prelines', function($q) use($value){
+            $a = $value == 'SINGLE' ? "=" : "<";
+            return $q->whereRaw(\DB::raw("1 $a (SELECT COUNT(*) FROM `item_prelines` WHERE `items`.`id` = `item_prelines`.`item_id`)"));
+        });
+    }
+
     public function sort_ALL($order = '') {
         $stockists = '"FM", "WO", "WIP", "FG", "NC", "NCR"';
         return $this->builder->select('items.*',
