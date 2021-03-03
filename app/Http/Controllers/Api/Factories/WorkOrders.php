@@ -264,13 +264,15 @@ class WorkOrders extends ApiController
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
         if($work_order->status == 'OPEN') $this->error("SPK [#$work_order->number] has state 'OPEN'. Not allowed to be PRODUCTED!");
 
-        $FROM = $work_order->stockist_from;
-        $work_order->work_order_items->each(function($detail) use ($FROM) {
-            $detail->item->distransfer($detail);
-            $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
-        });
+        if(!$work_order->main_id) {
+            $FROM = $work_order->stockist_from;
+            $work_order->work_order_items->each(function($detail) use ($FROM) {
+                $detail->item->distransfer($detail);
+                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
+            });
+            $work_order->stateable()->delete();
+        }
 
-        $work_order->stateable()->delete();
         $work_order->moveState('OPEN');
 
         $this->DATABASE::commit();
@@ -295,7 +297,7 @@ class WorkOrders extends ApiController
         return response()->json($work_order);
     }
 
-    public function Packed(Request $request, $id)
+    public function packed(Request $request, $id)
     {
         $this->DATABASE::beginTransaction();
 
