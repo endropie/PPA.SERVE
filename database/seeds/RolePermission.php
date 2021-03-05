@@ -22,7 +22,7 @@ class RolePermission extends Seeder
             'permissions' => ['c','r','u','d'],
 			// Common
 			'customers' => ['c','r','u','d','push'],
-			'items' => ['c','r','u','d','price','sample','reference','push'],
+			'items' => ['c','r','u','d','price','sample','reference','engineer','push'],
 			'employees' => ['c','r','u','d','reference'],
 			// Factories
 			'packings' => ['c','r','u','d','close','void'],
