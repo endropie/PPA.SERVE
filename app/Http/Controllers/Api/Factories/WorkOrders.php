@@ -190,6 +190,7 @@ class WorkOrders extends ApiController
         if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
         if(request('mode') == 'reopen') return $this->reopen($request, $id);
+        if(request('mode') == 'recalculate') return $this->recalculate($request, $id);
         if(request('mode') == 'directed') return $this->directValidated($request, $id);
 
         $this->DATABASE::beginTransaction();
@@ -280,6 +281,20 @@ class WorkOrders extends ApiController
         }
 
         $work_order->moveState('OPEN');
+
+        $this->DATABASE::commit();
+        return response()->json($work_order);
+    }
+
+    public function recalculate(Request $request, $id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $work_order = WorkOrder::findOrFail($id);
+
+        $work_order->work_order_items->each(function($detail) {
+            $detail->calculate($error = false);
+        });
 
         $this->DATABASE::commit();
         return response()->json($work_order);
