@@ -33,7 +33,13 @@ class WorkOrders extends ApiController
             default:
                 $work_orders = WorkOrder::with(['created_user', 'line', 'shift'])->filter($filter)->latest()->collect();
                 $work_orders->getCollection()->transform(function($row) {
-                    $row->append(['is_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_productions', 'summary_packings']);
+                    $row->append([
+                      'has_producted',
+                      'has_packed',
+                      'summary_items',
+                      'summary_productions',
+                      'summary_packings'
+                    ]);
                     return $row;
                 });
 
