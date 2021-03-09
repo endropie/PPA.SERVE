@@ -4,11 +4,12 @@ namespace App\Models\Factory;
 
 use App\Filters\Filterable;
 use App\Models\Model;
+use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkOrderItem extends Model
 {
-    use Filterable, SoftDeletes;
+    use Filterable, SoftDeletes, HasCommentable;
 
     protected $fillable = [
         'item_id', 'quantity', 'unit_id', 'target', 'unit_rate', 'ngratio'

@@ -33,8 +33,6 @@ class Packings extends ApiController
             default:
                 $packings = Packing::with([
                     'created_user',
-                    // 'packing_items.item'=> function($q) { $q->select(['id', 'code', 'part_number', 'part_name']); },
-                    // 'customer'=> function($q) { $q->select(['id', 'code', 'name']); },
                     'packing_items.item',
                     'customer',
                     'shift'
@@ -83,6 +81,13 @@ class Packings extends ApiController
             }
 
             $detail->setPackingItemOrder();
+
+            $detail->refresh();
+            foreach ($detail->packing_item_orders as $packing_item_order) {
+
+                $packing_item_order->work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Created. SPK Detail[#". $packing_item_order->work_order_item->id ."] Part ". $detail->item->part_name .".");
+
+            }
         }
 
         $over = $packing->packing_items->packing_item_orders->filter(function ($order) {
@@ -90,6 +95,8 @@ class Packings extends ApiController
         })->count();
 
         if($over) $this->error("SPK Detail invalid, Try later.");
+
+        $packing->setCommentLog("Packing [$packing->fullnumber] has been Created.");
 
         $this->DATABASE::commit();
         return response()->json($packing);
@@ -136,10 +143,22 @@ class Packings extends ApiController
             if($oldDetail) {
                 ## Calculate stock on before the Packing items updated!
                 $oldDetail->item->distransfer($oldDetail);
+                foreach ($oldDetail->packing_item_orders as $packing_item_order)  {
+                    if ($work_order_item = $packing_item_order->work_order_item)
+                    {
+                        if ($work_order_item->work_order_packed) abort(501, "INVALID. SPK has PACKED state.");
+
+                        $packing_item_order->forceDelete();
+
+                        $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated(remove row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
+                        $work_order_item->calculate();
+                    }
+                }
             }
 
             ## Update or Create detail row
             $newDetail = $packing->packing_items->updateOrCreate(['id' => $row['id']], $row);
+
             ## Calculate stock on after the Packing items updated!
             $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'FG', 'WIP');
 
@@ -159,10 +178,19 @@ class Packings extends ApiController
             if ($newDetail->unit_faulty > 0) {
                 $newDetail->item->transfer($newDetail, $newDetail->unit_faulty, 'NC', 'WIP');
             }
+
             $newDetail->setPackingItemOrder();
+
+            $newDetail->refresh();
+
+            foreach ($newDetail->packing_item_orders as $packing_item_order)
+            {
+                $work_order_item = $packing_item_order->work_order_item;
+                $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated (add row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
+            }
         }
 
-        // $this->error('LOLOS');
+        $packing->setCommentLog("Packing [$packing->fullnumber] has been Updated.");
 
         $this->DATABASE::commit();
         return response()->json($packing);
@@ -186,12 +214,16 @@ class Packings extends ApiController
         $detail->item->distransfer($detail);
 
         ## Delete Packing Item order.
-        $detail->packing_item_orders->each(function($item) {
-            $work_order_item = $item->work_order_item;
-            $item->delete();
+        foreach ($detail->packing_item_orders as $packing_item_order) {
+
+            $work_order_item = $packing_item_order->work_order_item;
+
+            $packing_item_order->delete();
+
+            $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been $mode. SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
 
             $work_order_item->calculate();
-        });
+        }
 
         ## Delete Packing faults.
         $detail->packing_item_faults()->delete();
@@ -199,6 +231,8 @@ class Packings extends ApiController
         $detail->delete();
 
         $packing->delete();
+
+        $packing->setCommentLog("Packing [$packing->fullnumber] has been $mode.");
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);

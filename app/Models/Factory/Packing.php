@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 
 class Packing extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
         'number', 'customer_id', 'date', 'shift_id', 'description',

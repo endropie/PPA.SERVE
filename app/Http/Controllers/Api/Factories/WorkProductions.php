@@ -60,34 +60,38 @@ class WorkProductions extends ApiController
                 ## create Part item on the WIP Created!
                 $detail = $work_production->work_production_items()->create($row);
 
-                if($work_order_item = WorkOrderItem::find($row['work_order_item_id'])) {
+                $work_order_item = WorkOrderItem::find($row['work_order_item_id']);
 
-                    if($work_order = $work_order_item->work_order) {
-                        if ($work_order->status == 'CLOSED') {
-                            $this->error("[$work_order->number] has CLOSED state. Not Allowed to be CREATED!");
-                        }
-                        if ($work_order->has_producted) {
-                            $this->error("[$work_order->number] has PRODUCTED state. Not Allowed to be CREATED!");
-                        }
-                    }
+                if(!$work_order_item) $this->error("SPK ITEM [#". $row['work_order_item_id'] ."] has not found. Not Allowed to be SPK CREATED!");
 
-                    $detail->work_order_item()->associate($work_order_item);
-                    $detail->save();
+                if ($work_order_item->work_order->status == 'CLOSED') {
+                    $this->error("[". $work_order_item->work_order->number ."] has CLOSED state. Not Allowed to be CREATED!");
+                }
 
+                if ($work_order_item->work_order->has_producted) {
+                    $this->error("[". $work_order_item->work_order->number ."] has PRODUCTED state. Not Allowed to be CREATED!");
+                }
+
+                $detail->work_order_item()->associate($work_order_item);
+                $detail->save();
+
+                $work_order_item->calculate();
+                if (!$work_order_item->work_order->main_id) {
+                    $FROM = $work_order_item->work_order->stockist_from;
+                    $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
+                    $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
                     $work_order_item->calculate();
-                    if (!$work_order_item->work_order->main_id) {
-                        $FROM = $work_order_item->work_order->stockist_from;
-                        $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
-                        $detail->item->transfer($detail, $detail->unit_amount, null, 'WO'.$FROM);
-                        $work_order_item->calculate();
 
-                        $detail->item->refresh();
-                        if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
-                    }
+                    $detail->item->refresh();
+                    if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                 }
 
                 if ($work_production->isExistFullnumber()) $this->error('GENERATE NUMBER CONFLICT!');
+
+                $detail->work_order_item->setCommentLog("Production [$work_production->fullnumber] has been Created. SPK Detail[#". $work_order_item->id ."] Part ". $detail->item->part_name .".");
             }
+
+            $work_production->setCommentLog("Production [$work_production->fullnumber] has been Created");
 
             $works->push($work_production);
             $multiple--;
@@ -121,14 +125,16 @@ class WorkProductions extends ApiController
         if ($work_production->trashed()) $this->error("[$work_production->number] has trashed. Not Allowed to be UPDATED!");
         if ($work_production->is_relationship) $this->error("[$work_production->number] has relationship. Not Allowed to be UPDATED!");
 
-        $work_production->work_production_items->each( function ($detail) {
+        foreach ($work_production->work_production_items as $detail) {
 
             $detail->item->distransfer($detail);
 
             if($detail->work_order_item) $detail->work_order_item->calculate(false);
 
+            $detail->work_order_item->setCommentLog("Production [$work_production->fullnumber] has been updated (remove row). SPK Detail[#". $detail->work_order_item->id ."] Part ". $detail->item->part_name .".");
+
             $detail->forceDelete();
-        });
+        }
 
         $work_production->update($request->input());
 
@@ -162,10 +168,14 @@ class WorkProductions extends ApiController
                     $detail->item->refresh();
                     if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                 }
+
+                $work_order_item->setCommentLog("Production [$work_production->fullnumber] has been Updated (add row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
             }
         }
 
         if ($work_production->isExistFullnumber()) $this->error('GENERATE NUMBER CONFLICT!');
+
+        $work_production->setCommentLog("Production [$work_production->fullnumber] has been UPDATED.");
 
         $this->DATABASE::commit();
         return response()->json($work_production);
@@ -184,20 +194,25 @@ class WorkProductions extends ApiController
         $work_production->status = $mode;
         $work_production->save();
 
-        $work_production->work_production_items->each( function ($detail) {
+        foreach ($work_production->work_production_items as $detail) {
 
             $work_order_item = $detail->work_order_item;
+
+            if (!$work_order_item) $this->error("Production $mode INVALID. Detail(#$detail->id) [". $detail->item->part_name ."] undefined!");
 
             $detail->item->distransfer($detail);
             $detail->work_order_item()->associate(null);
             $detail->save();
             $detail->delete();
 
-            if ($work_order_item) $work_order_item->calculate(false);
+            $work_order_item->calculate();
+            $work_order_item->setCommentLog("Production [$work_production->fullnumber] has been $mode. SPK Detail[#$work_order_item->id] Part ". $work_order_item->item->part_name .".");
 
-        });
+        }
 
         $work_production->delete();
+
+        $work_production->setCommentLog("Production [$work_production->fullnumber] has been $mode.");
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);

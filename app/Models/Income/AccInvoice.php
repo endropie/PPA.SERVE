@@ -4,11 +4,12 @@ namespace App\Models\Income;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 use Endropie\AccurateClient\Traits\AccurateTrait;
 
 class AccInvoice extends Model
 {
-    use Filterable, WithUserBy, AccurateTrait;
+    use Filterable, WithUserBy, HasCommentable, AccurateTrait;
 
     protected $accurate_model = 'sales-invoice';
 

@@ -106,6 +106,8 @@ class AccInvoices extends ApiController
             }
         }
 
+        $acc_invoice->setCommentLog("Invoice Collect [$acc_invoice->fullnumber] has been Created");
+
         $this->DATABASE::commit();
         return response()->json($acc_invoice);
     }
@@ -192,6 +194,8 @@ class AccInvoices extends ApiController
             }
         }
 
+        $acc_invoice->setCommentLog("Invoice Collect [$acc_invoice->fullnumber] has been Updated");
+
         $this->DATABASE::commit();
         return response()->json($acc_invoice);
     }
@@ -236,6 +240,8 @@ class AccInvoices extends ApiController
 
         $acc_invoice->delete();
 
+        $acc_invoice->setCommentLog("Invoice Collect [$acc_invoice->fullnumber] has been DELETED");
+
         return response()->json(['success' => true]);
     }
 
@@ -274,6 +280,8 @@ class AccInvoices extends ApiController
         $acc_invoice->status = 'INVOICED';
         $acc_invoice->save();
 
+        $acc_invoice->setCommentLog("Invoice Collect [$acc_invoice->fullnumber] has been Confirmed");
+
         $this->DATABASE::commit();
 
         return response()->json(['message' => $response['d'], 'success' => $response['s']]);
@@ -292,6 +300,8 @@ class AccInvoices extends ApiController
         $acc_invoice->service_model_id = null;
         $acc_invoice->status = 'OPEN';
         $acc_invoice->save();
+
+        $acc_invoice->setCommentLog("Invoice Collect [$acc_invoice->fullnumber] has been Re-OPEN");
 
         $this->DATABASE::commit();
 

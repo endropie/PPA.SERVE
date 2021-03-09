@@ -145,6 +145,8 @@ class WorkOrders extends ApiController
             $this->storeSublines($work_order);
         }
 
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been created!");
+
         $this->DATABASE::commit();
         return response()->json($work_order);
     }
@@ -230,6 +232,8 @@ class WorkOrders extends ApiController
             $this->storeSublines($work_order);
         }
 
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been Updated!");
+
         $this->DATABASE::commit();
         return response()->json($work_order);
     }
@@ -258,6 +262,8 @@ class WorkOrders extends ApiController
 
         $work_order->delete();
 
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been $mode!");
+
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
     }
@@ -281,6 +287,10 @@ class WorkOrders extends ApiController
         }
 
         $work_order->moveState('OPEN');
+
+
+
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been Re-OPEN!.");
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -314,6 +324,8 @@ class WorkOrders extends ApiController
 
         $work_order->moveState('PRODUCTED');
 
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been PRODUCTED!");
+
         $this->DATABASE::commit();
         return response()->json($work_order);
     }
@@ -329,6 +341,8 @@ class WorkOrders extends ApiController
         if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("SPK [#$work_order->number] Total Packing not valid. Not allowed to be PACKED!");
 
         $work_order->moveState('PACKED');
+
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been PACKED!");
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -360,6 +374,7 @@ class WorkOrders extends ApiController
         }
 
         $work_order->moveState('CLOSED');
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been CLOSED!");
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -387,6 +402,8 @@ class WorkOrders extends ApiController
         }
 
         $work_order->moveState('CLOSED');
+
+        $work_order->setCommentLog("WO [$work_order->fullnumber] has been DIRECT-VALIDATED!");
 
         $this->DATABASE::commit();
         return response()->json($work_order);
@@ -417,6 +434,8 @@ class WorkOrders extends ApiController
                     $work_order_item->forceDelete();
                 }
                 $sub_work_order->forceDelete();
+
+                $work_order->setCommentLog("WO SUBLINE [$sub_work_order->fullnumber] has been Deleted. On WO [$work_order->fullnumber] Updated");
             }
         }
 
@@ -428,17 +447,22 @@ class WorkOrders extends ApiController
 
             $sublines = $work_order_item->item->item_prelines()->where('ismain', 0)->get();
             foreach ($sublines as $subline) {
-                $sub_work_order = WorkOrder::firstOrcreate(['main_id' => $work_order->id, 'line_id' => $subline->line_id],
-                    array_merge($work_order->toArray(), [
-                        'main_id' => $work_order->id,
-                        'line_id' => $subline->line_id,
-                        'number' => $work_order->number . "-$subline->line_id",
-                    ])
-                );
-                $sub_work_order_item = $sub_work_order->work_order_items()->create($work_order_item->toArray());
+
+                $sub_work_order = WorkOrder::where('main_id', $work_order->id)->where('line_id', $subline->line_id)->first();
+
+                if (!$sub_work_order)
+                {
+                    $sub_work_order = WorkOrder::create(array_merge($work_order->toArray(), [
+                            'main_id' => $work_order->id,
+                            'line_id' => $subline->line_id,
+                            'number' => $work_order->number . "-$subline->line_id",
+                        ]));
+
+                    $sub_work_order->setCommentLog("WO SUBLINE [$sub_work_order->fullnumber] has been Created. On WO [$work_order->fullnumber]");
+                }
+
+                $sub_work_order->work_order_items()->create($work_order_item->toArray());
             }
-
         }
-
     }
 }

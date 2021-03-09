@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Filters\Filterable;
 use App\Models\Model;
 use App\Models\WithUserBy;
+use App\Traits\HasCommentable;
 
 class WorkProduction extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy;
+    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = ['number', 'line_id', 'date', 'shift_id', 'worktime', 'oprator_id', 'description'];
 

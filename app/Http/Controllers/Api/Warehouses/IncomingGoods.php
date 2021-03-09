@@ -241,7 +241,7 @@ class IncomingGoods extends ApiController
         $revise->save();
         $revise->delete();
 
-        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been restored!");
+        $incoming_good->setCommentLog("Incoming [$revise->fullnumber] has been restored!");
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);

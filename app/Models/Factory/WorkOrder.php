@@ -7,10 +7,11 @@ use App\Models\Model;
 use App\Models\WithUserBy;
 use App\Models\WithStateable;
 use App\Filters\Filterable;
+use App\Traits\HasCommentable;
 
 class WorkOrder extends Model
 {
-    use Filterable, SoftDeletes, WithUserBy, WithStateable;
+    use Filterable, SoftDeletes, WithUserBy, WithStateable, HasCommentable;
 
     protected $fillable = [
         'number', 'line_id', 'date', 'shift_id', 'stockist_from', 'stockist_direct', 'mode_line', 'description', 'main_id'
@@ -84,7 +85,6 @@ class WorkOrder extends Model
     }
 
     public function getHangerPackingAttribute() {
-        // abort(502, $this->number. "=>". $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing'));
         return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing');
     }
 

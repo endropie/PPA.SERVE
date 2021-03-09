@@ -73,10 +73,12 @@ class PackingItem extends Model
     public function setPackingItemOrder($mode = null) {
         $collection = collect([]);
 
-        foreach ($this->packing_item_orders as $item)  {
-            if ($work_order_item = $item->work_order_item) {
-                if ($work_order_item->work_order_packed) abort(501, "INVALID. Packing has Relationship.");
-                $item->forceDelete();
+        foreach ($this->packing_item_orders as $packing_item_order)  {
+            if ($work_order_item = $packing_item_order->work_order_item)
+            {
+                if ($work_order_item->work_order_packed) abort(501, "INVALID. SPK has PACKED state.");
+
+                $packing_item_order->forceDelete();
                 $work_order_item->calculate();
             }
         }
@@ -133,6 +135,7 @@ class PackingItem extends Model
         if ((round($finish) + round($faulty)) != 0) abort(501, "TOTAL [$finish + $faulty] PACKING ORDER INVALID");
 
         $created = $this->packing_item_orders()->createMany($collection->toArray());
+
         foreach ($created as $packing_item_order) {
             $packing_item_order->work_order_item->calculate();
         }
