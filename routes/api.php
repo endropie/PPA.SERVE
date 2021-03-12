@@ -86,6 +86,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('delivery-loads', 'Incomes\DeliveryLoads');
             Route::apiResource('delivery-verifies', 'Incomes\DeliveryVerifies');
             Route::apiResource('delivery-checkouts', 'Incomes\DeliveryCheckouts');
+            Route::apiResource('delivery-handovers', 'Incomes\DeliveryHandovers');
 
             Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
             Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');

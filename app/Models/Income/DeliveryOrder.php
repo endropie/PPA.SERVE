@@ -85,6 +85,11 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Reference\Reason');
     }
 
+    public function confirmed_user()
+    {
+        return $this->belongsTo('App\Models\Auth\User', 'confirmed_by');
+    }
+
     public function getSummaryItemsAttribute() {
         return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
     }
@@ -123,5 +128,10 @@ class DeliveryOrder extends Model
         return $revise->revise_id && $revise->revise_number
             ? $revise->number ." R.". (int) $revise->revise_number
             : $revise->number;
+    }
+
+    public function getConfirmedUserAttribute()
+    {
+        return $this->confirmed_user()->first();
     }
 }
