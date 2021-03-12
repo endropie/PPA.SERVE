@@ -48,6 +48,7 @@ class RolePermission extends Seeder
 			'delivery-verifies' => ['c','r','d','void'],
             'delivery-loads' => ['c','r','void'],
             'delivery-checkouts' => ['c','r','void'],
+            'delivery-handovers' => ['c','r','void'],
 			'deportation-goods' => ['c','r','u','d','validation','revision','void'],
 			'schedule-boards' => ['c','r','u','d','void'],
 			// Reference

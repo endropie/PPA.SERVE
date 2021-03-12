@@ -60,4 +60,16 @@ class DeliveryOrder extends Filter
             });
     }
 
+    public function handovering($order = 'true')
+    {
+        return $this->builder
+            // ->where('transaction', 'REGULER')->where('is_internal', 0)
+            ->where(function($q) {
+                return $q->whereNull('delivery_handover_id')
+                ->when(request('or_delivery_handover_id'), function($q) {
+                    return $q->orWhere('delivery_handover_id', request('or_delivery_handover_id'));
+                });
+            });
+    }
+
 }
