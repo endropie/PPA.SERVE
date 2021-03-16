@@ -90,6 +90,7 @@ class RolePermission extends Seeder
             'delivery.verify' => ['delivery-verifies'],
             'delivery.load' => ['delivery-loads'],
             'delivery.checkout' => ['delivery-checkouts'],
+            'delivery.handover' => ['delivery-handovers'],
 
             'incoming.good' => ['incoming-goods'],
             'opname.voucher' => ['opname-vouchers'],
