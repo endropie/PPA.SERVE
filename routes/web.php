@@ -34,15 +34,15 @@ Route::middleware('auth')->group(function () {
 Auth::routes();
 Accurate::routes();
 
-Route::get('/accurate-test', function () {
-    // $customer = \App\Models\Income\Customer::first();
-    // $response = $customer->accurate()->push();
-    $customers = \App\Models\Income\Customer::whereNull('accurate_model_id')->get();
-    $customers->each(function($customer) {
-        $customer->accurate()->push();
-    });
-    return response()->json(['status' => true, 'counter' => $customers->count()]);
-});
+// Route::get('/accurate-test', function () {
+//     // $customer = \App\Models\Income\Customer::first();
+//     // $response = $customer->accurate()->push();
+//     $customers = \App\Models\Income\Customer::whereNull('accurate_model_id')->get();
+//     $customers->each(function($customer) {
+//         $customer->accurate()->push();
+//     });
+//     return response()->json(['status' => true, 'counter' => $customers->count()]);
+// });
 
 Route::get('/', function () { return view('welcome'); });
 

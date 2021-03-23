@@ -371,7 +371,7 @@ class DeliveryLoads extends ApiController
         foreach ($outer as $key => $amount) {
             if (round($amount) > 0) {
                 $item = Item::find($key);
-                $label = "#$key $item->part_name $item->part_subnameDELI";
+                $label = "#$key $item->part_name $item->part_subname";
                 $this->error("OVER LOADING BY PO [$label:$amount]");
             }
         }
