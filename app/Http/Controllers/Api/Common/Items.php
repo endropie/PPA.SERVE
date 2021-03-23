@@ -349,7 +349,7 @@ class Items extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
-        $item = Item::findOrFail($id);
+        $item = Item::withSampled()->findOrFail($id);
 
         if ($item->is_relationship) $this->error("CODE:$item->code has data relation, Delete not allowed!");
 
