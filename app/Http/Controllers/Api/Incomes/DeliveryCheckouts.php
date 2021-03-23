@@ -38,6 +38,23 @@ class DeliveryCheckouts extends ApiController
         return response()->json($delivery_checkouts);
     }
 
+    public function rutes(Filter $filter)
+    {
+        $delivery_checkouts = DeliveryCheckout::filter($filter)->whereHas('rute')->latest()->collect();
+        $delivery_checkouts->getCollection()->transform(function($item) {
+            return [
+                'id' => $item->id,
+                'date' => $item->date,
+                'description' => $item->description,
+                'rute' => $item->rute()->get(['id', 'name'])->first(),
+                'vehicle' => $item->vehicle()->get(['id', 'number'])->first(),
+            ];
+            return $item;
+        });
+
+        return response()->json($delivery_checkouts);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

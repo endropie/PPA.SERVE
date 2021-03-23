@@ -36,6 +36,11 @@ class DeliveryCheckout extends Model
         return $this->belongsTo('App\Models\Reference\Vehicle');
     }
 
+    public function rute()
+    {
+        return $this->belongsTo('App\Models\Common\Rute');
+    }
+
     public function getFullnumberAttribute ()
     {
         return str_pad($this->id, 5, '0', STR_PAD_LEFT) ;
