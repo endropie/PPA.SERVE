@@ -15,7 +15,7 @@ class AddMoveSampleItemsTable extends Migration
     {
         Schema::table('items', function (Blueprint $table) {
             $table->date('estimate_begin_date')->nullable()->after('estimate_price');
-            $table->jsonb('depics')->nullable()->after('description');
+            $table->jsonb('depicts')->nullable()->after('description');
 
             $table->enum('project', ['NONE', 'NEW', 'MIGRATE'])->default('NONE')->after('sample');
             $table->string('project_number')->nullable()->after('project');
@@ -40,7 +40,7 @@ class AddMoveSampleItemsTable extends Migration
         Schema::table('items', function (Blueprint $table) {
 
             $table->dropColumn('project');
-            $table->dropColumn('depics');
+            $table->dropColumn('depicts');
 
             $table->dropColumn('sample_enginered_by');
             $table->dropColumn('sample_validated_by');

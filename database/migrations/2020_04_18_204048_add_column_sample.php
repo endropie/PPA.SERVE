@@ -17,6 +17,7 @@ class AddColumnSample extends Migration
             $table->boolean('sample')->default(0)->after('enable');
 
             $table->decimal('estimate_monthly_amount')->nullable()->after('unit_id');
+            $table->decimal('estimate_load_capacity')->nullable()->after('unit_id');
             $table->decimal('estimate_sadm')->nullable()->after('unit_id');
             $table->decimal('estimate_price', 20, 4)->nullable()->after('unit_id');
         });
@@ -27,6 +28,7 @@ class AddColumnSample extends Migration
         Schema::table('items', function (Blueprint $table) {
             $table->dropColumn('sample');
             $table->dropColumn('estimate_monthly_amount');
+            $table->dropColumn('estimate_load_capacity');
             $table->dropColumn('estimate_sadm');
             $table->dropColumn('estimate_price');
         });
