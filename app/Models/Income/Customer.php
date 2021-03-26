@@ -11,16 +11,6 @@ class Customer extends Model
 
     protected $accurate_model = 'customer';
 
-    protected $accurate_push_attributes = [
-        'name' => 'name',
-        'customerNo' => 'code',
-        'notes' => 'description',
-    ];
-
-    protected $accurate_push_casts = [
-        'notes' => 'String',
-    ];
-
     protected $fillable = [
         'code', 'name', 'phone', 'fax', 'email', 'address', 'subdistrict', 'district', 'province_id', 'zipcode',
         'bank_account', 'npwp', 'pkp', 'with_ppn', 'with_pph', 'ppn', 'sen_service', 'exclude_service', 'bounded_service', 'description', 'enable',
@@ -77,5 +67,25 @@ class Customer extends Model
         if ($this->order_mode != 'NONE') return false;
 
         return $this->invoice_request_required;
+    }
+
+    protected  static function booted ()
+    {
+        static::registerModelEvent('accurate.pushing', function($model, $record) {
+            return array_merge($record, [
+                'name' => (string) $model->name,
+                'customerNo' => (string) $model->code,
+                'notes' => (string) $model->description,
+                'pkpNo' => (string) $model->pkp ,
+                'npwpNo' => (string) $model->npwp ,
+                'billStreet' => (string) $model->address ,
+                'billCity' => (string) $model->district ,
+                'billProvince' => (string) $model->province ? $model->province->name : null,
+                'billZipCode' => (string) $model->zipcode ,
+                'workPhone' => (string) $model->phone ,
+                'fax' => (string) $model->fax ,
+                'email' => (string) $model->email ,
+            ]);
+        });
     }
 }
