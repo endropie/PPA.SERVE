@@ -90,6 +90,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('delivery-checkouts', 'Incomes\DeliveryCheckouts');
             Route::apiResource('delivery-handovers', 'Incomes\DeliveryHandovers');
 
+
+            Route::get('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@detail');
+            Route::delete('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@destroyDetail');
             Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
             Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');
             Route::put('delivery-order-internals/{id}/confirmed', 'Incomes\DeliveryOrders@confirmation');

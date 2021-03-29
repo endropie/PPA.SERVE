@@ -6,6 +6,7 @@ use App\Http\Requests\Request;
 // use App\Http\Requests\Income\DeliveryVerifyItem as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Filter as Filter;
+use App\Models\Income\DeliveryVerify;
 // use App\Filters\Income\DeliveryVerifyItem as Filters;
 use App\Models\Income\DeliveryVerifyItem;
 use App\Traits\GenerateNumber;
@@ -52,7 +53,15 @@ class DeliveryVerifies extends ApiController
 
         $this->DATABASE::beginTransaction();
 
+        $delivery_verify = DeliveryVerify::create([
+            'customer_id' => $request->get('customer_id'),
+            'description' => $request->get('description'),
+        ]);
+
         $delivery_verify_item = DeliveryVerifyItem::create($request->input());
+
+        $delivery_verify_item->delivery_verify()->associate($delivery_verify);
+        $delivery_verify_item->save();
 
         $label = $delivery_verify_item->item->part_name . "(". $delivery_verify_item->item->code .")";
 
@@ -64,7 +73,7 @@ class DeliveryVerifies extends ApiController
         $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id [$label] has been created!");
 
         $this->DATABASE::commit();
-        return response()->json($delivery_verify_item);
+        return response()->json($delivery_verify);
     }
 
     public function multiStore(Request $request)
@@ -82,6 +91,11 @@ class DeliveryVerifies extends ApiController
 
         $this->DATABASE::beginTransaction();
 
+        $delivery_verify = DeliveryVerify::create([
+            'customer_id' => $request->get('customer_id'),
+            'description' => $request->get('description'),
+        ]);
+
         foreach ($request->multi_items as $key => $row) {
             $input = array_merge($row, [
                 "customer_id" => $request->customer_id,
@@ -90,6 +104,9 @@ class DeliveryVerifies extends ApiController
             ]);
 
             $delivery_verify_item = DeliveryVerifyItem::create($input);
+
+            $delivery_verify_item->delivery_verify()->associate($delivery_verify);
+            $delivery_verify_item->save();
 
             $label = $delivery_verify_item->item->part_name . "(". $delivery_verify_item->item->code .")";
 
@@ -102,11 +119,24 @@ class DeliveryVerifies extends ApiController
         }
 
         $this->DATABASE::commit();
-        return response()->json($delivery_verify_item);
+        return response()->json($delivery_verify);
 
     }
 
     public function show($id)
+    {
+        $delivery_verify = DeliveryVerify::with([
+            'customer',
+            'delivery_verify_items',
+            'delivery_verify_items.item.item_units',
+            'delivery_verify_items.item.unit',
+            'delivery_verify_items.unit',
+        ])->withTrashed()->findOrFail($id);
+
+        return response()->json($delivery_verify);
+    }
+
+    public function detail($id)
     {
         $delivery_verify_item = DeliveryVerifyItem::with([
             'customer',
@@ -150,6 +180,34 @@ class DeliveryVerifies extends ApiController
 
         $this->DATABASE::beginTransaction();
 
+        $delivery_verify = DeliveryVerify::findOrFail($id);
+
+        $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        foreach ($delivery_verify->delivery_verify_items as $delivery_verify_item) {
+
+            if ($delivery_verify_item->validateDestroyVerified() != true)
+            {
+                $this->error("The `". $delivery_verify_item->item->part_name ."` not allowed to be $mode");
+            }
+
+            $delivery_verify_item->delete();
+
+            $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id has been $mode !");
+        }
+
+        $delivery_verify->delete();
+
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function destroyDetail($id)
+    {
+
+        $this->DATABASE::beginTransaction();
+
         $delivery_verify_item = DeliveryVerifyItem::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
@@ -159,16 +217,9 @@ class DeliveryVerifies extends ApiController
             $this->error("The `". $delivery_verify_item->item->part_name ."` not allowed to be $mode");
         }
 
-        if($mode == "VOID")
-        {
-            $delivery_verify_item->status = "VOID";
-            $delivery_verify_item->save();
-        }
-
         $delivery_verify_item->delete();
 
-        $action = ($mode == "VOID") ? 'voided' : 'deleted';
-        $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id has been $action !");
+        $delivery_verify_item->setCommentLog("VERIFY #$delivery_verify_item->id has been $mode !");
 
         $this->DATABASE::commit();
 

@@ -24,6 +24,11 @@ class DeliveryVerifyItem extends Model
         'quantity' => 'double',
     ];
 
+    public function delivery_verify()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryVerify');
+    }
+
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
