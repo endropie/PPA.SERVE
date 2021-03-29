@@ -55,6 +55,19 @@ class DeliveryCheckouts extends ApiController
         return response()->json($delivery_checkouts);
     }
 
+    public function rute($id)
+    {
+        $delivery_checkout = DeliveryCheckout::findOrFail($id);
+
+        return response()->json([
+            'id' => $delivery_checkout->id,
+            'date' => $delivery_checkout->date,
+            'description' => $delivery_checkout->description,
+            'rute' => $delivery_checkout->rute()->get(['id', 'name'])->first(),
+            'vehicle' => $delivery_checkout->vehicle()->get(['id', 'number'])->first(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

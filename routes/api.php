@@ -21,6 +21,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
     Route::apiResource('commentables', 'Commentables')->only(['index']);
     Route::name('delivery-rutes')->get('delivery-rutes', 'Incomes\DeliveryCheckouts@rutes');
+    Route::name('delivery-rutes.show')->get('delivery-rutes/{id}', 'Incomes\DeliveryCheckouts@rute');
 
     Route::prefix('landing')->name('landing.')->group(function () {
         Route::name('schedule-boards')->get('schedule-boards', 'Transports\ScheduleBoards@landing');
