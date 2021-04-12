@@ -22,7 +22,7 @@ class DeliveryLoad extends Model
         'delivery_orders',
     ];
 
-    protected $appends = ['fullnumber'];
+    protected $appends = ['fullnumber', 'is_checkout'];
 
     public function delivery_load_items()
     {
@@ -54,6 +54,11 @@ class DeliveryLoad extends Model
         if (!$checkout = $this->delivery_checkout) return null;
 
         return $checkout->fullnumber;
+    }
+
+    public function getIsCheckoutAttribute()
+    {
+        return (boolean) $this->delivery_checkout_id;
     }
 
     public function getFullnumberAttribute()
