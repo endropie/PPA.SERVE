@@ -37,7 +37,7 @@ class IncomingGood extends Model
     }
 
     public function request_order_closed() {
-        return $this->belongsTo('App\Models\Income\RequestOrder')->where('status', 'CLOSED');
+        return $this->belongsTo('App\Models\Income\RequestOrder', 'request_order_id')->where('status', 'CLOSED');
     }
 
     public function delivery_task () {
