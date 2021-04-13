@@ -9,7 +9,6 @@ use App\Filters\Warehouse\IncomingGoodItem as FilterItem;
 use App\Models\Income\Customer;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
-use App\Models\Income\PreDelivery;
 use App\Models\Income\RequestOrderItem;
 use App\Models\Warehouse\IncomingGoodItem;
 use App\Traits\GenerateNumber;
@@ -289,6 +288,9 @@ class IncomingGoods extends ApiController
         $this->DATABASE::beginTransaction();
 
         $revise = IncomingGood::findOrFail($id);
+
+        if ($revise->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be REVISED");
+
         $details = $revise->incoming_good_items;
         foreach ($details as $detail) {
             $detail->item->distransfer($detail);

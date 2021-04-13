@@ -23,6 +23,7 @@ class IncomingGood extends Model
     protected $relationships = [
         'delivery_task',
         'request_order',
+        'request_order_closed',
         'request_order.delivery_orders' => 'delivery_orders'
     ];
 
@@ -33,6 +34,10 @@ class IncomingGood extends Model
 
     public function request_order() {
         return $this->belongsTo('App\Models\Income\RequestOrder');
+    }
+
+    public function request_order_closed() {
+        return $this->belongsTo('App\Models\Income\RequestOrder')->where('status', 'CLOSED');
     }
 
     public function delivery_task () {
