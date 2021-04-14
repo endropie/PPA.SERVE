@@ -22,7 +22,6 @@ class IncomingGood extends Model
 
     protected $relationships = [
         'delivery_task',
-        'request_order',
         'request_order_closed',
         'request_order.delivery_orders' => 'delivery_orders'
     ];
