@@ -31,6 +31,12 @@ class IncomingGood extends Model
         return $this->hasMany('App\Models\Warehouse\IncomingGoodItem')->withTrashed();
     }
 
+    public function incoming_validations()
+    {
+        return $this->hasMany('App\Models\Warehouse\IncomingValidation');
+
+    }
+
     public function request_order() {
         return $this->belongsTo('App\Models\Income\RequestOrder');
     }

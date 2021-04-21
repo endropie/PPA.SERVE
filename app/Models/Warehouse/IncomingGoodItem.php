@@ -19,6 +19,7 @@ class IncomingGoodItem extends Model
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [
+        'valid' => 'double',
         'unit_rate' => 'double',
         'quantity' => 'double'
     ];
@@ -28,6 +29,11 @@ class IncomingGoodItem extends Model
     public function incoming_good()
     {
         return $this->belongsTo('App\Models\Warehouse\IncomingGood');
+    }
+
+    public function incoming_validation_items()
+    {
+        return $this->hasMany('App\Models\Warehouse\IncomingValidationItem');
     }
 
     public function request_order_item() {

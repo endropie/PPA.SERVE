@@ -234,7 +234,7 @@ class DeportationGoods extends ApiController
             }
 
             $to = $deportation_good->transaction == 'RETURN' ? 'NCR' : 'FM';
-            $detail->item->transfer($detail, $detail->unit_valid, $to);
+            $detail->item->transfer($detail, $detail->unit_amount, $to);
         }
 
         if (strtoupper($deportation_good->order_mode) === 'NONE') {

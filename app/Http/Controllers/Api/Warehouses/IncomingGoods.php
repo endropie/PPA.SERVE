@@ -11,6 +11,7 @@ use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Models\Warehouse\IncomingGoodItem;
+use App\Models\Warehouse\IncomingValidation;
 use App\Traits\GenerateNumber;
 
 class IncomingGoods extends ApiController
@@ -63,6 +64,15 @@ class IncomingGoods extends ApiController
         return response()->json($incoming_good_items);
     }
 
+    public function validations($incomingGoodId)
+    {
+        $validations = IncomingValidation::with(['incoming_validation_items'])
+            ->where('incoming_good_id', $incomingGoodId)
+            ->latest()->get();
+
+        return response()->json($validations);
+    }
+
     public function store(Request $request)
     {
         // DB::beginTransaction => Before the function process!
@@ -113,10 +123,10 @@ class IncomingGoods extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') === 'rejection') return $this->rejection($request, $id);
-        if(request('mode') === 'restoration') return $this->restoration($request, $id);
-        if(request('mode') === 'validation') return $this->validation($request, $id);
-        if(request('mode') === 'revision') return $this->revision($request, $id);
+        // if(request('mode') === 'rejection') return $this->rejection($request, $id);
+        // if(request('mode') === 'restoration') return $this->restoration($request, $id);
+        // if(request('mode') === 'validation') return $this->validation($request, $id);
+        // if(request('mode') === 'revision') return $this->revision($request, $id);
 
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -162,15 +172,19 @@ class IncomingGoods extends ApiController
             $incoming_good->save();
         }
 
-        if($details = $incoming_good->incoming_good_items) {
-            foreach ($details as $detail) {
-                $detail->item->distransfer($detail);
-                $detail->delete();
-            }
+        ## Delate all validation & detail
+        foreach ($incoming_good->incoming_validations as $incoming_validation) {
+            $incoming_validation->incoming_validation_items()->delete();
+            $incoming_validation->delete();
+        }
+
+        ## Delete all incoming & detail
+        foreach ($incoming_good->incoming_good_items as $detail) {
+            $detail->item->distransfer($detail);
+            $detail->delete();
         }
 
         $incoming_good->delete();
-
 
         $action = ($mode == "VOID") ? 'voided' : 'deleted';
         $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been $action !");
@@ -179,7 +193,7 @@ class IncomingGoods extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function rejection($request, $id)
+    public function rejection(Request $request, $id)
     {
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -208,7 +222,7 @@ class IncomingGoods extends ApiController
         return response()->json($incoming_good);
     }
 
-    public function restoration($request, $id)
+    public function restoration(Request $request, $id)
     {
         $this->DATABASE::beginTransaction();
 
@@ -246,7 +260,7 @@ class IncomingGoods extends ApiController
         return response()->json($incoming_good);
     }
 
-    public function validation($request, $id)
+    public function validation(Request $request, $id)
     {
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -283,13 +297,14 @@ class IncomingGoods extends ApiController
         return response()->json($incoming_good);
     }
 
-    public function revision($request, $id)
+    public function revision(Request $request, $id)
     {
         $this->DATABASE::beginTransaction();
 
         $revise = IncomingGood::findOrFail($id);
 
-        if ($revise->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be REVISED");
+        if ($revise->is_relationship) $this->error("Data has RELATIONSHIP, is not allowed to be REVISED");
+        if ($revise->incoming_validations->count()) $this->error("Data has Partial validation, is not allowed to be REVISED");
 
         $details = $revise->incoming_good_items;
         foreach ($details as $detail) {
@@ -343,6 +358,125 @@ class IncomingGoods extends ApiController
 
         $this->DATABASE::commit();
         return response()->json($incoming_good);
+    }
+
+    public function storePartialValidation(Request $request, $incomingGoodId)
+    {
+        // DB::beginTransaction => Before the function process!
+        $this->DATABASE::beginTransaction();
+
+        $incoming_good = IncomingGood::findOrFail($incomingGoodId);
+
+        if (!in_array($incoming_good->status, ["OPEN" , 'PARTIAL-VALIDATED'])) $this->error("INCOMING has $incoming_good->status state, is not allowed to be validation");
+
+        $incoming_validation = $incoming_good->incoming_validations()->create([
+            'date' => $request->get('validate_date'),
+            'description' => $request->get('validate_description'),
+        ]);
+
+        foreach ($request->incoming_good_items as $row) {
+
+            if ($row['validate_quantity'] ?? null)
+            {
+                $detail = $incoming_validation->incoming_validation_items()->firstOrNew(['id' => null], [
+                    'quantity' => $row['validate_quantity'],
+                ]);
+
+                $detail->incoming_good_item_id = $row['id'];
+                $detail->save();
+
+                $incoming_good_item = $detail->incoming_good_item;
+                $incoming_good_item->valid = $incoming_good_item->incoming_validation_items->sum('quantity');
+                $incoming_good_item->save();
+
+                if (round($incoming_good_item->valid) > round($incoming_good_item->quantity)) $this->error("DETAIL [". $incoming_good_item->item->part_name ."] is OVER-VALIDATE");
+            }
+        }
+
+        foreach ($incoming_good->incoming_good_items as $detail)
+        {
+
+            $detail->item->distransfer($detail);
+
+            ## CALCULATE STOCK NOT DETAIL SAMPLE
+            if ($incoming_good->transaction != 'SAMPLE') {
+                $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
+                $detail->item->transfer($detail, $detail->unit_valid, $to);
+            }
+        }
+
+        ## SET INCOMING STATUS
+        $balance = (double) $incoming_good->incoming_good_items->reduce(function ($total, $item) {
+            return $total + (round($item->quantity) -  round($item->valid));
+        });
+
+        $incoming_good->status = $balance > 0 ? 'PARTIAL-VALIDATED' : 'VALIDATED';
+        $incoming_good->save();
+
+        ## REQUEST ORDER GENERATE ONLY FOR MODE "NONE/DAILY" AND TRANSACTION "INTERNAL"
+        if (strtoupper($incoming_good->order_mode) === 'NONE' && strtoupper($incoming_good->transaction) !== 'INTERNAL')
+        {
+            ## REQUEST ORDER GENERATE ONLY FOR HAS NOT YET
+            if (!$incoming_good->request_order) {
+                $this->storeRequestOrder($incoming_good);
+            }
+        }
+
+        $incoming_good->setCommentLog("Incoming validation [$incoming_good->fullnumber] has been $incoming_good->status [#$incoming_validation->id].");
+
+        $this->DATABASE::commit();
+        return response()->json($incoming_good);
+    }
+
+    public function destroyPartialValidation($incomingGoodId, $id)
+    {
+
+        $incoming_good = IncomingGood::findOrFail($incomingGoodId);
+        $incoming_validation = IncomingValidation::findOrFail($id);
+
+        $this->DATABASE::beginTransaction();
+        if ($incoming_good->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be DELETE");
+
+        foreach ($incoming_validation->incoming_validation_items as $detail)
+        {
+            $incoming_good_item = $detail->incoming_good_item;
+
+            ## Remove detail validation
+            $detail->delete();
+
+            ## Reclculate unit valid of detail incoming good
+            $incoming_good_item->valid = $incoming_good_item->incoming_validation_items->sum('quantity');
+            $incoming_good_item->save();
+        }
+
+        $incoming_validation->delete();
+
+
+        ## RECALCULATE INCOMING STOCK
+        foreach ($incoming_good->incoming_good_items as $detail)
+        {
+            $detail->item->distransfer($detail);
+            if ($incoming_good->transaction != 'SAMPLE') {
+                $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
+                $detail->item->transfer($detail, $detail->unit_valid, $to);
+            }
+        }
+
+        ## SET INCOMING STATUS
+        $balance = (double) $incoming_good->incoming_good_items->reduce(function ($total, $item) {
+            return $total + (round($item->quantity) -  round($item->valid));
+        });
+
+        $incoming_good->status = $incoming_good->incoming_validations->count()
+            ? ($balance > 0 ? 'PARTIAL-VALIDATED' : 'VALIDATED')
+            : 'OPEN';
+        $incoming_good->save();
+
+        $incoming_good->setCommentLog("Incoming validation [$incoming_good->fullnumber] has been DELETED [#$incoming_validation->id]!");
+
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
     }
 
     protected function reviseRequestOrder($revise, $incoming_good) {
@@ -438,9 +572,9 @@ class IncomingGoods extends ApiController
             $incoming_good->request_order()->associate($request_order);
             $incoming_good->save();
 
-            $rows = $incoming_good->incoming_good_items;
-            foreach ($rows as $row) {
-                $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate'])->merge(['quantity'=>$row['valid'], 'price'=>0])->toArray();
+            foreach ($incoming_good->incoming_good_items as $row)
+            {
+                $fields = collect($row)->only(['item_id', 'unit_id', 'unit_rate', 'quantity'])->merge(['price'=>0])->toArray();
                 $detail = $request_order->request_order_items()->create($fields);
                 ## Setup unit price
                 $detail->price = ($detail->item && $detail->item->price)
