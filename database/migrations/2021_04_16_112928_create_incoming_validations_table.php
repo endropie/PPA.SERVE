@@ -26,7 +26,7 @@ class CreateIncomingValidationsTable extends Migration
             $table->id();
             $table->foreignId('incoming_validation_id');
             $table->foreignId('incoming_good_item_id');
-            $table->decimal('quantity');
+            $table->decimal('quantity', 10, 2);
             $table->timestamps();
             $table->softDeletes();
         });
