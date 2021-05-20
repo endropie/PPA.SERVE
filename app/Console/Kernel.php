@@ -31,8 +31,7 @@ class Kernel extends ConsoleKernel
         //     ->dailyAt($schedule_time);
 
         $schedule->command('trip:run')
-            // ->hourly()
-            ->everyMinute()
+            ->hourly()
             ->runInBackground()
             ->withoutOverlapping()
             ->onSuccess(function () {
