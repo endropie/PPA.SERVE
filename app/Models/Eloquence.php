@@ -30,6 +30,15 @@ use Route;
 trait Eloquence
 {
 
+    public function scopeGetCollect($query, $map = false)
+    {
+        return $query->get()
+            ->map(function($item ) {
+                if (request()->has('--appends')) $item->append(explode(',', request('--appends')));
+                return $item;
+            });
+    }
+
     public function scopeCollect($query, $map = false)
     {
         $request = request();
