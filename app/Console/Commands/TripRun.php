@@ -42,7 +42,7 @@ class TripRun extends Command
 
         $date = now()->yesterday();
 
-        if (!Trip::where('date', $date->format('Y-m-d'))->count() || true)
+        if (!Trip::where('date', $date->format('Y-m-d'))->count())
         {
             DB::transaction(function () use($date) {
                 Trip::dailyScheduler($date, true);
