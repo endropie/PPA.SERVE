@@ -184,6 +184,13 @@ class IncomingGoods extends ApiController
             $detail->delete();
         }
 
+        ## Delete request order & detail
+        if($request_order = $incoming_good->request_order)
+        {
+            $request_order->request_order_items()->delete();
+            $request_order->delete();
+        }
+
         $incoming_good->delete();
 
         $action = ($mode == "VOID") ? 'voided' : 'deleted';
