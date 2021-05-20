@@ -40,6 +40,16 @@ class Customer extends Model
         return $this->hasMany('App\Models\Income\CustomerTrip');
     }
 
+    public function trips()
+    {
+        return $this->hasMany('App\Models\Income\Trip');
+    }
+
+    public function delivery_tasks()
+    {
+        return $this->hasMany('App\Models\Income\DeliveryTask');
+    }
+
     public function customer_items() {
         return $this->hasMany('App\Models\Common\Item');
     }
@@ -67,6 +77,12 @@ class Customer extends Model
         if ($this->order_mode != 'NONE') return false;
 
         return $this->invoice_request_required;
+    }
+
+    public function getDateTripsAttribute()
+    {
+        $date = request('trip_date', now()->format('Y-m-d'));
+        return $this->trips()->where('date', $date)->get();
     }
 
     protected  static function booted ()

@@ -15,7 +15,7 @@ class Customers extends ApiController
     {
         switch (request('mode')) {
             case 'all':
-                $customers = Customer::filter($filters)->get();
+                $customers = Customer::filter($filters)->getCollect();
                 break;
 
             case 'datagrid':

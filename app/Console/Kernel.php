@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -14,6 +15,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\RecurringCheck::class,
+        Commands\TripRun::class,
     ];
 
     /**
@@ -24,11 +26,21 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule_time = env('APP_SCHEDULE_TIME', '03:00');
-        // $schedule->command('inspire')->daily()->at($schedule_time);
-        $schedule->command('recurring:check')
-            ->dailyAt($schedule_time);
-            // ->appendOutputTo('/storage/logs/laravel_output.log');
+        // $schedule_time = env('APP_SCHEDULE_TIME', '03:00');
+        // $schedule->command('recurring:check')
+        //     ->dailyAt($schedule_time);
+
+        $schedule->command('trip:run')
+            // ->hourly()
+            ->everyMinute()
+            ->runInBackground()
+            ->withoutOverlapping()
+            ->onSuccess(function () {
+                Log::info("TRIP: running sucsess[". now() ."].");
+            })
+            ->onFailure(function () {
+                Log::error("TRIP: running failed[". now() ."].");
+            });
     }
 
     /**

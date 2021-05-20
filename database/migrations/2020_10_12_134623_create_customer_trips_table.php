@@ -19,6 +19,8 @@ class CreateCustomerTripsTable extends Migration
             $table->tinyInteger('intday');
             $table->time('time');
             $table->timestamps();
+
+            $table->unique(['customer_id', 'intday', 'time']);
         });
     }
 
