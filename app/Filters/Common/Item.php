@@ -89,7 +89,7 @@ class Item extends Filter
 
     public function main_line($value = 0) {
         return $this->builder->whereHas('item_prelines', function($q) use($value){
-            return $q->where('line_id', strtoupper($value));
+            return $q->where('line_id', strtoupper($value))->where('ismain', 1);
         });
     }
 
