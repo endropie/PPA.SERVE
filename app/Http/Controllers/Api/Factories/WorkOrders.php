@@ -132,7 +132,6 @@ class WorkOrders extends ApiController
 
             if (!$work_order->stockist_direct) {
                 $FROM = $work_order->stockist_from;
-                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
 
                 $detail->item->refresh();
                 if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
@@ -220,7 +219,6 @@ class WorkOrders extends ApiController
             if (!$work_order->stockist_direct) {
                 ## Calculate stock on after Detail item updated!
                 $FROM = $work_order->stockist_from;
-                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
                 $detail->item->refresh();
                 if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
                     $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
@@ -281,7 +279,6 @@ class WorkOrders extends ApiController
             $FROM = $work_order->stockist_from;
             $work_order->work_order_items->each(function($detail) use ($FROM) {
                 $detail->item->distransfer($detail);
-                $detail->item->transfer($detail, $detail->unit_amount, 'WO'.$FROM);
             });
             $work_order->stateable()->delete();
         }
@@ -319,8 +316,6 @@ class WorkOrders extends ApiController
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
         if($work_order->status !== 'OPEN') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PRODUCTED!");
         if($work_order->total_production <= 0) $this->error("SPK [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
-
-        $this->stockRestore($work_order);
 
         $work_order->moveState('PRODUCTED');
 
@@ -407,20 +402,6 @@ class WorkOrders extends ApiController
 
         $this->DATABASE::commit();
         return response()->json($work_order);
-    }
-
-    protected function stockRestore($work_order)
-    {
-        foreach ($work_order->work_order_items as  $detail) {
-            ## Calculate Over Stock Quantity at item processed!
-            $amount_process = round($detail->amount_process);
-            $unit_amount = round($detail->unit_amount);
-            $FROM = $work_order->stockist_from;
-            if ($amount_process < $unit_amount) {
-                $OVER = ($unit_amount - $amount_process);
-                $detail->item->transfer($detail, $OVER, null, 'WO'.$FROM);
-            }
-        }
     }
 
     protected function storeSublines($work_order)
