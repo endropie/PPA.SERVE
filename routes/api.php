@@ -79,6 +79,8 @@ Route::prefix('v1')->namespace('Api')->group(function() {
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
+            Route::apiResource('forecast-periods', 'Incomes\ForecastPeriods');
+            Route::apiResource('forecast-loads', 'Incomes\ForecastLoads');
             Route::apiResource('request-orders', 'Incomes\RequestOrders');
             Route::apiResource('invoices', 'Incomes\AccInvoices');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');

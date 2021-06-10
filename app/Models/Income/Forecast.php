@@ -13,7 +13,7 @@ class Forecast extends Model
    use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
    protected $fillable = [
-      'number', 'begin_date', 'until_date', 'customer_id', 'description',
+      'number', 'period_id', 'customer_id', 'description',
    ];
 
    protected $hidden = [];
@@ -28,6 +28,11 @@ class Forecast extends Model
    public function customer()
    {
       return $this->belongsTo('App\Models\Income\Customer');
+   }
+
+   public function period()
+   {
+      return $this->belongsTo('App\Models\Income\ForecastPeriod', 'period_id');
    }
 
    public function getFullnumberAttribute()

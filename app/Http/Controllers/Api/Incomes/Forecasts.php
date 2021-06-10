@@ -20,12 +20,12 @@ class Forecasts extends ApiController
                 break;
 
             case 'datagrid':
-                $forecasts = Forecast::with(['customer'])->filter($filters)->latest()->get();
+                $forecasts = Forecast::with(['customer', 'period'])->filter($filters)->latest()->get();
 
                 break;
 
             default:
-                $forecasts = Forecast::with(['customer'])->filter($filters)->latest()->collect();
+                $forecasts = Forecast::with(['customer', 'period'])->filter($filters)->latest()->collect();
                 break;
         }
 
@@ -56,7 +56,7 @@ class Forecasts extends ApiController
 
     public function show($id)
     {
-        $forecast = Forecast::with(['customer', 'forecast_items.item.item_units', 'forecast_items.unit'])->withTrashed()->findOrFail($id);
+        $forecast = Forecast::with(['customer', 'period', 'forecast_items.item.item_units', 'forecast_items.unit'])->withTrashed()->findOrFail($id);
         $forecast->is_editable = (!$forecast->is_related);
 
         return response()->json($forecast);
@@ -95,8 +95,7 @@ class Forecasts extends ApiController
         $forecast->forecast_items()->delete();
         $forecast->delete();
 
-        $action = ($mode == "VOID") ? 'voided' : 'deleted';
-        $forecast->setCommentLog("Forecast [$forecast->fullnumber] has been $action !");
+        $forecast->setCommentLog("Forecast [$forecast->fullnumber] has been DELETED !");
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);

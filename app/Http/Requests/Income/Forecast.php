@@ -25,8 +25,7 @@ class Forecast extends Request
 
         return [
             'number' => ($id ? 'required|string|' : '') .'max:191|unique:forecasts,NULL,' . $id,
-            'begin_date' => 'required',
-            'until_date' => 'required',
+            'period_id' => 'required|exists:forecast_periods,id',
             'customer_id' => 'required',
 
             'forecast_items.*.item_id' => 'required',
