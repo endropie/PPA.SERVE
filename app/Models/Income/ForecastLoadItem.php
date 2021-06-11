@@ -10,7 +10,7 @@ class ForecastLoadItem extends Model
     use Filterable;
 
     protected $fillable = [
-        'line_id', 'item_id', 'amount', 'amount_load', 'capacity'
+        'line_id', 'item_id', 'amount', 'amount_load', 'amount_packtime', 'capacity', 'ismain'
     ];
 
     protected $hidden = [];
@@ -18,6 +18,7 @@ class ForecastLoadItem extends Model
     protected $casts = [
         'amount' => 'double',
         'amount_load' => 'double',
+        'amount_packtime' => 'double',
         'capacity' => 'double',
     ];
 
