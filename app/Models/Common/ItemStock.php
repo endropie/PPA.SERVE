@@ -12,17 +12,9 @@ class ItemStock extends Model
         'NC' => 'No-Common',
         'NCR' => 'No-Common Return',
         'NG' => 'No-Good',
-
-        'WO' => 'WO amounable',
-
-        'WOFM' => 'WOFM amounable',
-        'WONC' => 'WONC amounable',
-        'WONCR' => 'WONCR amounable',
         'VDO' => 'VERIFY amounable',
         'PDO.REG' => 'REGULER-PDO amounable',
         'PDO.RET' => 'RETURN-PDO amounable',
-        // 'RDO.REG' => 'REGULER Request-DO amounable',
-        // 'RDO.RET' => 'RETURN Request-DO amounable',
     ];
 
     protected $fillable = ['item_id', 'stockist', 'total'];
