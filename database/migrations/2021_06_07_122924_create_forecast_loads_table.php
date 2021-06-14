@@ -30,7 +30,9 @@ class CreateForecastLoadsTable extends Migration
             $table->foreignId('line_id');
             $table->decimal('amount', 20, 2);
             $table->decimal('amount_load', 22, 4);
+            $table->decimal('amount_packtime', 22, 4);
             $table->decimal('capacity', 22, 4);
+            $table->boolean('ismain')->default(0);
             $table->timestamps();
 
             $table->unique(['forecast_load_id', 'item_id', 'line_id']);
