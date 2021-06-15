@@ -7,6 +7,8 @@ use App\Models\Model;
 use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use function React\Promise\Stream\first;
+
 class WorkOrderItem extends Model
 {
     use Filterable, SoftDeletes, HasCommentable;
@@ -17,7 +19,7 @@ class WorkOrderItem extends Model
 
     protected $touches = ['work_order'];
 
-    protected $appends = ['unit_amount'];
+    protected $appends = ['unit_amount', 'work_order_number'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
@@ -28,6 +30,7 @@ class WorkOrderItem extends Model
         'ngratio' => 'double',
         'amount_process' => 'double',
         'amount_packing' => 'double',
+        'amount_faulty' => 'double',
     ];
 
     protected $relationships = [];
@@ -120,17 +123,21 @@ class WorkOrderItem extends Model
         return (double) $this->process * $this->unit_rate;
     }
 
+    public function getWorkOrderNumberAttribute()
+    {
+        $work_order = $this->work_order()->first();
+        return  $work_order->fullnumber ?? null;
+    }
+
     public function calculate($error = true)
     {
 
-        $total = (double) $this->work_production_items->sum('unit_amount');
-        $finsih = (double) $this->packing_item_orders->sum('amount_finish');
-        $faulty = (double) $this->packing_item_orders->sum('amount_faulty');
+        $process = (double) $this->work_production_items->sum('unit_amount');
+        $packing = (double) $this->packing_item_orders->sum('unit_amount');
 
-        $this->amount_process = $total;
-        $this->amount_packing = $finsih + $faulty;
+        $this->amount_process = $process;
+        $this->amount_packing = $packing;
         $this->save();
-
 
         if($error && round($this->unit_amount) < round($this->amount_process)) {
             abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");

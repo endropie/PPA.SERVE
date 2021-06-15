@@ -17,8 +17,7 @@ class CreatePackingOrdersTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('packing_item_id');
             $table->bigInteger('work_order_item_id');
-            $table->decimal('amount_finish', 20,4)->default(0);
-            $table->decimal('amount_faulty', 20,4)->default(0);
+            $table->decimal('quantity', 20,4)->default(0);
 
             $table->softDeletes();
             $table->timestamps();

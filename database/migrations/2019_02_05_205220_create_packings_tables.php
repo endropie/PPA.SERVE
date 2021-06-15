@@ -36,10 +36,9 @@ class CreatePackingsTables extends Migration
             $table->integer('item_id');
             $table->integer('unit_id');
             $table->decimal('unit_rate', 10, 5)->default(1);
-            $table->decimal('quantity', 10, 2);
-            $table->decimal('amount_faulty', 24, 4)->default(0);
+            $table->decimal('quantity', 10, 2)->default(0);
+            $table->decimal('faulty', 10, 2)->default(0);
             $table->integer('type_fault_id')->nullable();
-            $table->integer('work_order_item_id')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

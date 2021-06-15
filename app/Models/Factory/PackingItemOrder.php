@@ -9,15 +9,14 @@ class PackingItemOrder extends Model
 {
     use SoftDeletes;
 
-    protected $appends = ['unit_total'];
+    protected $appends = ['unit_amount'];
 
-    protected $fillable = ['work_order_item_id', 'amount_finish', 'amount_faulty'];
+    protected $fillable = ['work_order_item_id', 'quantity'];
 
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $casts = [
-        'amount_finish' => 'double',
-        'amount_faulty' => 'double'
+        'quantity' => 'double',
     ];
 
     protected $relationships = [];
@@ -32,9 +31,9 @@ class PackingItemOrder extends Model
         return $this->belongsTo('App\Models\Factory\WorkOrderItem');
     }
 
-    public function getUnitTotalAttribute() {
+    public function getUnitAmountAttribute() {
         // return false when rate is not valid
-        $total = (double) ($this->amount_finish + $this->amount_faulty);
-        return $total;
+        $rate = $this->packing_item->unit_rate;
+        return (double) ($this->quantity * $rate);
       }
 }
