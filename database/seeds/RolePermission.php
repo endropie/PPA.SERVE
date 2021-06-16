@@ -6,7 +6,6 @@ use App\Models\Auth\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 
 class RolePermission extends Seeder
 {
@@ -26,6 +25,7 @@ class RolePermission extends Seeder
 			'employees' => ['c','r','u','d','reference'],
 			// Factories
 			'packings' => ['c','r','u','d','close','void'],
+            'packing-loads' => ['c','r','u','d'],
 			'work-orders' => ['c','r','u','d','close','revision','void','validation'],
 			'work-productions' => ['c','r','u','d','close','void'],
 			'work-process' => ['r','confirm'],
@@ -79,6 +79,7 @@ class RolePermission extends Seeder
             'work.production' => ['work-productions'],
             'work.process' => ['work-process'],
             'packing' => ['packings'],
+            'packing' => ['packing-loads'],
 
             'outgoing.verify' => ['outgoing-verifications'],
             'outgoing.good' => ['outgoing-goods'],

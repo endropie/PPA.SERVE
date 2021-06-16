@@ -58,6 +58,10 @@ class Settings extends Seeder
             "packing.number_interval"   => "{Y-m}",
             "packing.number_digit"      => "5",
 
+            "packing_load.number_prefix"     => "PKL",
+            "packing_load.number_interval"   => "{Y-m}",
+            "packing_load.number_digit"      => "5",
+
             "forecast.number_prefix"     => "FCO",
             "forecast.number_interval"   => "{Y-m}",
             "forecast.number_digit"      => "5",
