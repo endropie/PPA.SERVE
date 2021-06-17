@@ -370,13 +370,14 @@ class DeliveryLoads extends ApiController
 
         foreach ($outer as $key => $amount) {
             if (round($amount) > 0) {
-                $item = Item::find($key);
-                $label = "#$key $item->part_name $item->part_subname";
-                $this->error("OVER LOADING BY PO [$label:$amount]");
+                $over[$key] = ($over[$key] ?? 0) + $amount;
             }
         }
 
-        if (sizeof($over)) {
+        if (count($over)) {
+
+            if (!$delivery_load->customer->delivery_over_allowed || !request('overload', false)) $this->error("OVER LOADING BY PO.", 428);
+
             $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
             $delivery_order = $delivery_load->delivery_orders()->create([
                 'number' => $this->getNextSJInternalNumber($delivery_load->date),
@@ -391,6 +392,7 @@ class DeliveryLoads extends ApiController
                 'date' => $delivery_load->date,
                 'vehicle_id' => $delivery_load->vehicle_id,
                 'rit' => $delivery_load->rit,
+                'is_internal' => 1
             ]);
 
             foreach ($over as $key => $amount) {
@@ -402,6 +404,7 @@ class DeliveryLoads extends ApiController
                     'unit_id' => $item->unit->id,
                     'unit_rate' => 1
                 ]);
+
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
                 $detail->save();
             }
