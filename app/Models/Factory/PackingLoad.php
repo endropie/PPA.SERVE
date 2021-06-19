@@ -13,7 +13,7 @@ class PackingLoad extends Model
     use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
-        'number', 'description'
+        'number', 'customer_id', 'description'
     ];
 
     protected $appends = ['fullnumber'];
@@ -23,6 +23,11 @@ class PackingLoad extends Model
     public function packing_load_items()
     {
         return $this->hasMany('App\Models\Factory\PackingLoadItem')->withTrashed();
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\Income\Customer');
     }
 
     public function getFullnumberAttribute()

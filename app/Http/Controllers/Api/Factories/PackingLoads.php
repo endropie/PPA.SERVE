@@ -20,6 +20,7 @@ class PackingLoads extends ApiController
 
             case 'datagrid':
                 $packing_loads = PackingLoad::with([
+                    'customer',
                     'packing_load_items.item',
                     'packing_load_items.unit',
                 ])->filter($filter)->latest()->orderBy('id', 'DESC')->get();
@@ -28,6 +29,7 @@ class PackingLoads extends ApiController
 
             default:
                 $packing_loads = PackingLoad::with([
+                    'customer',
                     'created_user',
                     'packing_load_items.item',
                     'packing_load_items.unit',
@@ -69,6 +71,7 @@ class PackingLoads extends ApiController
     {
 
         $packing_load = PackingLoad::with([
+            'customer',
             'packing_load_items.item',
             'packing_load_items.unit'
         ])->withTrashed()->findOrFail($id);

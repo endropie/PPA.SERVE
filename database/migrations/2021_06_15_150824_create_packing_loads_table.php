@@ -16,6 +16,7 @@ class CreatePackingLoadsTable extends Migration
         Schema::create('packing_loads', function (Blueprint $table) {
             $table->id();
             $table->string('number');
+            $table->foreignId('customer_id');
             $table->string('status')->default('OPEN');
             $table->foreignId('created_by');
             $table->text('description')->nullable();
