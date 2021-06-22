@@ -8,6 +8,7 @@ class ItemStock extends Model
     static $stockists = [
         'FM' => 'Fresh',
         'WIP' => 'Work In Process',
+        'PFG' => 'Pre-Finish Good',
         'FG' => 'Finish Good',
         'NC' => 'No-Common',
         'NCR' => 'No-Common Return',

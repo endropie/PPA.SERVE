@@ -136,6 +136,7 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('work-productions', 'Factories\WorkProductions');
             Route::apiResource('work-orders', 'Factories\WorkOrders');
             Route::apiResource('packings', 'Factories\Packings');
+            Route::apiResource('packing-loads', 'Factories\PackingLoads');
         });
 
         Route::prefix('transports')->name('transports.')->group(function () {

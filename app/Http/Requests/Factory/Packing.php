@@ -31,6 +31,8 @@ class Packing extends Request
             'packing_items.item_id' => 'required',
             'packing_items.quantity' => 'required|numeric|min:0',
             'packing_items.unit_id' => 'required',
+            'packing_items.packing_item_orders.*.work_order_item_id' => 'distinct',
+            'packing_items.packing_item_orders.*.quantity' => 'required_if:packing_items.packing_item_orders.*.work_order_item_id,!=,null',
             'packing_items.packing_item_faults.*.quantity' => 'required_if:packing_items.packing_item_faults.*.fault_id,!=,null',
         ];
     }
@@ -42,6 +44,13 @@ class Packing extends Request
         return [
             'packing_items.item_id' => $msg,
             'customer_id.required'  => $msg,
+        ];
+    }
+
+    public function attributes()
+    {
+        return [
+            'packing_items.packing_item_orders.*.work_order_item_id' => 'Detail SPK',
         ];
     }
 }

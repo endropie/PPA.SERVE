@@ -50,6 +50,7 @@ class Packings extends ApiController
 
     public function store(Request $request)
     {
+
         $this->DATABASE::beginTransaction();
         if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
 
@@ -62,8 +63,14 @@ class Packings extends ApiController
             ## Create the Packing item. Note: with "hasOne" Relation.
             $detail = $packing->packing_items()->create($request->packing_items);
 
-            ## Calculate stock on after the Packing items Created!
-            $detail->item->transfer($detail, $detail->unit_amount, 'FG', 'WIP');
+            $orders = $row['packing_item_orders'];
+            for ($i=0; $i < count($orders); $i++) {
+                $order = $orders[$i];
+                if($order['work_order_item_id'] || $order['quantity'] ) {
+                    ## create fault on the Packing Goods Created!
+                    $detail->packing_item_orders()->create($order);
+                }
+            }
 
             $faults = $row['packing_item_faults'];
             for ($i=0; $i < count($faults); $i++) {
@@ -74,27 +81,23 @@ class Packings extends ApiController
                 }
             }
 
+            $detail->quantity = $detail->packing_item_orders()->get()->sum('quantity');
+            $detail->faulty = $detail->packing_item_faults()->get()->sum('quantity');
+            $detail->save();
+
+            ## Calculate stock on after the Packing items Created!
+            $detail->item->transfer($detail, $detail->unit_amount, 'PFG', 'WIP');
+
             ## Calculate "NC" stock on after the Item Faults Created!
+            if ($detail->unit_faulty > 0) $detail->item->transfer($detail, $detail->unit_faulty, 'NC', 'WIP');
 
-            if ($detail->unit_faulty > 0) {
-                $detail->item->transfer($detail, $detail->unit_faulty, 'NC', 'WIP');
-            }
+            if ($detail->item->stock('WIP')->total < -1) $this->error('Packing Failed. WIP stock invalid!');
 
-            $detail->setPackingItemOrder();
-
-            $detail->refresh();
             foreach ($detail->packing_item_orders as $packing_item_order) {
-
+                $packing_item_order->work_order_item->calculate(true);
                 $packing_item_order->work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Created. SPK Detail[#". $packing_item_order->work_order_item->id ."] Part ". $detail->item->part_name .".");
-
             }
         }
-
-        $over = $packing->packing_items->packing_item_orders->filter(function ($order) {
-            return round($order->work_order_item->amount_process) < round($order->work_order_item->amount_packing);
-        })->count();
-
-        if($over) $this->error("SPK Detail invalid, Try later.");
 
         $packing->setCommentLog("Packing [$packing->fullnumber] has been Created.");
 
@@ -117,7 +120,8 @@ class Packings extends ApiController
             'operator',
             'packing_items.item.item_units',
             'packing_items.unit',
-            'packing_items.packing_item_faults.fault'
+            'packing_items.packing_item_faults.fault',
+            'packing_items.packing_item_orders.work_order_item'
         ], $addWith))->withTrashed()->findOrFail($id);
 
         $packing->append(['has_relationship']);
@@ -159,8 +163,14 @@ class Packings extends ApiController
             ## Update or Create detail row
             $newDetail = $packing->packing_items->updateOrCreate(['id' => $row['id']], $row);
 
-            ## Calculate stock on after the Packing items updated!
-            $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'FG', 'WIP');
+            $orders = $row['packing_item_orders'];
+            for ($i=0; $i < count($orders); $i++) {
+                $order = $orders[$i];
+                if($order['work_order_item_id'] || $order['quantity'] ) {
+                    ## create fault on the Packing Goods Created!
+                    $newDetail->packing_item_orders()->create($order);
+                }
+            }
 
             $faults = $row['packing_item_faults'];
             ## Delete fault on the Packing Good updated!
@@ -174,17 +184,23 @@ class Packings extends ApiController
                 }
             }
 
-            ## Calculate stock on after the NC items updated!
-            if ($newDetail->unit_faulty > 0) {
-                $newDetail->item->transfer($newDetail, $newDetail->unit_faulty, 'NC', 'WIP');
-            }
+            $newDetail->quantity = $newDetail->packing_item_orders()->get()->sum('quantity');
+            $newDetail->faulty = $newDetail->packing_item_faults()->get()->sum('quantity');
+            $newDetail->save();
 
-            $newDetail->setPackingItemOrder();
+            ## Calculate stock on after the Packing items updated!
+            $newDetail->item->transfer($newDetail, $newDetail->unit_amount, 'PFG', 'WIP');
+
+            ## Calculate stock on after the NC items updated!
+            if ($newDetail->unit_faulty > 0) $newDetail->item->transfer($newDetail, $newDetail->unit_faulty, 'NC', 'WIP');
+
+            if ($newDetail->item->stock('WIP')->total < -1) $this->error('Packing Failed. WIP stock invalid!');
 
             $newDetail->refresh();
 
             foreach ($newDetail->packing_item_orders as $packing_item_order)
             {
+                $packing_item_order->work_order_item->calculate(true);
                 $work_order_item = $packing_item_order->work_order_item;
                 $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated (add row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
             }
