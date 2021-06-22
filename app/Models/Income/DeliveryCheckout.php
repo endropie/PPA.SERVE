@@ -12,7 +12,7 @@ class DeliveryCheckout extends Model
     use Filterable, WithUserBy, HasCommentable;
 
     protected $fillable = [
-        'date', 'vehicle_id', 'rute_id', 'rute_amount', 'description'
+        'date', 'vehicle_id', 'rute_id', 'description'
     ];
 
     protected $appends = ['fullnumber'];
@@ -28,7 +28,12 @@ class DeliveryCheckout extends Model
 
     public function delivery_order_internals()
     {
-        return $this->hasMany('App\Models\Income\DeliveryOrder')->withTrashed();
+        return $this->hasMany('App\Models\Income\DeliveryOrder')->withTrashed()->whereNull('delivery_load_id');
+    }
+
+    public function deportation_goods()
+    {
+        return $this->hasMany('App\Models\Warehouse\DeportationGood')->withTrashed();
     }
 
     public function vehicle()
@@ -44,7 +49,5 @@ class DeliveryCheckout extends Model
     public function getFullnumberAttribute ()
     {
         return str_pad($this->id, 5, '0', STR_PAD_LEFT) ;
-            // preg_replace('/\s+/', '', $this->vehicle->number)
-            // ."/". date_format(date_create($this->date), 'y.m.d');
     }
 }

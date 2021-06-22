@@ -20,6 +20,7 @@ class DeliveryLoad extends Model
 
     protected $relationships = [
         'delivery_orders',
+        'delivery_checkout'
     ];
 
     protected $appends = ['fullnumber', 'is_checkout'];

@@ -8,6 +8,7 @@ use App\Filters\Filter as Filter;
 use App\Models\Income\DeliveryCheckout;
 use App\Models\Income\DeliveryLoad;
 use App\Models\Income\DeliveryOrder;
+use App\Models\Warehouse\DeportationGood;
 use App\Traits\GenerateNumber;
 
 class DeliveryCheckouts extends ApiController
@@ -70,18 +71,21 @@ class DeliveryCheckouts extends ApiController
 
     public function store(Request $request)
     {
+        $validateLoad = sizeof($request->delivery_checkout_internals) || sizeof($request->delivery_checkout_deportations)
+            ? 'nullable' : 'required|min:1';
+
         $request->validate([
             'vehicle_id' => 'required',
             'date' => 'required',
-            'delivery_checkout_loads' => count($request->delivery_checkout_internals) ? '' : 'required|min:1',
+            'delivery_checkout_loads' => $validateLoad,
             'delivery_checkout_loads.*.delivery_load_id' => 'required|distinct',
             'delivery_checkout_internals.*.delivery_order_id' => 'required|distinct',
+            'delivery_checkout_deportations.*.deportation_good_id' => 'required|distinct',
         ], [
             'delivery_checkout_loads.*.delivery_load_id.distinct' => 'The field has a duplicate value.'
         ]);
 
         $this->DATABASE::beginTransaction();
-        // if(!$request->number) $request->merge(['number'=> $this->getNextDeliveryCheckoutNumber()]);
 
         $delivery_checkout = DeliveryCheckout::create($request->input());
 
@@ -97,6 +101,12 @@ class DeliveryCheckouts extends ApiController
             $delivery_checkout->delivery_order_internals()->save($internal);
         }
 
+        $rows = $request->delivery_checkout_deportations;
+        for ($i=0; $i < count($rows); $i++) {
+            $deportation = DeportationGood::find($rows[$i]['deportation_good_id']);
+            $delivery_checkout->deportation_goods()->save($deportation);
+        }
+
         $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been created!");
 
         $this->DATABASE::commit();
@@ -109,24 +119,11 @@ class DeliveryCheckouts extends ApiController
             'vehicle',
             'delivery_loads.customer',
             'delivery_order_internals.customer',
+            'deportation_goods.customer',
         ])->findOrFail($id);
 
         $delivery_checkout->append(['has_relationship']);
 
-        return response()->json($delivery_checkout);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $this->error('INVALID METHOD');
-
-        $this->DATABASE::beginTransaction();
-
-        $delivery_checkout = DeliveryCheckout::findOrFail($id);
-
-        $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been updated !");
-
-        $this->DATABASE::commit();
         return response()->json($delivery_checkout);
     }
 
@@ -141,6 +138,7 @@ class DeliveryCheckouts extends ApiController
         $delivery_checkout->delete();
 
         $action = ($mode == "VOID") ? 'voided' : 'deleted';
+
         $delivery_checkout->setCommentLog("DELIVERY CHECKOUT [$delivery_checkout->fullnumber] has been $action !");
 
         $this->DATABASE::commit();

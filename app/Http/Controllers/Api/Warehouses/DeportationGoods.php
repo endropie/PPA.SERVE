@@ -51,7 +51,7 @@ class DeportationGoods extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            // create item row on the incoming Goods updated!
+            // create item row on the Deportation Goods updated!
             $detail = $deportation_good->deportation_good_items()->create($row);
             if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
 
@@ -79,11 +79,6 @@ class DeportationGoods extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') === 'rejection') return $this->rejection($request, $id);
-        if(request('mode') === 'validation') return $this->validation($request, $id);
-        if(request('mode') === 'revision') return $this->revision($request, $id);
-
-        // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $deportation_good = DeportationGood::findOrFail($id);
@@ -93,10 +88,10 @@ class DeportationGoods extends ApiController
 
         $deportation_good->update($request->input());
 
-        // Before Update Force delete incoming goods items
+        // Before Update Force delete Deportation goods items
         $deportation_good->deportation_good_items()->forceDelete();
 
-        // Update incoming goods items
+        // Update Deportation goods items
         $rows = $request->deportation_good_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
@@ -137,7 +132,7 @@ class DeportationGoods extends ApiController
         $deportation_good->delete();
 
         $action = ($mode == "VOID") ? 'voided' : 'deleted';
-        $deportation_good->setCommentLog("Sales Order [$deportation_good->fullnumber] has been $action !");
+        $deportation_good->setCommentLog("Deposrtation [$deportation_good->fullnumber] has been $action !");
 
         $this->DATABASE::commit();
         return response()->json(['success' => true]);
@@ -156,7 +151,7 @@ class DeportationGoods extends ApiController
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            // create item row on the incoming Goods updated!
+            // create item row on the Deportation Goods updated!
             $detail = $deportation_good->deportation_good_items()->find($row["id"]);
             $detail->update($row);
         }
@@ -194,65 +189,6 @@ class DeportationGoods extends ApiController
         $deportation_good->save();
 
         $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been validated!");
-
-        $this->DATABASE::commit();
-        return response()->json($deportation_good);
-    }
-
-    public function revision($request, $id)
-    {
-        $this->DATABASE::beginTransaction();
-
-        $revise = DeportationGood::findOrFail($id);
-        $details = $revise->deportation_good_items;
-        foreach ($details as $detail) {
-            $detail->item->distransfer($detail);
-            $detail->delete();
-        }
-
-        if($request->number) {
-            $max = (int) DeportationGood::where('number', $request->number)->max('revise_number');
-            $request->merge(['revise_number' => ($max + 1)]);
-        }
-
-        if(!$request->transaction == 'RETURN') $request->merge(['order_mode'=> 'NONE']);
-
-        $deportation_good = DeportationGood::create($request->all());
-
-        $request_order = $revise->request_order;
-
-        $rows = $request->deportation_good_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            $row['valid'] = $row['quantity'];
-            $detail = $deportation_good->deportation_good_items()->create($row);
-
-            if (isset($row['request_order_item_id'])) {
-                $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
-                $detail->request_order_item()->associate($request_order_item);
-                $detail->save();
-            }
-
-            $to = $deportation_good->transaction == 'RETURN' ? 'NCR' : 'FM';
-            $detail->item->transfer($detail, $detail->unit_amount, $to);
-        }
-
-        if (strtoupper($deportation_good->order_mode) === 'NONE') {
-            $this->reviseRequestOrder($revise, $deportation_good);
-        }
-
-        if ($request_order) $deportation_good->request_order()->associate($request_order);
-        $deportation_good->status = $revise->status;
-        $deportation_good->save();
-
-        $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been created.\nOn Revision [$revise->fullnumber]!");
-
-        $revise->status = 'REVISED';
-        $revise->revise_id = $deportation_good->id;
-        $revise->save();
-        $revise->delete();
-
-        $revise->setCommentLog("Deportation [$revise->fullnumber] has been revised!");
 
         $this->DATABASE::commit();
         return response()->json($deportation_good);

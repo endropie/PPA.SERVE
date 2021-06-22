@@ -23,7 +23,8 @@ class DeliveryOrder extends Model
     protected $hidden = [];
 
     protected $relationships = [
-        'request_order_closed'
+        'request_order_closed',
+        'delivery_checkout'
     ];
 
     protected $casts = [
@@ -35,9 +36,9 @@ class DeliveryOrder extends Model
         return $this->hasMany('App\Models\Income\DeliveryOrderItem')->withTrashed();
     }
 
-    public function outgoing_goods()
+    public function delivery_checkout()
     {
-        return $this->hasMany('App\Models\Warehouse\OurgoingGood');
+        return $this->belongsTo('App\Models\Income\DeliveryCheckout');
     }
 
     public function acc_invoice()

@@ -17,7 +17,9 @@ class DeportationGood extends Model
 
     protected $appends = ['fullnumber'];
 
-    protected $relationships = [];
+    protected $relationships = [
+        'delivery_checkout'
+    ];
 
     public function deportation_good_items()
     {
@@ -27,6 +29,11 @@ class DeportationGood extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\Income\Customer');
+    }
+
+    public function delivery_checkout()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryCheckout');
     }
 
     public function getFullnumberAttribute()

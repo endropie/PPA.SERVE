@@ -103,7 +103,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
+
             Route::get('incoming-goods/items', 'Warehouses\IncomingGoods@items');
+
             Route::get('incoming-goods/{incomingGoodId}/partial-validations', 'Warehouses\IncomingGoods@validations');
             Route::post('incoming-goods/{incomingGoodId}/partial-validations', 'Warehouses\IncomingGoods@storePartialValidation');
             Route::delete('incoming-goods/{incomingGoodId}/partial-validations/{id}', 'Warehouses\IncomingGoods@destroyPartialValidation');
@@ -112,6 +114,9 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::put('incoming-goods/{incoming_good}/restoration', 'Warehouses\IncomingGoods@restoration');
             Route::put('incoming-goods/{incoming_good}/validation', 'Warehouses\IncomingGoods@validation');
             Route::put('incoming-goods/{incoming_good}/revision', 'Warehouses\IncomingGoods@revision');
+
+            Route::put('deportation-goods/{deportation_good}/validation', 'Warehouses\Deportations@validation');
+            Route::put('deportation-goods/{deportation_good}/rejection', 'Warehouses\Deportations@rejection');
 
             Route::apiResource('transports', 'Warehouses\Transports');
             Route::apiResource('incoming-goods', 'Warehouses\IncomingGoods');

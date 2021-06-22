@@ -21,4 +21,16 @@ class DeportationGood extends Filter
         return $this->builder->where('date', '<=',  $value);
     }
 
+    public function has_checkout($value = '')
+    {
+        if (!strlen($value)) return $this->builder;
+        return $this->builder->when((boolean) $value,
+            function ($q) {
+                return $q->whereNotNull('delivery_checkout_id');
+            },
+            function ($q) {
+                return $q->where('status', 'VALIDATED')->whereNull('delivery_checkout_id');
+            });
+    }
+
 }

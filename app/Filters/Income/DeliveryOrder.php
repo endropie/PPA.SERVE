@@ -3,7 +3,6 @@ namespace App\Filters\Income;
 
 use App\Filters\Filter;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class DeliveryOrder extends Filter
 {
@@ -41,11 +40,22 @@ class DeliveryOrder extends Filter
         if (!strlen($value)) return $this->builder;
         return $this->builder->when((boolean) $value,
             function ($q) {
-                abort('502', 'INI TRUE');
                 return $q->whereNotNull('delivery_checkout_id');
             },
             function ($q) {
                 return $q->whereNull('delivery_checkout_id');
+            });
+    }
+
+    public function has_load($value = '')
+    {
+        if (!strlen($value)) return $this->builder;
+        return $this->builder->when((boolean) $value,
+            function ($q) {
+                return $q->whereNotNull('delivery_load_id');
+            },
+            function ($q) {
+                return $q->whereNull('delivery_load_id');
             });
     }
 
