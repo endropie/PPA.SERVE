@@ -334,7 +334,6 @@ class WorkOrders extends ApiController
 
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PACKED!");
         if($work_order->status !== 'PRODUCTED') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PACKED!");
-        if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("SPK [#$work_order->number] Total Packing not valid. Not allowed to be PACKED!");
 
         $work_order->moveState('PACKED');
 
@@ -356,8 +355,6 @@ class WorkOrders extends ApiController
 
         if (!$work_order->main_id)
         {
-            if(round($work_order->total_production) != round($work_order->total_packing)) $this->error("SPK [#$work_order->number] Total Packing not valid. Not allowed to be CLOSED!");
-
             if ($work_order->status == 'OPEN') $this->stockRestore($work_order);
 
             if (!$work_order->has_producted) {
