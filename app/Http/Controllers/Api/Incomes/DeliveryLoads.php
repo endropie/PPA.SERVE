@@ -373,9 +373,9 @@ class DeliveryLoads extends ApiController
         if (count($over)) {
 
             if (!$delivery_load->customer->delivery_over_allowed) {
-                $this->error("OVER LOADING BY PO.", 501);
+                $this->error("OVER LOADING BY PO. [" . implode(";", array_keys($over)) . "]", 501);
             } else if (!request('overload', false)) {
-                $this->error("OVER LOADING BY PO.", 428);
+                $this->error("OVER LOADING BY PO. [" . implode(";", array_keys($over)) . "]", 428);
             }
 
             $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
