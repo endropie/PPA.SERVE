@@ -311,6 +311,7 @@ class DeliveryLoads extends ApiController
     {
         $list = [];
         $over = [];
+        $over_item = [];
         $request_order_items = RequestOrderItem::where('is_autoload', 0)
             ->whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($delivery_load) {
@@ -367,15 +368,17 @@ class DeliveryLoads extends ApiController
         foreach ($outer as $key => $amount) {
             if (round($amount) > 0) {
                 $over[$key] = ($over[$key] ?? 0) + $amount;
+                $item = Item::find($key);
+                $over_item[$key] = "[" . $item->part_name . "-" . $item->part_subname . "]";
             }
         }
 
         if (count($over)) {
 
             if (!$delivery_load->customer->delivery_over_allowed) {
-                $this->error("OVER LOADING BY PO. [" . implode(";", array_keys($over)) . "]", 501);
+                $this->error("OVER LOADING BY PO. " . implode("", array_values($over_item)), 501);
             } else if (!request('overload', false)) {
-                $this->error("OVER LOADING BY PO. [" . implode(";", array_keys($over)) . "]", 428);
+                $this->error("OVER LOADING BY PO. " . implode("", array_values($over_item)), 428);
             }
 
             $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
