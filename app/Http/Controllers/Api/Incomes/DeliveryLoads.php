@@ -28,8 +28,8 @@ class DeliveryLoads extends ApiController
                 break;
 
             default:
-                $delivery_loads = DeliveryLoad::with(['created_user','customer'])->filter($filter)->latest()->collect();
-                $delivery_loads->getCollection()->transform(function($item) {
+                $delivery_loads = DeliveryLoad::with(['created_user', 'customer'])->filter($filter)->latest()->collect();
+                $delivery_loads->getCollection()->transform(function ($item) {
                     $item->append(['is_relationship']);
                     return $item;
                 });
@@ -42,42 +42,38 @@ class DeliveryLoads extends ApiController
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
-        if(!$request->number) $request->merge(['number'=> $this->getNextDeliveryLoadNumber()]);
+        if (!$request->number) $request->merge(['number' => $this->getNextDeliveryLoadNumber()]);
 
         $delivery_load = DeliveryLoad::create($request->input());
 
         $rows = $request->delivery_load_items;
-        for ($i=0; $i < count($rows); $i++) {
+        for ($i = 0; $i < count($rows); $i++) {
             // create detail item created!
             $detail = $delivery_load->delivery_load_items()->create($rows[$i]);
 
-            $label = $detail->item->part_name . "(". $detail->item->code .")";
+            $label = $detail->item->part_name . "(" . $detail->item->code . ")";
 
             $request->validate(
-                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:". $detail->maxAmountDetail() ],
-                ["delivery_load_items.$i.quantity.lte" => "Maximum (Load) ". $detail->maxAmountDetail() .". Part: ". $label ]
+                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:" . $detail->maxAmountDetail()],
+                ["delivery_load_items.$i.quantity.lte" => "Maximum (Load) " . $detail->maxAmountDetail() . ". Part: " . $label]
             );
 
             $request->validate(
-                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:". $detail->maxFGDetail() ],
-                ["delivery_load_items.$i.quantity.lte" => "Maximum (FG) ". $detail->maxFGDetail() .". Part: ". $label]
+                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:" . $detail->maxFGDetail()],
+                ["delivery_load_items.$i.quantity.lte" => "Maximum (FG) " . $detail->maxFGDetail() . ". Part: " . $label]
             );
 
             $detail->setLoadVerified();
         }
 
 
-        if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE")
-        {
+        if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE") {
             $this->storeRequestOrder($delivery_load->fresh());
-        }
-        else if ($request->request_order && $delivery_load->order_mode != "ACCUMULATE")
-        {
+        } else if ($request->request_order && $delivery_load->order_mode != "ACCUMULATE") {
             $this->storeManualDeliveryOrder($delivery_load->fresh(), $request);
             $delivery_load->is_manual = 1;
             $delivery_load->save();
-        }
-        else {
+        } else {
             $this->storeDeliveryOrder($delivery_load->fresh());
         }
 
@@ -150,12 +146,11 @@ class DeliveryLoads extends ApiController
 
         if ($mode == "VOID") {
             if ($delivery_load->status == 'VOID') $this->error("Delivery (Load) is `$delivery_load->status`, is not allowed to be $mode");
-        }
-        else {
+        } else {
             if ($delivery_load->status != 'OPEN') $this->error("Delivery (Load) is `$delivery_load->status`, is not allowed to be $mode");
         }
 
-        if($mode == "VOID") {
+        if ($mode == "VOID") {
             $delivery_load->status = "VOID";
             $delivery_load->save();
         }
@@ -175,7 +170,7 @@ class DeliveryLoads extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function vehicleUpdated ($id, Request $request)
+    public function vehicleUpdated($id, Request $request)
     {
         $this->DATABASE::beginTransaction();
 
@@ -314,7 +309,8 @@ class DeliveryLoads extends ApiController
 
     protected function storeDeliveryOrder($delivery_load)
     {
-        $list = []; $over=[];
+        $list = [];
+        $over = [];
         $request_order_items = RequestOrderItem::where('is_autoload', 0)
             ->whereRaw('(quantity * unit_rate) > amount_delivery')
             ->whereHas('request_order', function ($query) use ($delivery_load) {
@@ -324,7 +320,7 @@ class DeliveryLoads extends ApiController
                     ->where('transaction', $delivery_load->transaction)
                     ->where('customer_id', $delivery_load->customer_id)
                     ->where('date', '<=', $delivery_load->date);
-                    // ->whereRaw("DATE($delivery_load->date) <= IF(actived_date IS NULL, '$delivery_load->date', actived_date)");
+                // ->whereRaw("DATE($delivery_load->date) <= IF(actived_date IS NULL, '$delivery_load->date', actived_date)");
             })->get();
 
         $request_order_items = $request_order_items
@@ -333,7 +329,7 @@ class DeliveryLoads extends ApiController
                 return true;
             })
             ->map(function ($detail) {
-                $detail->sortin = $detail->request_order->date ." ". $detail->request_order->created_at;
+                $detail->sortin = $detail->request_order->date . " " . $detail->request_order->created_at;
                 return $detail;
             })
             ->sortBy('sortin');
@@ -376,7 +372,11 @@ class DeliveryLoads extends ApiController
 
         if (count($over)) {
 
-            if (!$delivery_load->customer->delivery_over_allowed || !request('overload', false)) $this->error("OVER LOADING BY PO.", 428);
+            if (!$delivery_load->customer->delivery_over_allowed) {
+                $this->error("OVER LOADING BY PO.", 501);
+            } else if (!request('overload', false)) {
+                $this->error("OVER LOADING BY PO.", 428);
+            }
 
             $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
             $delivery_order = $delivery_load->delivery_orders()->create([
@@ -409,7 +409,7 @@ class DeliveryLoads extends ApiController
                 $detail->save();
             }
 
-        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
+            $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
         }
 
         foreach ($list as $RO => $rows) {
