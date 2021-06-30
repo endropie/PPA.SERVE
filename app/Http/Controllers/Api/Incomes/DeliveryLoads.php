@@ -369,16 +369,21 @@ class DeliveryLoads extends ApiController
             if (round($amount) > 0) {
                 $over[$key] = ($over[$key] ?? 0) + $amount;
                 $item = Item::find($key);
-                $over_item[$key] = "[" . $item->part_name . "-" . $item->part_subname . "]";
+                $over_item[$key] = [
+                    'name' => $item->part_name,
+                    'subname' => $item->part_subname,
+                    'amount' =>  $over[$key],
+                    'unit' => $item->unit->code,
+                ];
             }
         }
 
         if (count($over)) {
 
             if (!$delivery_load->customer->delivery_over_allowed) {
-                $this->error("OVER LOADING BY PO. " . implode("", array_values($over_item)), 501);
+                $this->error(['message' => 'OVER LOADING BY PO.', 'over' => array_values($over_item)], 430);
             } else if (!request('overload', false)) {
-                $this->error("OVER LOADING BY PO. " . implode("", array_values($over_item)), 428);
+                $this->error(['message' => 'OVER LOADING BY PO.', 'over' => array_values($over_item)], 428);
             }
 
             $prefix_code = $delivery_load->customer->code ?? "C$delivery_load->customer_id";
