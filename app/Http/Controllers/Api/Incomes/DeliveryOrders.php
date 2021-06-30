@@ -25,13 +25,13 @@ class DeliveryOrders extends ApiController
                 break;
 
             case 'datagrid':
-                $delivery_orders = DeliveryOrder::with(['customer','operator','vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->get();
+                $delivery_orders = DeliveryOrder::with(['customer', 'operator', 'vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->get();
                 $delivery_orders->each->append(['is_relationship']);
                 break;
 
             default:
-                $delivery_orders = DeliveryOrder::with(['created_user','customer','operator','vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->collect();
-                $delivery_orders->getCollection()->transform(function($item) {
+                $delivery_orders = DeliveryOrder::with(['created_user', 'customer', 'operator', 'vehicle'])->filter($filter)->orderBy('id', 'DESC')->latest()->collect();
+                $delivery_orders->getCollection()->transform(function ($item) {
                     $item->append(['is_relationship', 'summary_items']);
                     return $item;
                 });
@@ -45,15 +45,15 @@ class DeliveryOrders extends ApiController
     {
         switch (request('mode')) {
             case 'all':
-            $delivery_order_items = DeliveryOrderItem::filter($filter_item)->latest()->get();
-            break;
+                $delivery_order_items = DeliveryOrderItem::filter($filter_item)->latest()->get();
+                break;
 
             default:
                 $delivery_order_items = DeliveryOrderItem::with(['unit', 'item', 'delivery_order'])
-                  ->filter($filter_item)
-                  ->latest()->collect();
+                    ->filter($filter_item)
+                    ->latest()->collect();
 
-                $delivery_order_items->getCollection()->transform(function($row) {
+                $delivery_order_items->getCollection()->transform(function ($row) {
                     return $row;
                 });
 
@@ -72,12 +72,11 @@ class DeliveryOrders extends ApiController
 
         if ($customer = Customer::find($request->get('customer_id'))) {
             $prefix_code = $customer->code ?? "C:$customer->id";
-        }
-        else $request->validate(['customer_id' => 'not_in:'.$request->get('customer_id')]);
+        } else $request->validate(['customer_id' => 'not_in:' . $request->get('customer_id')]);
 
-        if(!$request->number) $request->merge([
-            'number'=> $this->getNextSJDeliveryNumber($request->get('date')),
-            'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
+        if (!$request->number) $request->merge([
+            'number' => $this->getNextSJDeliveryNumber($request->get('date')),
+            'indexed_number' => $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
         ]);
 
         $delivery_order = DeliveryOrder::create($request->input());
@@ -102,12 +101,11 @@ class DeliveryOrders extends ApiController
 
         if ($customer = Customer::find($request->get('customer_id'))) {
             $prefix_code = $customer->code ?? "C:$customer->id";
-        }
-        else $request->validate(['customer_id' => 'not_in:'.$request->get('customer_id')]);
+        } else $request->validate(['customer_id' => 'not_in:' . $request->get('customer_id')]);
 
-        if(!$request->number) $request->merge([
-            'number'=> $this->getNextSJInternalNumber($request->get('date')),
-            'indexed_number'=> $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
+        if (!$request->number) $request->merge([
+            'number' => $this->getNextSJInternalNumber($request->get('date')),
+            'indexed_number' => $this->getNextSJDeliveryIndexedNumber($request->get('date'), $prefix_code),
         ]);
 
         $delivery_order = DeliveryOrder::create($request->input());
@@ -117,7 +115,7 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->create($row);
 
             if (round($detail->unit_amount) > round($detail->item->stock('FG')->total)) {
-                return $this->error("AMOUNT PART #". $detail->item->id ." [". $detail->item->part_name ."] IS NOT VALID");
+                return $this->error("AMOUNT PART #" . $detail->item->id . " [" . $detail->item->part_name . "] IS NOT VALID");
             }
 
             $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
@@ -201,9 +199,9 @@ class DeliveryOrders extends ApiController
         $delivery_order = DeliveryOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
-        if($delivery_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
-        if($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
-        if($mode == "DELETED" && $delivery_order->status != "OPEN") $this->error("The data $delivery_order->status state, is not allowed to be $mode!");
+        if ($delivery_order->acc_invoice_id) $this->error("The data has Invoice Collect, is not allowed to be $mode!");
+        if ($delivery_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode!");
+        if ($mode == "DELETED" && $delivery_order->status != "OPEN") $this->error("The data $delivery_order->status state, is not allowed to be $mode!");
 
         foreach ($delivery_order->delivery_order_items as $detail) {
             $request_order_item = $detail->request_order_item;
@@ -267,8 +265,7 @@ class DeliveryOrders extends ApiController
             if ($detail->request_order_item) $detail->request_order_item->calculate();
         }
 
-        if (request('confirmed_number'))
-        {
+        if (request('confirmed_number')) {
             $delivery_order->confirmed_number = request('confirmed_number');
         }
 
@@ -292,19 +289,19 @@ class DeliveryOrders extends ApiController
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
 
-        if($revise->acc_invoice_id) $this->error("The data has Invoice Collect, MANY-REVISION Not alowed !");
+        if ($revise->acc_invoice_id) $this->error("The data has Invoice Collect, MANY-REVISION Not alowed !");
 
-        if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. MANY-REVISION Not alowed!");
-        if($revise->is_internal) $this->error("[". $revise->number ."] is INTERNAL. MANY-REVISION Not alowed!");
-        if(!$request_order) $this->error("[". $revise->number ."] RequestOrder Failed. MANY-REVISION Not alowed!");
-        if($revise->status != 'OPEN') {
-            if ($revise->request_order->status == 'CLOSED') $this->error("[". $revise->request_order->number ."] has CLOSED. REVISION Not alowed!");
+        if ($revise->trashed()) $this->error("[" . $revise->number . "] is trashed. MANY-REVISION Not alowed!");
+        if ($revise->is_internal) $this->error("[" . $revise->number . "] is INTERNAL. MANY-REVISION Not alowed!");
+        if (!$request_order) $this->error("[" . $revise->number . "] RequestOrder Failed. MANY-REVISION Not alowed!");
+        if ($revise->status != 'OPEN') {
+            if ($revise->request_order->status == 'CLOSED') $this->error("[" . $revise->request_order->number . "] has CLOSED. REVISION Not alowed!");
         }
 
         ## Remove detail of revision
         foreach ($revise->delivery_order_items as $detail) {
             if ($request_order_item = $detail->request_order_item) {
-                if($revise->request_order->order_mode == 'ACCUMULATE') {
+                if ($revise->request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item->item->distransfer($request_order_item);
                     $request_order_item->forceDelete();
                 }
@@ -333,29 +330,27 @@ class DeliveryOrders extends ApiController
             $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
 
             $request->merge([
-                'revise_number'=> ($max + 1),
+                'revise_number' => ($max + 1),
                 'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);
 
             $delivery_order = DeliveryOrder::create($request->all());
             $request_order = RequestOrder::find($partition['request_order_id']);
-            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:".$partition["request_order_id"]]);
+            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:" . $partition["request_order_id"]]);
 
             $rows = $partition['delivery_order_items'];
-            for ($i=0; $i < count($rows); $i++) {
+            for ($i = 0; $i < count($rows); $i++) {
                 $row = $rows[$i];
 
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
-                if ($request_order->order_mode == 'ACCUMULATE')
-                {
+                if ($request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
                     ## Setup unit price
                     $request_order_item->price = ($request_order_item->item && $request_order_item->item->price)
-                        ? (double) $request_order_item->unit_rate * (double) $request_order_item->item->price : 0;
+                        ? (float) $request_order_item->unit_rate * (float) $request_order_item->item->price : 0;
                     $request_order_item->save();
-                }
-                else {
+                } else {
                     $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
                 }
 
@@ -368,13 +363,12 @@ class DeliveryOrders extends ApiController
 
                 $request_order_item->calculate();
 
-                if($detail->request_order_item) {
-                    if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
+                if ($detail->request_order_item) {
+                    if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
                         $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                        $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
+                        $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
                     }
-                }
-                else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
+                } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
             }
 
             $delivery_order->request_order_id = $partition["request_order_id"];
@@ -404,21 +398,20 @@ class DeliveryOrders extends ApiController
         $revise = DeliveryOrder::findOrFail($id);
         $request_order = $revise->request_order;
 
-        if($revise->acc_invoice_id) $this->error("The data has Invoice Collect, REVISION Not alowed!");
+        if ($revise->acc_invoice_id) $this->error("The data has Invoice Collect, REVISION Not alowed!");
 
-        if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
+        if ($revise->trashed()) $this->error("[" . $revise->number . "] is trashed. REVISION Not alowed!");
 
-        if ($revise->is_internal) $this->error("[". $revise->number ."] not OPEN. REVISION Not alowed!");
+        if ($revise->is_internal) $this->error("[" . $revise->number . "] not OPEN. REVISION Not alowed!");
 
-        if ($request_order = $revise->request_order)
-        {
-            if ($request_order->status == 'CLOSED') $this->error("[". $revise->request_order->number ."] has CLOSED. REVISION Not alowed!");
-            if ($request_order->acc_invoice_id) $this->error("[". $revise->request_order->number ."] has INVOICED. REVISION Not alowed!");
+        if ($request_order = $revise->request_order) {
+            if ($request_order->status == 'CLOSED') $this->error("[" . $revise->request_order->number . "] has CLOSED. REVISION Not alowed!");
+            if ($request_order->acc_invoice_id) $this->error("[" . $revise->request_order->number . "] has INVOICED. REVISION Not alowed!");
         }
 
         ## Remove detail of revision
         foreach ($revise->delivery_order_items as $detail) {
-            if($revise->request_order->order_mode == 'ACCUMULATE') {
+            if ($revise->request_order->order_mode == 'ACCUMULATE') {
                 $request_order_item = $detail->request_order_item;
                 $request_order_item->item->distransfer($request_order_item);
                 $request_order_item->forceDelete();
@@ -442,26 +435,25 @@ class DeliveryOrders extends ApiController
                 ->where('number', $request->number)
                 ->get()->max('N');
 
-            $request->merge(['revise_number'=> ($max + 1)]);
+            $request->merge(['revise_number' => ($max + 1)]);
         }
 
         $delivery_order = DeliveryOrder::create($request->all());
 
         $request_order = RequestOrder::find($request['request_order_id']);
-        if (!$request_order) $request->validate(["request_order_id" => "not_in:".$request["request_order_id"]]);
+        if (!$request_order) $request->validate(["request_order_id" => "not_in:" . $request["request_order_id"]]);
 
         $rows = $request->delivery_order_items;
-        for ($i=0; $i < count($rows); $i++) {
+        for ($i = 0; $i < count($rows); $i++) {
             $row = $rows[$i];
 
-            if($request_order->order_mode == 'ACCUMULATE') {
+            if ($request_order->order_mode == 'ACCUMULATE') {
                 $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
                 ## Setup unit price
                 $request_order_item->price = ($request_order_item->item && $request_order_item->item->price)
-                    ? (double) $request_order_item->unit_rate * (double) $request_order_item->item->price : 0;
+                    ? (float) $request_order_item->unit_rate * (float) $request_order_item->item->price : 0;
                 $request_order_item->save();
-            }
-            else {
+            } else {
                 $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
             }
 
@@ -469,23 +461,17 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->create($row);
             $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
 
-            // $PDO = $delivery_order->transaction == "RETURN" ? 'PDO.RET' : 'PDO.REG';
-            // $detail->item->transfer($detail, $detail->unit_amount, null, $PDO);
-            // $detail->item->transfer($detail, $detail->unit_amount, null, 'VDO');
-
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
 
-            if($detail->request_order_item) {
-                if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
+            if ($detail->request_order_item) {
+                if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
                     $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                    $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
+                    $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
                 }
-            }
-            else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
+            } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
 
             $detail->request_order_item->calculate();
-
         }
 
         $delivery_order->request_order_id = $request->request_order_id;
@@ -514,10 +500,10 @@ class DeliveryOrders extends ApiController
 
         $revise = DeliveryOrder::findOrFail($id);
 
-        if($revise->acc_invoice_id) $this->error("The data has Invoice Collect, REVISION Not alowed !");
-        if($revise->trashed()) $this->error("[". $revise->number ."] is trashed. REVISION Not alowed!");
-        if(!$revise->is_internal) $this->error("[". $revise->number ."] is not INTERNAL. REVISION Not alowed!");
-        if($revise->status == 'CLOSED') $this->error("[". $revise->request_order->number ."] has CLOSED. REVISION Not alowed!");
+        if ($revise->acc_invoice_id) $this->error("The data has Invoice Collect, REVISION Not alowed !");
+        if ($revise->trashed()) $this->error("[" . $revise->number . "] is trashed. REVISION Not alowed!");
+        if (!$revise->is_internal) $this->error("[" . $revise->number . "] is not INTERNAL. REVISION Not alowed!");
+        if ($revise->status == 'CLOSED') $this->error("[" . $revise->request_order->number . "] has CLOSED. REVISION Not alowed!");
 
         ## Remove detail of revision
         foreach ($revise->delivery_order_items as $detail) {
@@ -540,29 +526,27 @@ class DeliveryOrders extends ApiController
 
             $request->merge([
                 'number' => $number,
-                'revise_number'=> null,
+                'revise_number' => null,
                 'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);
 
             $delivery_order = DeliveryOrder::create($request->all());
             $request_order = RequestOrder::find($partition['request_order_id']);
-            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:".$partition["request_order_id"]]);
+            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:" . $partition["request_order_id"]]);
 
             $rows = $partition['delivery_order_items'];
-            for ($i=0; $i < count($rows); $i++) {
+            for ($i = 0; $i < count($rows); $i++) {
                 $row = $rows[$i];
 
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
-                if ($request_order->order_mode == 'ACCUMULATE')
-                {
+                if ($request_order->order_mode == 'ACCUMULATE') {
                     $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
                     ## Setup unit price
                     $request_order_item->price = ($request_order_item->item && $request_order_item->item->price)
-                        ? (double) $request_order_item->unit_rate * (double) $request_order_item->item->price : 0;
+                        ? (float) $request_order_item->unit_rate * (float) $request_order_item->item->price : 0;
                     $request_order_item->save();
-                }
-                else {
+                } else {
                     $request_order_item = RequestOrderItem::find($row['request_order_item_id']);
                 }
 
@@ -575,13 +559,12 @@ class DeliveryOrders extends ApiController
 
                 $request_order_item->calculate();
 
-                if($detail->request_order_item) {
-                    if(round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
+                if ($detail->request_order_item) {
+                    if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
                         $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                        $this->error("Part [". $detail->item->part_name ."] unit maximum '$max'");
+                        $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
                     }
-                }
-                else $this->error("Part [". $detail->item->part_name ."] relation [#$detail->request_order_item] undifined!");
+                } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
             }
 
             $delivery_order->is_internal = 0;
@@ -606,7 +589,7 @@ class DeliveryOrders extends ApiController
 
     private function setRequestOrderClosed($request_order)
     {
-        $unconfirm = $request_order->delivery_orders->filter(function($delivery) {
+        $unconfirm = $request_order->delivery_orders->filter(function ($delivery) {
             return $delivery->status != "CONFIRMED";
         });
 

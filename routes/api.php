@@ -14,8 +14,8 @@ use Illuminate\Http\Request;
 */
 
 
-Route::prefix('v1')->namespace('Api')->group(function() {
-    Route::name('app')->get('app', function() {
+Route::prefix('v1')->namespace('Api')->group(function () {
+    Route::name('app')->get('app', function () {
         return response()->json(setting()->all());
     });
 
@@ -31,13 +31,13 @@ Route::prefix('v1')->namespace('Api')->group(function() {
     Route::name('register')->post('register', 'Auth\Authentication@register');
 
     $noauth = request()->has('noauth') && env('APP_ENV', 'local') == 'local';
-    Route::middleware(($noauth ? [] : ['auth:api']))->group( function(){
+    Route::middleware(($noauth ? [] : ['auth:api']))->group(function () {
         Route::post('uploads/file', 'Uploads@storeFile');
         Route::delete('uploads/file', 'Uploads@destroyFile');
         // Route::post('uploads/exist', 'Uploads@existFile');
 
         Route::prefix('auth')->name('auth.')->group(function () {
-            Route::middleware(['auth:api'])->group( function(){
+            Route::middleware(['auth:api'])->group(function () {
                 Route::name('user')->post('/', 'Auth\Authentication@user');
                 Route::name('valid-token')->post('/valid-token', 'Auth\Authentication@validToken');
                 Route::name('confirm-password')->post('/confirm-password', 'Auth\Authentication@confirmPassword');
@@ -123,8 +123,6 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('opnames', 'Warehouses\Opnames');
             Route::apiResource('opname-stocks', 'Warehouses\OpnameStocks');
             Route::apiResource('opname-vouchers', 'Warehouses\OpnameVouchers');
-            Route::apiResource('outgoing-goods', 'Warehouses\OutgoingGoods');
-            Route::apiResource('outgoing-good-verifications', 'Warehouses\OutgoingGoodVerifications');
             Route::apiResource('deportation-goods', 'Warehouses\DeportationGoods');
         });
 
@@ -162,13 +160,12 @@ Route::prefix('v1')->namespace('Api')->group(function() {
             Route::apiResource('category-items', 'References\CategoryItems');
             Route::apiResource('specifications', 'References\Specifications');
         });
-
     });
 });
 
 $api = app('Dingo\Api\Routing\Router');
 $api->version('v1', function ($api) {
-    $api->GET('/', function() {
+    $api->GET('/', function () {
         return response()->json([
             'app' => env('APP_NAME'),
             'prefix' => env('API_PREFIX'),
@@ -208,4 +205,3 @@ $api->version('v1', function ($api) {
         });
     });
 });
-

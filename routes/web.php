@@ -18,15 +18,7 @@ Route::middleware('auth')->get('/user', function () {
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/calculate-delivery', function() {
-        return App\Models\Common\ItemStock::deliveryTransferAmount();
-    });
-
-    Route::get('/check-delivery', function() {
-        return App\Models\Common\ItemStock::deliveryCheckAmount();
-    });
-
-    Route::get('/test-incoming-good', function() {
+    Route::get('/test-incoming-good', function () {
         // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'
     });
 });
@@ -44,6 +36,8 @@ Accurate::routes();
 //     return response()->json(['status' => true, 'counter' => $customers->count()]);
 // });
 
-Route::get('/', function () { return view('welcome'); });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 Route::get('/home', 'HomeController@index')->name('home');

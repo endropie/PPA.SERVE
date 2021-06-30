@@ -5,10 +5,10 @@ use App\Models\Model;
 
 class Settings extends Seeder
 {
-	public function run()
+    public function run()
     {
         Model::unguard();
-            $this->create();
+        $this->create();
         Model::reguard();
     }
 
@@ -69,10 +69,6 @@ class Settings extends Seeder
             "request_order.number_prefix"     => "SO",
             "request_order.number_interval"   => "{Y-m}",
             "request_order.number_digit"      => "5",
-
-            "pre_delivery.number_prefix"     => "PDO",
-            "pre_delivery.number_interval"   => "{Y-m}",
-            "pre_delivery.number_digit"      => "5",
 
             "sj_delivery.number_prefix"     => "SJDO",
             "sj_delivery.number_interval"   => "{Y-m}",
