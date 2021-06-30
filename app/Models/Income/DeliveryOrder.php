@@ -24,7 +24,7 @@ class DeliveryOrder extends Model
 
     protected $relationships = [
         'request_order_closed',
-        'delivery_checkout'
+        'acc_invoice'
     ];
 
     protected $casts = [
@@ -91,8 +91,9 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Auth\User', 'confirmed_by');
     }
 
-    public function getSummaryItemsAttribute() {
-        return (double) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
+    public function getSummaryItemsAttribute()
+    {
+        return (float) $this->hasMany('App\Models\Income\DeliveryOrderItem')->get()->sum('quantity');
     }
 
     public function getHasRevisionAttribute()
@@ -102,12 +103,13 @@ class DeliveryOrder extends Model
 
     public function getFullnumberAttribute()
     {
-        if ($this->revise_number) return $this->number ." R.". (int) $this->revise_number;
+        if ($this->revise_number) return $this->number . " R." . (int) $this->revise_number;
 
         return $this->number;
     }
 
-    public function getRequestReferenceNumberAttribute() {
+    public function getRequestReferenceNumberAttribute()
+    {
         if ($request_order = app('App\Models\Income\RequestOrder')->find($this->request_order_id)) {
             return (string) $request_order->reference_number;
         }
@@ -116,7 +118,7 @@ class DeliveryOrder extends Model
 
     public function getFullnumberIndexAttribute()
     {
-        if ($this->indexed_number && $this->revise_number) return $this->indexed_number ." R.". (int) $this->revise_number;
+        if ($this->indexed_number && $this->revise_number) return $this->indexed_number . " R." . (int) $this->revise_number;
 
         return $this->indexed_number;
     }
@@ -127,7 +129,7 @@ class DeliveryOrder extends Model
         if (!$revise) return null;
 
         return $revise->revise_id && $revise->revise_number
-            ? $revise->number ." R.". (int) $revise->revise_number
+            ? $revise->number . " R." . (int) $revise->revise_number
             : $revise->number;
     }
 

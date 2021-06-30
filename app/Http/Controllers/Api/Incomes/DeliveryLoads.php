@@ -97,7 +97,7 @@ class DeliveryLoads extends ApiController
 
         ## resource return as json
         $delivery_load->delivery_orders = $delivery_load->delivery_orders()->get()->map(function ($delivery, $key) {
-            return $delivery->only(['id', 'fullnumber']);
+            return $delivery->only(['id', 'fullnumber', 'is_internal']);
         });
 
         return response()->json($delivery_load);
