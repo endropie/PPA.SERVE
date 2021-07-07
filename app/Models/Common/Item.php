@@ -14,6 +14,8 @@ class Item extends Model
 
     protected $allowTransferDisabled;
 
+    protected $allowTransferStockLess;
+
     protected $accurate_model = "item";
 
     protected $accurate_push_attributes = [
@@ -25,7 +27,7 @@ class Item extends Model
     static function boot()
     {
         parent::boot();
-        static::registerModelEvent('accurate.pushing', function($model, $record) {
+        static::registerModelEvent('accurate.pushing', function ($model, $record) {
             return array_merge($record, [
                 'tax1Name' => 'Pajak Pertambahan Nilai',
                 'tax3Name' => 'Jasa Teknik',
@@ -60,47 +62,58 @@ class Item extends Model
         'forecast_items', 'request_order_items', 'delivery_order_items',
     ];
 
-    public function incoming_good_items() {
+    public function incoming_good_items()
+    {
         return $this->hasMany('App\Models\Warehouse\IncomingGoodItem');
     }
 
-    public function outgoing_good_items() {
+    public function outgoing_good_items()
+    {
         return $this->hasMany('App\Models\Warehouse\OutgoingGoodItem');
     }
 
-    public function work_order_items() {
+    public function work_order_items()
+    {
         return $this->hasMany('App\Models\Factory\WorkOrderItem');
     }
 
-    public function work_production_items() {
+    public function work_production_items()
+    {
         return $this->hasMany('App\Models\Factory\WorkProductionItem');
     }
 
-    public function packing_items() {
+    public function packing_items()
+    {
         return $this->hasMany('App\Models\Factory\PackingItem');
     }
 
-    public function forecast_items() {
+    public function forecast_items()
+    {
         return $this->hasMany('App\Models\Income\ForecastItem');
     }
 
-    public function request_order_items() {
+    public function request_order_items()
+    {
         return $this->hasMany('App\Models\Income\RequestOrderItem');
     }
 
-    public function delivery_order_items() {
+    public function delivery_order_items()
+    {
         return $this->hasMany('App\Models\Income\DeliveryOrderItem');
     }
 
-    public function delivery_task_items() {
+    public function delivery_task_items()
+    {
         return $this->hasMany('App\Models\Income\DeliveryTaskItem');
     }
 
-    public function delivery_verify_items() {
+    public function delivery_verify_items()
+    {
         return $this->hasMany('App\Models\Income\DeliveryVerifyItem');
     }
 
-    public function delivery_load_items() {
+    public function delivery_load_items()
+    {
         return $this->hasMany('App\Models\Income\DeliveryLoadItem');
     }
 
@@ -119,7 +132,7 @@ class Item extends Model
         return $this->hasMany('App\Models\Common\ItemUnit');
     }
 
-    public function category_item_price ()
+    public function category_item_price()
     {
         return $this->belongsTo('App\Models\Common\CategoryItemPrice');
     }
@@ -187,7 +200,7 @@ class Item extends Model
         $units->push(array_merge($this->unit->toArray(), ['rate' => 1]));
 
         foreach ($this->item_units as $item) {
-            $units->push(array_merge($item->unit->toArray(), ['rate' => (double) $item->rate]));
+            $units->push(array_merge($item->unit->toArray(), ['rate' => (float) $item->rate]));
         }
         return $units;
     }
@@ -197,8 +210,8 @@ class Item extends Model
         $stocks = [];
         $all = 0;
         foreach (ItemStock::getStockists() as $key => $value) {
-            $stocks[$key] = (double) $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
-            if (array_search($key, ['FM','WIP','FG','NC','NCR']) > -1) $all += $stocks[$key];
+            $stocks[$key] = (float) $this->hasMany('App\Models\Common\ItemStock')->where('stockist', $key)->sum('total');
+            if (array_search($key, ['FM', 'WIP', 'FG', 'NC', 'NCR']) > -1) $all += $stocks[$key];
         }
         return array_merge($stocks, ['*' => $all]);
     }
@@ -206,7 +219,7 @@ class Item extends Model
     public function getTotalWorkOrderAttribute()
     {
         return $this->hasMany('App\Models\Factory\WorkOrderItem')
-            ->whereHas('work_order', function($q) {
+            ->whereHas('work_order', function ($q) {
                 return $q->where('status', 'OPEN')->whereNull('main_id');
             })->get()
             ->groupBy(function ($item) {
@@ -225,31 +238,31 @@ class Item extends Model
         return $customer->code;
     }
 
-    public function amount_delivery_verify ($date = null)
+    public function amount_delivery_verify($date = null)
     {
         if (!$date) return 0;
-        return (double) $this->delivery_verify_items()->where('date', $date)->get()->sum('unit_amount');
+        return (float) $this->delivery_verify_items()->where('date', $date)->get()->sum('unit_amount');
     }
 
-    public function amount_delivery_task ($date = null, $trans = null)
+    public function amount_delivery_task($date = null, $trans = null)
     {
         if (!$date) return 0;
-        return (double) $this->delivery_task_items()->whereHas('delivery_task', function ($q) use ($trans, $date) {
+        return (float) $this->delivery_task_items()->whereHas('delivery_task', function ($q) use ($trans, $date) {
             return $q->where('date', $date)
-                     ->when($trans !== null, function($q) use ($trans) {
-                         return $q->where('transaction', $trans);
-                     });
+                ->when($trans !== null, function ($q) use ($trans) {
+                    return $q->where('transaction', $trans);
+                });
         })->get()->sum('unit_amount');
     }
 
-    public function amount_delivery_load ($date = null, $trans = null)
+    public function amount_delivery_load($date = null, $trans = null)
     {
         if (!$date) return 0;
-        return (double) $this->delivery_load_items()->whereHas('delivery_load', function ($q) use ($trans, $date) {
+        return (float) $this->delivery_load_items()->whereHas('delivery_load', function ($q) use ($trans, $date) {
             return $q->where('date', $date)
-                    ->when($trans !== null, function($q) use ($trans) {
-                        return $q->where('transaction', $trans);
-                    });;
+                ->when($trans !== null, function ($q) use ($trans) {
+                    return $q->where('transaction', $trans);
+                });;
         })->get()->sum('unit_amount');
     }
 
@@ -262,10 +275,9 @@ class Item extends Model
 
     public function getUnitPrice($unit = null)
     {
-        $price = (double) $this->price ?? 0;
+        $price = (float) $this->price ?? 0;
         if (!$unit) return $price;
-        else
-        {
+        else {
             $id = $unit->id ?? $unit;
             $rate = ($u = $this->item_units()->where('unit_id', $id)->get()->first())
                 ? $u->rate : 1;
@@ -273,16 +285,20 @@ class Item extends Model
         }
     }
 
-    public function transfer($collect, $number, $stockist = false, $exStockist = false) {
+    public function transfer($collect, $number, $stockist = false, $exStockist = false)
+    {
 
-        if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
+        if (!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
 
         $collect = $collect->fresh();
 
-        if($exStockist) {
+        if ($exStockist) {
             $exStockist = ItemStock::getValidStockist($exStockist);
             $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
             $exStock->total = $exStock->total - $number;
+
+            if (!$this->allowTransferStockLess && round($exStock->total) <  0) abort(501, "PART [$this->code] STOCK LESS");
+
             $exStock->save();
 
             $this->item_stockables()->create([
@@ -292,10 +308,10 @@ class Item extends Model
                 'stockist' => $exStockist,
             ]);
 
-            if($stockist==false) return $exStock;
+            if ($stockist == false) return $exStock;
         }
 
-        if($stockist !== false) {
+        if ($stockist !== false) {
 
             $stockist = ItemStock::getValidStockist($stockist);
             $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
@@ -313,7 +329,8 @@ class Item extends Model
         }
     }
 
-    public function distransfer($collect, $delete=true) {
+    public function distransfer($collect, $delete = true)
+    {
         if ($collect->stockable->count() == 0) return;
 
         // if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
@@ -323,12 +340,19 @@ class Item extends Model
             $stock->total -= $log->unit_amount;
             $stock->save();
 
-            if($delete) $log->delete();
+            if ($delete) $log->delete();
         }
     }
 
-    public function allowDisableTransfer () {
+    public function allowDisableTransfer()
+    {
         $this->allowTransferDisabled = true;
+        return $this;
+    }
+
+    public function allowStockLessTransfer()
+    {
+        $this->allowTransferStockLess = true;
         return $this;
     }
 }
