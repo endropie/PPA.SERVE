@@ -145,6 +145,7 @@ class DeliveryOrders extends ApiController
             'request_order',
             'revisions',
             'reason',
+            'delivery_load',
             'delivery_order_items.item.unit',
             'delivery_order_items.unit',
             'delivery_order_items.item.item_units',

@@ -51,6 +51,11 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Income\RequestOrder');
     }
 
+    public function delivery_load()
+    {
+        return $this->belongsTo('App\Models\Income\DeliveryLoad');
+    }
+
     public function request_order_closed()
     {
         return $this->request_order()->where('status', 'CLOSED');
