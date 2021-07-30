@@ -31,7 +31,7 @@ class CreateDeliveryOrdersTables extends Migration
             $table->string('status')->default('OPEN');
 
             $table->unsignedInteger('revise_id')->nullable();
-            $table->string('revise_number')->nullable();
+            $table->unsignedInteger('revise_number')->nullable();
             $table->unsignedInteger('outgoing_good_id')->nullable();
             $table->unsignedInteger('request_order_id')->nullable();
 
