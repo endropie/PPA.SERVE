@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\Factories;
 
 use App\Filters\Factory\PackingLoad as Filters;
@@ -35,7 +36,7 @@ class PackingLoads extends ApiController
                     'packing_load_items.unit',
                 ])->filter($filter)->latest()->orderBy('id', 'DESC')->collect();
 
-                $packing_loads->getCollection()->transform(function($row) {
+                $packing_loads->getCollection()->transform(function ($row) {
                     return $row;
                 });
                 break;
@@ -47,7 +48,7 @@ class PackingLoads extends ApiController
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
-        if(!$request->number) $request->merge(['number'=> $this->getNextPackingLoadNumber()]);
+        if (!$request->number) $request->merge(['number' => $this->getNextPackingLoadNumber()]);
 
         ## Create the PackingLoad.
         $packing_load = PackingLoad::create($request->all());
@@ -73,7 +74,8 @@ class PackingLoads extends ApiController
         $packing_load = PackingLoad::with([
             'customer',
             'packing_load_items.item',
-            'packing_load_items.unit'
+            'packing_load_items.unit',
+            'packing_load_items.item.item_units'
         ])->withTrashed()->findOrFail($id);
 
         return response()->json($packing_load);
@@ -85,11 +87,10 @@ class PackingLoads extends ApiController
 
         $packing_load = PackingLoad::findOrFail($id);
 
-        if($packing_load->is_relationship) $this->error('The data has RELATIONSHIP, is not allowed to be updated!');
-        if($packing_load->status != "OPEN") $this->error("The data on $packing_load->satus state , is not allowed to be updated!");
+        if ($packing_load->is_relationship) $this->error('The data has RELATIONSHIP, is not allowed to be updated!');
+        if ($packing_load->status != "OPEN") $this->error("The data on $packing_load->satus state , is not allowed to be updated!");
 
-        foreach ($packing_load->packing_load_items as $oldDetail)
-        {
+        foreach ($packing_load->packing_load_items as $oldDetail) {
             ## Calculate stock on before the PackingLoad items (old) remove!
             $oldDetail->item->distransfer($oldDetail);
             $oldDetail->forceDelete();
@@ -97,8 +98,7 @@ class PackingLoads extends ApiController
 
         $packing_load->update($request->all());
 
-        foreach ($request->packing_load_items as $row)
-        {
+        foreach ($request->packing_load_items as $row) {
             ## Create the PackingLoad item. Note: with "hasOne" Relation.
             $detail = $packing_load->packing_load_items()->create($row);
 
@@ -118,14 +118,13 @@ class PackingLoads extends ApiController
         $packing_load = PackingLoad::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
-        if($packing_load->is_relationship) $this->error("[$packing_load->number] has RELATIONSHIP, is not allowed to be $mode!");
-        if($mode == "DELETED" && $packing_load->status != "OPEN") $this->error("[$packing_load->number] $packing_load->status state, is not allowed to be $mode!");
+        if ($packing_load->is_relationship) $this->error("[$packing_load->number] has RELATIONSHIP, is not allowed to be $mode!");
+        if ($mode == "DELETED" && $packing_load->status != "OPEN") $this->error("[$packing_load->number] $packing_load->status state, is not allowed to be $mode!");
 
         $packing_load->status = $mode;
         $packing_load->save();
 
-        foreach ($packing_load->packing_load_items as $detail)
-        {
+        foreach ($packing_load->packing_load_items as $detail) {
             ## Calculate Stok Before deleting
             $detail->item->distransfer($detail);
             $detail->delete();
