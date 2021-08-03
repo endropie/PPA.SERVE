@@ -19,12 +19,11 @@ class DeliveryOrder extends Request
         if ($method == 'PATCH' || $method == 'PUT') {
             $id = $this->delivery_order;
 
-            if($this->exists('nodata')) return [];
-        }
-        else $id = null;
+            if ($this->exists('nodata')) return [];
+        } else $id = null;
 
         return [
-            'number' => ($id ? 'required|string|' : '') .'max:191|unique:delivery_orders,number,'. $id .',id,revise_number,'. $this->get('revise_number'),
+            'number' => ($id ? 'required' : 'nullable') . '|max:191|unique:delivery_orders,number,' . $id . ',id,revise_number,' . $this->get('revise_number'),
             'date' => 'required',
             'transaction' => 'required',
             'customer_id' => 'required',

@@ -328,7 +328,7 @@ class DeliveryOrders extends ApiController
         ## New delivery order of partitions
         foreach ($request->partitions as $key => $partition) {
             ## Auto generate number of revision
-            $max = (int) DeliveryOrder::where('number', $request->number)->max('revise_number');
+            $max = (int) DeliveryOrder::withTrashed()->where('number', $request->number)->max('revise_number');
 
             $request->merge([
                 'revise_number' => ($max + 1),
@@ -527,7 +527,7 @@ class DeliveryOrders extends ApiController
 
             $request->merge([
                 'number' => $number,
-                'revise_number' => null,
+                'revise_number' => 0,
                 'transaction' => $partition['transaction'],
                 'description' => $partition['description'],
             ]);

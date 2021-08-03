@@ -66,8 +66,8 @@ Route::prefix('v1')->namespace('Api')->group(function () {
 
         Route::prefix('incomes')->name('incomes.')->group(function () {
             Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
-            Route::put('delivery-internals/{id}/confirmed', 'Incomes\DeliveryInternals@confirmed');
-            Route::put('delivery-internals/{id}/revised', 'Incomes\DeliveryInternals@revised');
+            // Route::put('delivery-internals/{id}/confirmed', 'Incomes\DeliveryInternals@confirmed');
+            // Route::put('delivery-internals/{id}/revised', 'Incomes\DeliveryInternals@revised');
             Route::put('delivery-loads/{id}/save-vehicle', 'Incomes\DeliveryLoads@vehicleUpdated');
             Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');
             Route::post('invoices/{id}/confirmed', 'Incomes\AccInvoices@confirmed');
@@ -85,7 +85,7 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::apiResource('invoices', 'Incomes\AccInvoices');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
-            Route::apiResource('delivery-internals', 'Incomes\DeliveryInternals');
+            // Route::apiResource('delivery-internals', 'Incomes\DeliveryInternals');
             Route::apiResource('delivery-tasks', 'Incomes\DeliveryTasks');
             Route::apiResource('delivery-loads', 'Incomes\DeliveryLoads');
             Route::apiResource('delivery-verifies', 'Incomes\DeliveryVerifies');
@@ -96,10 +96,10 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::get('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@detail');
             Route::delete('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@destroyDetail');
             Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
-            Route::put('delivery-order-internals/{id}/revision', 'Incomes\DeliveryOrders@revisonInternal');
-            Route::put('delivery-order-internals/{id}/confirmed', 'Incomes\DeliveryOrders@confirmation');
-            Route::get('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@show');
-            Route::delete('delivery-order-internals/{id}', 'Incomes\DeliveryOrders@destroy');
+            Route::put('delivery-order-internals/{delivery_order}/revision', 'Incomes\DeliveryOrders@revisonInternal');
+            Route::put('delivery-order-internals/{delivery_order}/confirmed', 'Incomes\DeliveryOrders@confirmation');
+            Route::get('delivery-order-internals/{delivery_order}', 'Incomes\DeliveryOrders@show');
+            Route::delete('delivery-order-internals/{delivery_order}', 'Incomes\DeliveryOrders@destroy');
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
