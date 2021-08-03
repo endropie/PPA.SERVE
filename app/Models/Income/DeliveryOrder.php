@@ -108,9 +108,11 @@ class DeliveryOrder extends Model
 
     public function getFullnumberAttribute()
     {
-        if ($this->revise_number) return $this->number . " R." . (int) $this->revise_number;
+        $number = str_replace('-', '', $this->number);
 
-        return $this->number;
+        if ($this->revise_number) return $number . " R." . (int) $this->revise_number;
+
+        return $number;
     }
 
     public function getRequestReferenceNumberAttribute()
@@ -133,9 +135,11 @@ class DeliveryOrder extends Model
         $revise = app('App\Models\Income\DeliveryOrder')->withTrashed()->find($this->revise_id);
         if (!$revise) return null;
 
-        return $revise->revise_id && $revise->revise_number
-            ? $revise->number . " R." . (int) $revise->revise_number
-            : $revise->number;
+        $number = str_replace('-', '', $this->revise->number);
+
+        return $revise->revise_number
+            ? $number . " R." . (int) $revise->revise_number
+            : $number;
     }
 
     public function getConfirmedUserAttribute()
