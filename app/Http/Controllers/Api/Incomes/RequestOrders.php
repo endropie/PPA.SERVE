@@ -14,7 +14,7 @@ use App\Traits\GenerateNumber;
 
 class RequestOrders extends ApiController
 {
-        use GenerateNumber;
+    use GenerateNumber;
 
     public function index(Filter $filter)
     {
@@ -25,17 +25,17 @@ class RequestOrders extends ApiController
 
             case 'datagrid':
                 $request_orders = RequestOrder::with(['created_user', 'customer'])->filter($filter)
-                  ->latest()->get();
-                $request_orders->each->append(['is_relationship']);
+                    ->latest()->get();
+                $request_orders->each->append(['delivery_counter']);
                 break;
 
             default:
                 $request_orders = RequestOrder::with(['created_user'])
-                  ->filter($filter)
-                  ->latest()->collect();
-                $request_orders->getCollection()->transform(function($item) {
+                    ->filter($filter)
+                    ->latest()->collect();
+                $request_orders->getCollection()->transform(function ($item) {
                     $item->customer = $item->customer()->first()->only(['id', 'name', 'code']);
-                    $item->append(['is_relationship', 'total_unit_amount', 'total_unit_delivery', 'delivery_counter']);
+                    $item->append(['delivery_counter']);
                     return $item;
                 });
                 break;
@@ -50,7 +50,7 @@ class RequestOrders extends ApiController
         $request_order_items = RequestOrderItem::filter($filter)->latest()->get();
 
         if ($date = request('delivery_date')) {
-            $request_order_items->map(function($detail) use ($date) {
+            $request_order_items->map(function ($detail) use ($date) {
                 $detail->item->item_units;
                 $detail->item->amount_delivery = [
                     "FG" => $detail->item->totals["FG"],
@@ -71,15 +71,14 @@ class RequestOrders extends ApiController
     {
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
-        if(!$request->number) $request->merge(['number'=> $this->getNextRequestOrderNumber()]);
+        if (!$request->number) $request->merge(['number' => $this->getNextRequestOrderNumber()]);
 
         $request_order = RequestOrder::create($request->all());
 
         $item = $request->request_order_items;
-        for ($i=0; $i < count($item); $i++) {
+        for ($i = 0; $i < count($item); $i++) {
 
             $detail = $request_order->request_order_items()->create($item[$i]);
-
         }
 
         $request_order->setCommentLog("Sales Order [$request_order->fullnumber] has been created!");
@@ -100,7 +99,7 @@ class RequestOrders extends ApiController
             // 'acc_invoices'
         ])->withTrashed()->findOrFail($id);
 
-        $request_order->append(['has_relationship','total_unit_amount', 'total_unit_delivery']);
+        $request_order->append(['has_relationship', 'total_unit_amount', 'total_unit_delivery']);
         $request_order->request_order_items->each->append('lots');
 
         ## resource return as json
@@ -114,8 +113,8 @@ class RequestOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') === 'calculate') return $this->calculate($request, $id);
-        if(request('mode') === 'close') return $this->close($request, $id);
+        if (request('mode') === 'calculate') return $this->calculate($request, $id);
+        if (request('mode') === 'close') return $this->close($request, $id);
 
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -128,20 +127,20 @@ class RequestOrders extends ApiController
 
         $request_order->update($request->input());
 
-        if(request('mode') === 'referenced') {
+        if (request('mode') === 'referenced') {
             $this->DATABASE::commit();
             return response()->json($request_order);
         }
 
         // Delete old incoming goods items when $request detail rows has not ID
-        if($request_order->request_order_items) {
+        if ($request_order->request_order_items) {
             $rows = collect($request->request_order_items);
             foreach ($request_order->request_order_items as $detail) {
                 $detail->item->distransfer($detail);
 
                 ## Find except row from old Details.
                 if (!$rows->contains('id', $detail->id)) {
-                    $name = ($detail->item->part_name) ?? ('#'.$detail->id);
+                    $name = ($detail->item->part_name) ?? ('#' . $detail->id);
                     if ($detail->amount_delivery > 0) $this->error("Part [$name] is not allowed to removed!");
                     $detail->forceDelete();
                 }
@@ -149,16 +148,16 @@ class RequestOrders extends ApiController
         }
 
         $rows = $request->request_order_items;
-        for ($i=0; $i < count($rows); $i++) {
+        for ($i = 0; $i < count($rows); $i++) {
             $row = $rows[$i];
             $old = $request_order->request_order_items()->find($row['id']);
             $detail = $request_order->request_order_items()->updateOrCreate(['id' => $row['id']], $row);
 
             if ($old && $old->delivery_order_items->count()) {
-                $request->validate(["request_order_items.$i.item_id" => "in:".$old['item_id']]);
+                $request->validate(["request_order_items.$i.item_id" => "in:" . $old['item_id']]);
             }
             if (round($detail->amount_delivery) > round($detail->unit_amount)) {
-                $request->validate(["request_order_items.$i.quantity" => "not_in:".$row['quantity']]);
+                $request->validate(["request_order_items.$i.quantity" => "not_in:" . $row['quantity']]);
             }
         }
 
@@ -186,13 +185,12 @@ class RequestOrders extends ApiController
             $rels = $request_order->has_relationship;
             unset($rels["incoming_good"]);
             if ($rels->count() > 0)  $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
-        }
-        else {
+        } else {
             if ($request_order->status != 'OPEN') $this->error("The data $request_order->status state, is not allowed to be $mode");
             if ($request_order->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be $mode");
         }
 
-        if($mode == "VOID") {
+        if ($mode == "VOID") {
             $request_order->status = "VOID";
             $request_order->save();
         }
@@ -304,8 +302,8 @@ class RequestOrders extends ApiController
         foreach ($request->input('delivery_orders') as $row) {
             $delivery_order = $request_order->delivery_orders()->find($row['id']);
 
-            if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
-            if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+            if (!$delivery_order) return $this->error('Delivery undefined! [ID: ' . $row['id'] . ']');
+            if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: ' . $delivery_order->fullnumber . ']');
 
             $delivery_order->acc_invoice()->associate($invoice);
             $delivery_order->save();
@@ -339,7 +337,7 @@ class RequestOrders extends ApiController
         return response()->json($response);
     }
 
-    public function forgetInvoice ($id)
+    public function forgetInvoice($id)
     {
         $invoice = AccInvoice::findOrFail($id);
         $forget = $invoice->accurate()->forget();
@@ -362,5 +360,4 @@ class RequestOrders extends ApiController
 
         return response()->json($invoice);
     }
-
 }
