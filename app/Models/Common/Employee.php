@@ -16,9 +16,7 @@ class Employee extends Model
     protected $hidden = ['created_at', 'updated_at'];
 
     protected $relationships = [
-        'work_productions',
-        'packings',
-        'outgoing_goods'
+        'commentables'
     ];
 
     public function user () {
@@ -45,8 +43,8 @@ class Employee extends Model
         return $this->hasMany('App\Models\Factory\Packing', 'operator_id');
     }
 
-    public function outgoing_goods() {
-        return $this->hasMany('App\Models\Warehouse\OutgoingGood', 'created_at');
+    public function commentables() {
+        return $this->hasMany('App\Models\Commentable', 'created_at');
     }
 
 }
