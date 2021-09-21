@@ -37,4 +37,34 @@ class Customer extends Filter
         });
     }
 
+    public function search($value = '')
+    {
+        if (!strlen($value)) return $this->builder;
+
+        if ($fields = request('search-keys')) {
+            $fields = explode(',', $fields);
+        } else {
+
+            $tableName = $this->builder->getQuery()->from;
+            $fields = \Schema::getColumnListing($tableName);
+            $except = [$this->builder->getModel()->getKeyName()];
+            $fields = array_diff_key($fields, $except);
+        }
+
+
+        $separator = substr_count($value, '|') > 0 ? '|' : ' ';
+        $keywords = explode($separator, $value);
+        return $this->builder->where(function ($query) use ($fields, $keywords) {
+            foreach ($keywords as $keyword) {
+                if (strlen($keyword)) {
+                    $query->where(function ($query) use ($fields, $keyword) {
+                        foreach ($fields as $field) {
+                            $query->orWhere($field, 'like', '%' . $keyword . '%');
+                        }
+                    });
+                }
+            }
+        });
+    }
+
 }
