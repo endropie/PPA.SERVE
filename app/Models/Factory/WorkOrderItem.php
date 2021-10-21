@@ -7,8 +7,6 @@ use App\Models\Model;
 use App\Traits\HasCommentable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use function React\Promise\Stream\first;
-
 class WorkOrderItem extends Model
 {
     use Filterable, SoftDeletes, HasCommentable;
@@ -125,8 +123,20 @@ class WorkOrderItem extends Model
 
     public function getWorkOrderNumberAttribute()
     {
-        $work_order = $this->work_order()->first();
+        $work_order = $this->fresh()->work_order;
         return  $work_order->fullnumber ?? null;
+    }
+
+    public function getWorkOrderDateAttribute()
+    {
+        $work_order = $this->fresh()->work_order;
+        return  $work_order->date ?? null;
+    }
+
+    public function getWorkOrderShiftAttribute()
+    {
+        $work_order = $this->fresh()->work_order;
+        return  $work_order->shift->name ?? null;
     }
 
     public function calculate($error = true)

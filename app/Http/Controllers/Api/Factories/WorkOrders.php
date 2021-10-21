@@ -54,7 +54,7 @@ class WorkOrders extends ApiController
         switch (request('mode')) {
             case 'all':
             $work_order_items = WorkOrderItem::filter($filter)->latest()->get();
-            $work_order_items->each->append(['work_order_number']);
+            $work_order_items->each->append(['work_order_number', 'work_order_date', 'work_order_shift']);
             break;
 
             default:
