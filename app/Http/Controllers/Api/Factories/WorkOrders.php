@@ -312,6 +312,10 @@ class WorkOrders extends ApiController
     {
         $this->DATABASE::beginTransaction();
 
+        $request->validate([
+            'producted_notes' => 'required'
+        ]);
+
         $work_order = WorkOrder::findOrFail($id);
 
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
@@ -319,6 +323,8 @@ class WorkOrders extends ApiController
         if($work_order->total_production <= 0) $this->error("SPK [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
 
         $work_order->moveState('PRODUCTED');
+        $work_order->producted_notes = $request->producted_notes;
+        $work_order->save();
 
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been PRODUCTED!");
 
