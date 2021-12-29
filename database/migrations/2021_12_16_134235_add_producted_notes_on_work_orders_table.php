@@ -13,8 +13,8 @@ class AddProductedNotesOnWorkOrdersTable extends Migration
      */
     public function up()
     {
-        Schema::table('work_orders', function (Blueprint $table) {
-            $table->text('producted_notes')->nullable()->after('description');
+        Schema::table('work_order_items', function (Blueprint $table) {
+            $table->text('producted_notes')->nullable()->after('note');
         });
     }
 
@@ -26,7 +26,7 @@ class AddProductedNotesOnWorkOrdersTable extends Migration
     public function down()
     {
 
-        Schema::table('work_orders', function (Blueprint $table) {
+        Schema::table('work_order_items', function (Blueprint $table) {
             $table->dropColumn('producted_notes');
         });
     }

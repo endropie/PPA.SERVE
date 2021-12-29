@@ -313,18 +313,24 @@ class WorkOrders extends ApiController
         $this->DATABASE::beginTransaction();
 
         $request->validate([
-            'producted_notes' => 'required'
+            'work_order_items.*.id' => 'required',
+            'work_order_items.*.producted_notes' => 'nullable',
         ]);
 
+
         $work_order = WorkOrder::findOrFail($id);
+
+        foreach ($request->get('work_order_items') as $row) {
+            $detail = $work_order->work_order_items()->find($row['id']);
+            $detail->producted_notes = $row['producted_notes'];
+            $detail->save();
+        }
 
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
         if($work_order->status !== 'OPEN') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PRODUCTED!");
         if($work_order->total_production <= 0) $this->error("SPK [#$work_order->number] has not Production. Not allowed to be PRODUCTED!");
 
         $work_order->moveState('PRODUCTED');
-        $work_order->producted_notes = $request->producted_notes;
-        $work_order->save();
 
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been PRODUCTED!");
 
