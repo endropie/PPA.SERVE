@@ -39,7 +39,7 @@ class RolePermission extends Seeder
             // Deliveries
             'incoming-goods' => ['c', 'r', 'u', 'd', 'validation', 'revision', 'void'],
             'pre-deliveries' => ['c', 'r', 'u', 'd', 'close', 'revision', 'void'],
-            'sj-delivery-orders' => ['c', 'r', 'u', 'd', 'confirm', 'revision', 'void'],
+            'sj-delivery-orders' => ['c', 'r', 'u', 'd', 'confirm', 'validation', 'reopen', 'revision', 'void'],
             'sj-delivery-internals' => ['c', 'r', 'u', 'd', 'confirm', 'revision', 'void'],
             'delivery-internals' => ['c', 'r', 'u', 'd', 'confirm', 'revision', 'void'],
             'delivery-tasks' => ['c', 'r', 'u', 'd', 'void'],

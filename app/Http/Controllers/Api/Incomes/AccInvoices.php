@@ -70,7 +70,7 @@ class AccInvoices extends ApiController
                 $delivery_order = DeliveryOrder::whereNull('acc_invoice_id')->find($row['id']);
 
                 if (!$delivery_order) return $this->error('Delivery undefined! [ID: #'. $row['id'] .']');
-                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                if ($delivery_order->status !== 'VALIDATED') return $this->error('Delivery not validated! ['. $delivery_order->fullnumber .']');
                 if ($delivery_order->is_internal) $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');
 
                 $delivery_order->acc_invoice_id = $acc_invoice->id;
@@ -93,8 +93,8 @@ class AccInvoices extends ApiController
                     if ($delivery_order->acc_invoice) {
                         return $this->error('Delivery has been invoiced [SJDO: '. $delivery_order->fullnumber .']');
                     }
-                    if ($delivery_order->status !== 'CONFIRMED') {
-                        return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                    if ($delivery_order->status !== 'VALIDATED') {
+                        return $this->error('Delivery not validated! [SJDO: '. $delivery_order->fullnumber .']');
                     }
 
                     $delivery_order->acc_invoice_id = $acc_invoice->id;
@@ -156,7 +156,7 @@ class AccInvoices extends ApiController
                     ->find($row['id']);
 
                 if (!$delivery_order) return $this->error('Delivery undefined! [ID: '. $row['id'] .']');
-                if ($delivery_order->status !== 'CONFIRMED') return $this->error('Delivery not confirmed! [SJDO: '. $delivery_order->fullnumber .']');
+                if ($delivery_order->status !== 'VALIDATED') return $this->error('Delivery not validated! [SJDO: '. $delivery_order->fullnumber .']');
 
                 $delivery_order->acc_invoice_id = $acc_invoice->id;
                 $delivery_order->save();
@@ -178,8 +178,8 @@ class AccInvoices extends ApiController
                     if ($delivery_order->acc_invoice && $delivery_order->acc_invoice->id != $id) {
                         return $this->error('Delivery has been invoiced ['. $delivery_order->fullnumber .']');
                     }
-                    if ($delivery_order->status !== 'CONFIRMED') {
-                        return $this->error('Delivery not confirmed! ['. $delivery_order->fullnumber .']');
+                    if ($delivery_order->status !== 'VALIDATED') {
+                        return $this->error('Delivery not validated! ['. $delivery_order->fullnumber .']');
                     }
                     if ($delivery_order->is_internal) {
                         return $this->error('Delivery is internal! ['. $delivery_order->fullnumber .']');

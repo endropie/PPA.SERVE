@@ -159,7 +159,7 @@ class DeliveryOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if (request('mode') == 'confirmation') return $this->confirmation($id);
+        if (request('mode') == 'confirmation') return $this->error();
         else if (request('mode') == 'revision') return $this->revision($request, $id);
         else if (request('mode') == 'multi-revision') return $this->multiRevision($request, $id);
         else if (request('mode') == 'internal-revision') return $this->internalRevision($request, $id);
@@ -275,9 +275,55 @@ class DeliveryOrders extends ApiController
         $delivery_order->confirmed_at = now();
         $delivery_order->save();
 
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been confirmed!");
+
+        $this->DATABASE::commit();
+        return $this->show($delivery_order->id);
+    }
+
+    public function validation($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_order = DeliveryOrder::findOrFail($id);
+
+        if ($delivery_order->status != "CONFIRMED") $this->error("SJDO[$delivery_order->number] has '$delivery_order->status' state. Validation not allowed!");
+
+        foreach ($delivery_order->delivery_order_items as $detail) {
+            if ($detail->request_order_item) $detail->request_order_item->calculate();
+        }
+
+        $delivery_order->status = 'VALIDATED';
+        $delivery_order->validated_by = auth()->user()->id;
+        $delivery_order->validated_at = now();
+        $delivery_order->save();
+
         if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
 
-        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been confirmed!");
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been validated!");
+
+        $this->DATABASE::commit();
+        return $this->show($delivery_order->id);
+    }
+
+    public function reopen($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_order = DeliveryOrder::findOrFail($id);
+
+        if ($delivery_order->status != "CONFIRMED") $this->error("SJDO[$delivery_order->number] has not '$delivery_order->status' state. Reopen not allowed!");
+
+        foreach ($delivery_order->delivery_order_items as $detail) {
+            if ($detail->request_order_item) $detail->request_order_item->calculate();
+        }
+
+        $delivery_order->status = 'OPEN';
+        $delivery_order->confirmed_by = null;
+        $delivery_order->confirmed_at = null;
+        $delivery_order->save();
+
+        $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been re-opened!");
 
         $this->DATABASE::commit();
         return $this->show($delivery_order->id);

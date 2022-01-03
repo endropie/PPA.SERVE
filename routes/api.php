@@ -77,6 +77,10 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::put('request-order-items/{id}/lock', 'Incomes\RequestOrders@setLockDetail');
             Route::put('request-order-items/{id}/unlock', 'Incomes\RequestOrders@setUnlockDetail');
 
+            Route::put('delivery-orders/{delivery_order}/validation', 'Incomes\DeliveryOrders@validation');
+            Route::put('delivery-orders/{delivery_order}/confirmation', 'Incomes\DeliveryOrders@confirmation');
+            Route::put('delivery-orders/{delivery_order}/reopen', 'Incomes\DeliveryOrders@reopen');
+
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
             Route::apiResource('forecast-periods', 'Incomes\ForecastPeriods');
@@ -85,7 +89,6 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::apiResource('invoices', 'Incomes\AccInvoices');
             Route::apiResource('pre-deliveries', 'Incomes\PreDeliveries');
             Route::apiResource('delivery-orders', 'Incomes\DeliveryOrders');
-            // Route::apiResource('delivery-internals', 'Incomes\DeliveryInternals');
             Route::apiResource('delivery-tasks', 'Incomes\DeliveryTasks');
             Route::apiResource('delivery-loads', 'Incomes\DeliveryLoads');
             Route::apiResource('delivery-verifies', 'Incomes\DeliveryVerifies');
