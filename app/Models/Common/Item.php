@@ -56,8 +56,7 @@ class Item extends Model
     ];
 
     protected $relationships = [
-        'item_stockables', 'item_stocks',
-        'incoming_good_items', 'outgoing_good_items',
+        'item_stockables', 'item_stocks', 'incoming_good_items',
         'work_order_items', 'work_production_items', 'packing_items',
         'forecast_items', 'request_order_items', 'delivery_order_items',
     ];
@@ -65,11 +64,6 @@ class Item extends Model
     public function incoming_good_items()
     {
         return $this->hasMany('App\Models\Warehouse\IncomingGoodItem');
-    }
-
-    public function outgoing_good_items()
-    {
-        return $this->hasMany('App\Models\Warehouse\OutgoingGoodItem');
     }
 
     public function work_order_items()

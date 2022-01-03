@@ -51,22 +51,6 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextPreDeliveryNumber($date = null)
-    {
-        $modul = 'pre_delivery';
-        $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul);
-        $prefix = $this->dateParser($prefix, $date);
-
-        $next = \App\Models\Income\PreDelivery::withTrashed()->where('number','LIKE', $prefix.'%')->max('number');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
     public function getNextDeliveryTaskNumber($date = null)
     {
         $modul = 'delivery_task';
@@ -296,25 +280,6 @@ trait GenerateNumber
         $next = \App\Models\Warehouse\IncomingGood::withTrashed()
             ->selectRaw('MAX(REPLACE(indexed_number, "'.$prefix.'", "") * 1) AS N')
             ->where('number','LIKE', $prefix.'%')->get()->max('N');
-        $next = $next ? (int) str_replace($prefix,'', $next) : 0;
-        $next++;
-
-        $number = $prefix . str_pad($next, $digit, '0', STR_PAD_LEFT);
-
-        return $number;
-    }
-
-    public function getNextOutgoingGoodNumber($date = null)
-    {
-        $modul = 'outgoing_good';
-        $digit = (int) setting()->get("$modul.number_digit", 5);
-        $prefix = $this->prefixParser($modul);
-        $prefix = $this->dateParser($prefix, $date);
-
-        $next = \App\Models\Warehouse\OutgoingGood::withTrashed()
-            ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
-            ->where('number','LIKE', $prefix.'%')->get()->max('N');
-            // ->where('number','LIKE', $prefix.'%')->max('number');
         $next = $next ? (int) str_replace($prefix,'', $next) : 0;
         $next++;
 
