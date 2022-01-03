@@ -88,16 +88,19 @@ class DeportationGoods extends ApiController
 
         $deportation_good->update($request->input());
 
-        // Before Update Force delete Deportation goods items
-        $deportation_good->deportation_good_items()->forceDelete();
+        if ($request->has('deportation_good_items')) {
+            // Before Update Force delete Deportation goods items
+            $deportation_good->deportation_good_items()->forceDelete();
 
-        // Update Deportation goods items
-        $rows = $request->deportation_good_items;
-        for ($i=0; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            // Update or Create detail row
-            $detail = $deportation_good->deportation_good_items()->create($row);
-            if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
+            // Update Deportation goods items
+            $rows = $request->get('deportation_good_items', []);
+            for ($i=0; $i < count($rows); $i++) {
+                $row = $rows[$i];
+                // Update or Create detail row
+                $detail = $deportation_good->deportation_good_items()->create($row);
+                if (!$detail->item->enable) $this->error("PART [". $detail->item->code . "] DISABLED");
+            }
+
         }
 
         $deportation_good->setCommentLog("Deportation [$deportation_good->fullnumber] has been updated!");
@@ -138,7 +141,7 @@ class DeportationGoods extends ApiController
         return response()->json(['success' => true]);
     }
 
-    public function rejection($request, $id)
+    public function rejection($id, Request $request)
     {
         // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
@@ -167,9 +170,9 @@ class DeportationGoods extends ApiController
         return response()->json($deportation_good);
     }
 
-    public function validation($request, $id)
+    public function validation($id, Request $request)
     {
-        // DB::beginTransaction => Before the function process!
+
         $this->DATABASE::beginTransaction();
 
         $deportation_good = DeportationGood::findOrFail($id);
