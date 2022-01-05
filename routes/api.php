@@ -77,6 +77,7 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::put('request-order-items/{id}/lock', 'Incomes\RequestOrders@setLockDetail');
             Route::put('request-order-items/{id}/unlock', 'Incomes\RequestOrders@setUnlockDetail');
 
+            Route::post('delivery-orders/multi-validation', 'Incomes\DeliveryOrders@multiValidation');
             Route::put('delivery-orders/{delivery_order}/validation', 'Incomes\DeliveryOrders@validation');
             Route::put('delivery-orders/{delivery_order}/confirmation', 'Incomes\DeliveryOrders@confirmation');
             Route::put('delivery-orders/{delivery_order}/reopen', 'Incomes\DeliveryOrders@reopen');

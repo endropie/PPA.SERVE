@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Incomes;
 use App\Filters\Income\DeliveryOrder as Filter;
 use App\Filters\Income\DeliveryOrderItem as FilterItem;
 use App\Http\Requests\Income\DeliveryOrder as Request;
+use App\Http\Requests\Request as BaseRequest;
 use App\Http\Controllers\ApiController;
 use App\Models\Income\Customer;
 use App\Models\Income\DeliveryOrder;
@@ -301,6 +302,34 @@ class DeliveryOrders extends ApiController
         if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
 
         $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been validated!");
+
+        $this->DATABASE::commit();
+        return $this->show($delivery_order->id);
+    }
+
+    public function multiValidation(BaseRequest $request)
+    {
+        $this->DATABASE::beginTransaction();
+
+        foreach ($request->get('data') as $key => $row) {
+
+            $delivery_order = DeliveryOrder::findOrFail($row['id']);
+
+            if ($delivery_order->status != "CONFIRMED") $this->error("SJDO[$delivery_order->number] has '$delivery_order->status' state. Validation not allowed!");
+
+            foreach ($delivery_order->delivery_order_items as $detail) {
+                if ($detail->request_order_item) $detail->request_order_item->calculate();
+            }
+
+            $delivery_order->status = 'VALIDATED';
+            $delivery_order->validated_by = auth()->user()->id;
+            $delivery_order->validated_at = now();
+            $delivery_order->save();
+
+            if ($delivery_order->request_order) $this->setRequestOrderClosed($delivery_order->request_order);
+        }
+
+        $delivery_order->setCommentLog("SJ Delivery has been validated!");
 
         $this->DATABASE::commit();
         return $this->show($delivery_order->id);
