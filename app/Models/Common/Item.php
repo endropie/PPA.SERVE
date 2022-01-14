@@ -264,7 +264,7 @@ class Item extends Model
     {
         $stockist = ItemStock::getValidStockist($stockist);
 
-        return $this->item_stocks->where('stockist', $stockist)->first();
+        return $this->fresh()->item_stocks()->where('stockist', $stockist)->get()->first();
     }
 
     public function getUnitPrice($unit = null)

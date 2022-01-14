@@ -442,7 +442,6 @@ class IncomingGoods extends ApiController
         $incoming_validation = IncomingValidation::findOrFail($id);
 
         $this->DATABASE::beginTransaction();
-        if ($incoming_good->is_relationship) $this->error("The data has RELATIONSHIP, is not allowed to be DELETE");
 
         foreach ($incoming_validation->incoming_validation_items as $detail)
         {
@@ -458,7 +457,6 @@ class IncomingGoods extends ApiController
 
         $incoming_validation->delete();
 
-
         ## RECALCULATE INCOMING STOCK
         foreach ($incoming_good->incoming_good_items as $detail)
         {
@@ -466,6 +464,11 @@ class IncomingGoods extends ApiController
             if ($incoming_good->transaction != 'SAMPLE') {
                 $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
                 $detail->item->transfer($detail, $detail->unit_valid, $to);
+
+                ## CHECK TOTAL STOCK LESS
+                if (round($detail->item->stock($to)->total) < 0) {
+                    $this->error("ITEM '". $detail->item->part_name ."' [". $detail->item->code ."] stock ($to) can't be less");
+                }
             }
         }
 
