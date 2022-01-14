@@ -35,6 +35,20 @@ class DeliveryOrder extends Filter
         }
     }
 
+    public function request_reference_number ($value = null)
+    {
+        if (!$value) return $this->builder;
+        return $this->builder->whereHas('request_order', function($q) use ($value) {
+            return $q->where(function ($q) use ($value) {
+                foreach (explode('+', $value) as $str) {
+                    $q->orWhere('reference_number', $str);
+                }
+
+                return $q;
+            });
+        });
+    }
+
     public function has_checkout($value = '')
     {
         if (!strlen($value)) return $this->builder;
