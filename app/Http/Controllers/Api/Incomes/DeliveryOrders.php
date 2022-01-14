@@ -115,7 +115,7 @@ class DeliveryOrders extends ApiController
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            if (round($detail->unit_amount) > round($detail->item->stock('FG')->total)) {
+            if (round($detail->unit_amount) > round($detail->item->getTotalStockist('FG'))) {
                 return $this->error("AMOUNT PART #" . $detail->item->id . " [" . $detail->item->part_name . "] IS NOT VALID");
             }
 

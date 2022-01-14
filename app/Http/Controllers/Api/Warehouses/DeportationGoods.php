@@ -182,7 +182,7 @@ class DeportationGoods extends ApiController
         foreach ($deportation_good->deportation_good_items as $detail) {
             $to = $detail->stockist_from;
             $detail->item->transfer($detail, $detail->unit_amount, null, $to);
-            if ((int) $detail->item->stock($to)->total < 0) {
+            if ((int) $detail->item->getTotalStockist($to) < 0) {
                 $this->error($detail->item->part_name . " [$to] OVER STOCK");
             }
         }

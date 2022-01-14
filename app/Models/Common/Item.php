@@ -260,11 +260,13 @@ class Item extends Model
         })->get()->sum('unit_amount');
     }
 
-    public function stock($stockist)
+    public function getTotalStockist($stockist)
     {
         $stockist = ItemStock::getValidStockist($stockist);
 
-        return $this->fresh()->item_stocks()->where('stockist', $stockist)->get()->first();
+        $stock = $this->fresh()->item_stocks()->where('stockist', $stockist)->get()->first();
+
+        return (double) ($stock->total ?? 0);
     }
 
     public function getUnitPrice($unit = null)
