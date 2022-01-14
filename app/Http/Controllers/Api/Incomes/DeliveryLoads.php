@@ -170,6 +170,15 @@ class DeliveryLoads extends ApiController
         return response()->json(['success' => true]);
     }
 
+    public function setPrintLog($id)
+    {
+        $delivery_load = DeliveryLoad::withTrashed()->findOrFail($id);
+
+        $delivery_load->setCommentLog("Delivery LOAD [$delivery_load->fullnumber] has been printed!", 'PRINT');
+
+        return response()->json($delivery_load);
+    }
+
     public function vehicleUpdated($id, Request $request)
     {
         $this->DATABASE::beginTransaction();

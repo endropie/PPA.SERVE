@@ -9,17 +9,17 @@ trait HasCommentable
         return $this->morphMany(\App\Models\Commentable::class, 'commentable');
     }
 
-    public function setComment($values)
+    public function setComment(string $values, string $type = 'GENERAL')
     {
         if (gettype($values) == 'string') $values = ['text' => $values];
 
-        return $this->commentables()->create(array_merge($values, ['is_log' => false]));
+        return $this->commentables()->create(array_merge($values, ['is_log' => false, 'type' => $type]));
     }
 
-    public function setCommentLog($values)
+    public function setCommentLog(string $values, string $type = 'GENERAL')
     {
         if (gettype($values) == 'string') $values = ['text' => $values];
 
-        return $this->commentables()->create(array_merge($values, ['is_log' => true]));
+        return $this->commentables()->create(array_merge($values, ['is_log' => true, 'type' => $type]));
     }
 }

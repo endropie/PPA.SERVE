@@ -9,7 +9,7 @@ class Commentable extends Model
 {
     use Filterable;
 
-    protected $fillable = ['text', 'is_log'];
+    protected $fillable = ['text', 'is_log', 'type'];
 
     protected $appends = ['user'];
 
