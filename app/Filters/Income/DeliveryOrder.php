@@ -39,13 +39,7 @@ class DeliveryOrder extends Filter
     {
         if (!$value) return $this->builder;
         return $this->builder->whereHas('request_order', function($q) use ($value) {
-            return $q->where(function ($q) use ($value) {
-                foreach (explode('+', $value) as $str) {
-                    $q->orWhere('reference_number', $str);
-                }
-
-                return $q;
-            });
+            return $q->where('reference_number', $value);
         });
     }
 
