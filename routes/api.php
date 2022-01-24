@@ -67,9 +67,7 @@ Route::prefix('v1')->namespace('Api')->group(function () {
         Route::prefix('incomes')->name('incomes.')->group(function () {
             Route::get('delivery-orders/items', 'Incomes\DeliveryOrders@items');
 
-            // Route::put('delivery-internals/{id}/confirmed', 'Incomes\DeliveryInternals@confirmed');
-            // Route::put('delivery-internals/{id}/revised', 'Incomes\DeliveryInternals@revised');
-
+            Route::put('delivery-loads/{id}/restore', 'Incomes\DeliveryLoads@restore');
             Route::put('delivery-loads/{id}/print-log', 'Incomes\DeliveryLoads@setPrintLog');
             Route::put('delivery-loads/{id}/save-vehicle', 'Incomes\DeliveryLoads@vehicleUpdated');
             Route::post('customers/{id}/accurate/push', 'Incomes\Customers@push');

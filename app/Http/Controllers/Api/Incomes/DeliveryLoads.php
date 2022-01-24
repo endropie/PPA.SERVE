@@ -66,14 +66,17 @@ class DeliveryLoads extends ApiController
             $detail->setLoadVerified();
         }
 
-
-        if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE") {
+        if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE")
+        {
             $this->storeRequestOrder($delivery_load->fresh());
-        } else if ($request->request_order && $delivery_load->order_mode != "ACCUMULATE") {
+        }
+        else if ($request->request_order && $delivery_load->order_mode != "ACCUMULATE")
+        {
             $this->storeManualDeliveryOrder($delivery_load->fresh(), $request);
             $delivery_load->is_manual = 1;
             $delivery_load->save();
-        } else {
+        }
+        else {
             $this->storeDeliveryOrder($delivery_load->fresh());
         }
 
@@ -96,7 +99,7 @@ class DeliveryLoads extends ApiController
         $delivery_load->append(['checkout_number', 'has_relationship']);
 
         ## resource return as json
-        $delivery_load->delivery_orders = $delivery_load->delivery_orders()->get()->map(function ($delivery, $key) {
+        $delivery_load->delivery_orders = $delivery_load->delivery_orders()->withTrashed()->get()->map(function ($delivery, $key) {
             return $delivery->only(['id', 'fullnumber', 'is_internal']);
         });
 
@@ -122,21 +125,22 @@ class DeliveryLoads extends ApiController
 
                 $detail->item->distransfer($detail);
 
-                $detail->request_order_item()->dissociate();
-                $detail->save();
+                // $detail->request_order_item()->dissociate();
+                // $detail->save();
+                $detail->delete();
 
                 if ($request_order_item) {
-                    $request_order_item->calculate();
                     if ($request_order_item->request_order->order_mode == 'ACCUMULATE') {
                         $request_order_item->forceDelete();
+                        $request_order_item = null;
                     }
                 }
 
-                $detail->delete();
+                if ($request_order_item) $request_order_item->calculate();
             }
 
             $delivery_order->status = $mode;
-            $delivery_order->request_order()->dissociate();
+            // $delivery_order->request_order()->dissociate();
             $delivery_order->save();
 
             $delivery_order->delete();
@@ -164,6 +168,55 @@ class DeliveryLoads extends ApiController
 
         $action = ($mode == "VOID") ? 'voided' : 'deleted';
         $delivery_load->setCommentLog("Delivery LOAD [$delivery_load->fullnumber] has been $action !");
+
+        $this->DATABASE::commit();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function restore($id)
+    {
+        $this->DATABASE::beginTransaction();
+
+        $delivery_load = DeliveryLoad::withTrashed()->findOrFail($id);
+
+        if ($delivery_load->status != 'VOID') $this->error("The data has not VOID, is not allowed to be restored!");
+
+        $delivery_load->restore();
+        $delivery_load->status = "OPEN";
+        $delivery_load->save();
+
+        foreach ($delivery_load->delivery_load_items as $detail) {
+
+            $detail->restore();
+
+            $label = $detail->item->part_name . "(" . $detail->item->code . ")";
+
+            if ($detail->maxAmountDetail() < $detail->quantity) {
+                $this->error("Maximum (Load) " . $detail->maxAmountDetail() . ". Part: " . $label);
+            }
+
+            if ($detail->maxFGDetail() < $detail->quantity) {
+                $this->error("Maximum (FG) " . $detail->maxAmountDetail() . ". Part: " . $label);
+            }
+
+            $detail->setLoadVerified();
+        }
+
+
+        if (!$delivery_load->delivery_orders()->withTrashed()->count()) {
+            $this->error("Delivery SJDO has undefined");
+        }
+
+        if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE")
+        {
+            $this->restoreRequestOrder($delivery_load->fresh());
+        }
+        else {
+            $this->restoreDeliveryOrder($delivery_load->fresh());
+        }
+
+        $delivery_load->setCommentLog("Delivery LOAD [$delivery_load->fullnumber] has been restored !");
 
         $this->DATABASE::commit();
 
@@ -199,7 +252,6 @@ class DeliveryLoads extends ApiController
 
     protected function storeRequestOrder($delivery_load)
     {
-
         $request_order = RequestOrder::where('customer_id', $delivery_load->customer_id)
             ->where('order_mode', $delivery_load->order_mode)
             ->where('status', 'OPEN')
@@ -461,6 +513,83 @@ class DeliveryLoads extends ApiController
             $delivery_order->save();
 
             $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn LOADING [$delivery_load->fullNumber].");
+        }
+    }
+
+    protected function restoreRequestOrder($delivery_load)
+    {
+        $delivery_order = $delivery_load->delivery_orders()->withTrashed()->first();
+        if (!$delivery_order) $this->error("SJDO hasn`t undefined. Not Allowed be restored");
+
+        $request_order = $delivery_order->request_order;
+        if (!$request_order) $this->error("SALES-ORDER hasn`t undefined. Not Allowed be restored");
+
+
+        $rows = $delivery_load->delivery_load_items
+            ->groupBy('item_id')
+            ->map(function ($group) {
+                return [
+                    'item_id' => $group[0]->item_id,
+                    'quantity' => $group->sum('unit_amount'),
+                    'price' => $group[0]->item->price,
+                    'unit_id' => $group[0]->item->unit_id,
+                    'unit_rate' => 1,
+                ];
+            });
+
+        foreach ($rows as $row) {
+            $detail = $request_order->request_order_items()->create($row);
+
+            ## Setup unit price
+            $detail->price = ($detail->item && $detail->item->price)
+                ? $detail->unit_rate * $detail->item->price : 0;
+            $detail->save();
+
+            $delivery_order_item = $delivery_order->delivery_order_items()->create($row);
+            $delivery_order_item->request_order_item()->associate($detail);
+            $delivery_order_item->save();
+
+
+            if (round($delivery_order_item->unit_amount) > $delivery_order_item->item->getTotalStockist('FG')) {
+                $partName = $delivery_order_item->item->part_name;
+                $this->error("Part [$partName] lower than `FG` stockist  . Not allowed to be restored");
+            }
+
+            $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
+        }
+    }
+
+    protected function restoreDeliveryOrder($delivery_load) {
+
+        if ($delivery_load->delivery_orders()->withTrashed()->count())
+        {
+
+        }
+
+        foreach ($delivery_load->delivery_orders()->withTrashed()->get() as $delivery_order) {
+
+            if ($delivery_order->status != "VOID") $this->error("SJDO $delivery_order->fullnumber is not VOID, is not allowed to be restored");
+
+            $delivery_order->restore();
+            $delivery_order->status = 'OPEN';
+            $delivery_order->save();
+
+            foreach ($delivery_order->delivery_order_items as $detail) {
+                $detail->restore();
+                $request_order_item = $detail->request_order_item;
+                $partName = $detail->item->part_name;
+
+                if (!$request_order_item) $this->error("SJDO Detail[#$detail->id] hasn`t order relation. Not allowed to be restored");
+
+                if (round($detail->unit_amount) > $detail->item->getTotalStockist('FG')) {
+                    $this->error("Part [$partName] lower than `FG` stockist  . Not allowed to be restored");
+                }
+
+                $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+                $request_order_item->calculate();
+            }
+
+            $delivery_load->setCommentLog("Delivery (SJDO) [$delivery_order->fullnumber] has been restored on LOAD[$delivery_load->fullnumber]!");
         }
     }
 }

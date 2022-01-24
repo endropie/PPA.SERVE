@@ -55,8 +55,6 @@ class DeliveryInternals extends ApiController
             $delivery_internal->delivery_internal_items()->create($row);
         }
 
-        // $this->error('LOLOS');
-
         $this->DATABASE::commit();
 
         return response()->json($delivery_internal);
