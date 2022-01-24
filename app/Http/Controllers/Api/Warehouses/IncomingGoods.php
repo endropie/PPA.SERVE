@@ -467,7 +467,10 @@ class IncomingGoods extends ApiController
 
                 ## CHECK TOTAL STOCK LESS
                 if (round($detail->item->getTotalStockist($to)) < 0) {
-                    $this->error("ITEM '". $detail->item->part_name ."' [". $detail->item->code ."] stock ($to) can't be less");
+
+                    $partName = $detail->item->part_name;
+                    $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                    $this->error("PART $partName [$to] STOCKLESS");
                 }
             }
         }

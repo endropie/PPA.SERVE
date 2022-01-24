@@ -183,7 +183,10 @@ class DeportationGoods extends ApiController
             $to = $detail->stockist_from;
             $detail->item->transfer($detail, $detail->unit_amount, null, $to);
             if ((int) $detail->item->getTotalStockist($to) < 0) {
-                $this->error($detail->item->part_name . " [$to] OVER STOCK");
+
+                $partName = $detail->item->part_name;
+                $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                $this->error("PART $partName [$to] STOCKLESS");
             }
         }
 

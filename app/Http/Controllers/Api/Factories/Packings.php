@@ -91,7 +91,11 @@ class Packings extends ApiController
             ## Calculate "NC" stock on after the Item Faults Created!
             if ($detail->unit_faulty > 0) $detail->item->transfer($detail, $detail->unit_faulty, 'NC', 'WIP');
 
-            if ($detail->item->getTotalStockist('WIP') < -1) $this->error('Packing Failed. WIP stock invalid!');
+            if ($detail->item->getTotalStockist('WIP') < -1) {
+                $partName = $detail->item->part_name;
+                $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                $this->error("PART $partName [WIP] STOCKLESS");
+            }
 
             foreach ($detail->packing_item_orders as $packing_item_order) {
                 $packing_item_order->work_order_item->calculate(true);
@@ -194,7 +198,11 @@ class Packings extends ApiController
             ## Calculate stock on after the NC items updated!
             if ($newDetail->unit_faulty > 0) $newDetail->item->transfer($newDetail, $newDetail->unit_faulty, 'NC', 'WIP');
 
-            if ($newDetail->item->getTotalStockist('WIP') < -1) $this->error('Packing Failed. WIP stock invalid!');
+            if ($newDetail->item->getTotalStockist('WIP') < -1) {
+                $partName = $newDetail->item->part_name;
+                $partName .= $this->part_subname ? "(". $newDetail->item->part_subname .")" : "";
+                $this->error("PART $partName [WIP] STOCKLESS");
+            }
 
             $newDetail->refresh();
 

@@ -293,7 +293,10 @@ class Item extends Model
             $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
             $exStock->total = $exStock->total - $number;
 
-            if (!$this->allowTransferStockLess && round($exStock->total) <  0) abort(501, "PART [$this->code] STOCK LESS");
+            $partName = $this->part_name;
+            $partName .= $this->part_subname ? "(". $this->part_subname .")" : "";
+
+            if (!$this->allowTransferStockLess && round($exStock->total) <  0) abort(501, "PART $partName - [$exStockist] STOCKLESS");
 
             $exStock->save();
 

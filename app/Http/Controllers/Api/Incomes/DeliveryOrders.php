@@ -116,7 +116,9 @@ class DeliveryOrders extends ApiController
             $detail = $delivery_order->delivery_order_items()->create($row);
 
             if (round($detail->unit_amount) > round($detail->item->getTotalStockist('FG'))) {
-                return $this->error("AMOUNT PART #" . $detail->item->id . " [" . $detail->item->part_name . "] IS NOT VALID");
+                $partName = $detail->item->part_name;
+                $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                $this->error("PART $partName [FG] STOCKLESS");
             }
 
             $detail->item->transfer($detail, $detail->unit_amount, null, "FG");

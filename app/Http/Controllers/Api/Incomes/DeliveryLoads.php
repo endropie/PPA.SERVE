@@ -552,7 +552,8 @@ class DeliveryLoads extends ApiController
 
             if (round($delivery_order_item->unit_amount) > $delivery_order_item->item->getTotalStockist('FG')) {
                 $partName = $delivery_order_item->item->part_name;
-                $this->error("Part [$partName] lower than `FG` stockist  . Not allowed to be restored");
+                $partName .= $this->part_subname ? "(". $delivery_order_item->item->part_subname .")" : "";
+                return $this->error("PART $partName [FG] STOCKLESS");
             }
 
             $delivery_order_item->item->transfer($delivery_order_item, $delivery_order_item->unit_amount, null, 'FG');
@@ -582,7 +583,9 @@ class DeliveryLoads extends ApiController
                 if (!$request_order_item) $this->error("SJDO Detail[#$detail->id] hasn`t order relation. Not allowed to be restored");
 
                 if (round($detail->unit_amount) > $detail->item->getTotalStockist('FG')) {
-                    $this->error("Part [$partName] lower than `FG` stockist  . Not allowed to be restored");
+                    $partName = $detail->item->part_name;
+                    $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                    return $this->error("PART $partName [FG] STOCKLESS");
                 }
 
                 $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
