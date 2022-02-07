@@ -130,8 +130,6 @@ class WorkProductions extends ApiController
 
             if($detail->work_order_item) $detail->work_order_item->calculate(false);
 
-            $detail->work_order_item->setCommentLog("Production [$work_production->fullnumber] has been updated (remove row). SPK Detail[#". $detail->work_order_item->id ."] Part ". $detail->item->part_name .".");
-
             $detail->forceDelete();
         }
 
