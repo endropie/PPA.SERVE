@@ -113,7 +113,12 @@ class Filter
         $tableName = $this->builder->getQuery()->from;
         $fields = \Schema::getColumnListing($tableName);
 
+        if (strlen($this->request->get('search-keys', ''))) {
+            $fields = explode(",", $this->request->get('search-keys'));
+        }
+
         $except = [$this->builder->getModel()->getKeyName()];
+
         $fields = array_diff_key($fields, $except);
 
         $separator = substr_count($value, '|') > 0 ? '|' : ' ';
