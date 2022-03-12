@@ -30,16 +30,21 @@ class WorkOrders extends ApiController
             $work_orders = WorkOrderItem::with(['item','work_order'])->filter($filterItem)->get();
             break;
 
+
             default:
+                $reqAppends = explode(',', request()->get('append_fields', ''));
+
+                $appends = array_intersect([
+                    'has_producted',
+                    'has_packed',
+                    'summary_items',
+                    'summary_productions',
+                    'summary_packings'
+                ], $reqAppends);
+
                 $work_orders = WorkOrder::with(['created_user', 'line', 'shift'])->filter($filter)->latest()->collect();
-                $work_orders->getCollection()->transform(function($row) {
-                    $row->append([
-                      'has_producted',
-                      'has_packed',
-                      'summary_items',
-                      'summary_productions',
-                      'summary_packings'
-                    ]);
+                $work_orders->getCollection()->transform(function($row) use ($appends) {
+                    $row->append($appends);
                     return $row;
                 });
 
@@ -175,7 +180,8 @@ class WorkOrders extends ApiController
           ], $with)
         )->withTrashed()->findOrFail($id);
 
-        $work_order->append(['is_relationship', 'has_relationship', 'has_producted', 'has_packed']);
+        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_productions', 'summary_packings'];
+        $work_order->append($appends);
 
         $work_order->work_order_items->map(function($detail) {
             $detail->item->append('total_work_order');
