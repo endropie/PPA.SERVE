@@ -180,6 +180,13 @@ class IncomingGoods extends ApiController
 
         ## Delete all incoming & detail
         foreach ($incoming_good->incoming_good_items as $detail) {
+
+            $to = $incoming_good->transaction == 'RETURN' ? 'NCR' : 'FM';
+
+            if (round($detail->item->getTotalStockist($to)) < round($detail->unit_valid)) {
+                $name = $detail->item->part_name ." - ". $detail->item->part_subname;
+                $this->error("Unit Quantity valid [$name] has Failed to [$mode]");
+            }
             $detail->item->distransfer($detail);
             $detail->delete();
         }

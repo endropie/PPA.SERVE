@@ -125,6 +125,12 @@ class PackingLoads extends ApiController
         $packing_load->save();
 
         foreach ($packing_load->packing_load_items as $detail) {
+
+            $to = 'FG';
+            if (round($detail->item->getTotalStockist($to)) < round($detail->unit_valid)) {
+                $name = $detail->item->part_name ." - ". $detail->item->part_subname;
+                $this->error("Unit Quantity Part [$name] has Failed to $mode");
+            }
             ## Calculate Stok Before deleting
             $detail->item->distransfer($detail);
             $detail->delete();
