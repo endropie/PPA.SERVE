@@ -48,53 +48,53 @@ class WorkOrder extends Model
     }
 
     public function getSummaryItemsAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('quantity');
+        return (double) $this->fresh()->work_order_items->sum('quantity');
     }
 
     public function getSummaryProductionsAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum(function($item) {
+        return (double) $this->fresh()->work_order_items->sum(function($item) {
             return (double) ($item->amount_process / ($item->unit_rate?? 1));
         });
     }
 
     public function getSummaryPackingsAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum(function($item) {
+        return (double) $this->fresh()->work_order_items->sum(function($item) {
             return (double) ($item->amount_packing / ($item->unit_rate?? 1));
         });
     }
 
     public function getTotalAmountAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('unit_amount');
+        return (double) $this->fresh()->work_order_items->sum('unit_amount');
     }
 
     public function getTotalProductionAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_process');
+        return (double) $this->fresh()->work_order_items->sum('amount_process');
     }
 
     public function getTotalPackingAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->sum('amount_packing');
+        return (double) $this->fresh()->work_order_items->sum('amount_packing');
     }
 
     public function getHangerAmountAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_amount');
+        return (double) $this->fresh()->work_order_items->sum('hanger_amount');
     }
 
     public function getHangerProductionAttribute() {
 
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_production');
+        return (double) $this->fresh()->work_order_items->sum('hanger_production');
     }
 
     public function getHangerPackingAttribute() {
-        return (double) $this->hasMany('App\Models\Factory\WorkOrderItem')->get()->sum('hanger_packing');
+        return (double) $this->fresh()->work_order_items->sum('hanger_packing');
     }
 
     public function getHasProductedAttribute() {
-        $row = $this->stateable->where('state', 'PRODUCTED')->last();
+        $row = $this->fresh()->stateable->where('state', 'PRODUCTED')->last();
         return $row ?? null;
     }
 
     public function getHasPackedAttribute() {
-        $row = $this->stateable->where('state', 'PACKED')->last();
+        $row = $this->fresh()->stateable->where('state', 'PACKED')->last();
         return $row ?? null;
     }
 
