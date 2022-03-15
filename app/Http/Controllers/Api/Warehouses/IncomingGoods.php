@@ -6,6 +6,7 @@ use App\Http\Requests\Warehouse\IncomingGood as Request;
 use App\Http\Controllers\ApiController;
 use App\Filters\Warehouse\IncomingGood as Filter;
 use App\Filters\Warehouse\IncomingGoodItem as FilterItem;
+use App\Http\Requests\Request as BaseRequest;
 use App\Models\Income\Customer;
 use App\Models\Warehouse\IncomingGood;
 use App\Models\Income\RequestOrder;
@@ -123,12 +124,7 @@ class IncomingGoods extends ApiController
 
     public function update(Request $request, $id)
     {
-        // if(request('mode') === 'rejection') return $this->rejection($request, $id);
-        // if(request('mode') === 'restoration') return $this->restoration($request, $id);
-        // if(request('mode') === 'validation') return $this->validation($request, $id);
-        // if(request('mode') === 'revision') return $this->revision($request, $id);
 
-        // DB::beginTransaction => Before the function process!
         $this->DATABASE::beginTransaction();
 
         $incoming_good = IncomingGood::findOrFail($id);
@@ -308,6 +304,50 @@ class IncomingGoods extends ApiController
         $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been validated!");
 
         $this->DATABASE::commit();
+        return response()->json($incoming_good);
+    }
+
+    public function standardization(BaseRequest $request, $id)
+    {
+        $request->validate([
+            'transaction' => "required|in:REGULER,RETURN",
+            'order_mode' => "required",
+            'registration' => "required",
+            'reference_number' => "required",
+            'reference_date' => "required",
+        ]);
+
+        $this->DATABASE::beginTransaction();
+
+        $incoming_good = IncomingGood::findOrFail($id);
+
+        if (!in_array($incoming_good->transaction, ['REGULER', 'RETURN'])) {
+            $this->error('The availabel Transaction [`REGULER`, `RETURN`]');
+        }
+
+        if ($incoming_good->status !== "VALIDATED") {
+            $this->error('The data not "VALIDATED" state');
+        }
+
+        $row = $request->only([
+            'transaction', 'order_mode', 'registration', 'reference_number', 'reference_date',
+        ]);
+
+        $incoming_good->update($row);
+
+        $incoming_good->standardized_at = now();
+        $incoming_good->standardized_by = auth()->user()->id;
+        $incoming_good->status = "STANDARDIZED";
+        $incoming_good->save();
+
+        if (strtoupper($incoming_good->order_mode) === 'NONE') {
+            $this->storeRequestOrder($incoming_good);
+        }
+
+        $incoming_good->setCommentLog("Incoming [$incoming_good->fullnumber] has been standardized!");
+
+        $this->DATABASE::commit();
+
         return response()->json($incoming_good);
     }
 
