@@ -89,20 +89,20 @@ class WorkOrderItem extends Model
 
     public function getHangerAmountAttribute()
     {
-        if(!$this->item->load_capacity) return null;
-        return (double) $this->unit_amount / $this->item->load_capacity;
+        if(!$this->fresh()->item->load_capacity) return null;
+        return (double) $this->unit_amount / $this->fresh()->item->load_capacity;
     }
 
     public function getHangerProductionAttribute()
     {
-        if(!$this->item->load_capacity) return null;
-        return (double) $this->amount_process / $this->item->load_capacity;
+        if(!$this->fresh()->item->load_capacity) return null;
+        return (double) $this->amount_process / $this->fresh()->item->load_capacity;
     }
 
     public function getHangerPackingAttribute()
     {
-        if(!$this->item->load_capacity) return null;
-        return (double) $this->amount_packing / $this->item->load_capacity;
+        if(!$this->fresh()->item->load_capacity) return null;
+        return (double) $this->amount_packing / $this->fresh()->item->load_capacity;
     }
 
     public function getUnitAmountAttribute()
@@ -142,8 +142,8 @@ class WorkOrderItem extends Model
     public function calculate($error = true)
     {
 
-        $process = (double) $this->work_production_items->sum('unit_amount');
-        $packing = (double) $this->packing_item_orders->sum('unit_amount');
+        $process = (double) $this->fresh()->work_production_items->sum('unit_amount');
+        $packing = (double) $this->fresh()->packing_item_orders->sum('unit_amount');
 
         $this->amount_process = $process;
         $this->amount_packing = $packing;

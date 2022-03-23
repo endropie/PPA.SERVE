@@ -6,6 +6,7 @@ use App\Filters\Factory\WorkOrder as Filter;
 use App\Filters\Factory\WorkOrderItem as FilterItem;
 use App\Http\Requests\Factory\WorkOrder as Request;
 use App\Http\Controllers\ApiController;
+use App\Http\Requests\Request as BaseRequest;
 use App\Models\Factory\WorkOrder;
 use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
@@ -38,8 +39,8 @@ class WorkOrders extends ApiController
                     'has_producted',
                     'has_packed',
                     'summary_items',
-                    'summary_productions',
-                    'summary_packings'
+                    'summary_production',
+                    'summary_packing'
                 ], $reqAppends);
 
                 $work_orders = WorkOrder::with(['created_user', 'line', 'shift'])->filter($filter)->latest()->collect();
@@ -123,6 +124,32 @@ class WorkOrders extends ApiController
         return response()->json($work_order_lines);
     }
 
+    public function packings (Filter $filter, BaseRequest $request)
+    {
+        if (!$request->has('date')) return $this->error('REQUEST DATE REQUIRED');
+
+        $work_order_lines = WorkOrder::with(['shift'])->whereNull('main_id')
+            ->filter($filter)->get();
+
+            $work_order_lines = $work_order_lines
+                ->groupBy(function($item, $key){ return $item["date"]."-".$item["shift_id"]; })
+                ->values()
+                ->map(function ($rows) {
+
+                    return array_merge($rows->first()->toArray(), [
+                        "summary_production" => $rows->sum('total_production'),
+                        "summary_packing" => $rows->sum('total_packing'),
+                        "document_total" => $rows->count(),
+                        "document_closed" => $rows->where('status', "CLOSED")->count(),
+                    ]);
+
+                })
+                ->sortBy(function ($item) { return $item['date'] ."-". $item['shift_id']; })
+                ->values();
+
+        return response()->json($work_order_lines);
+    }
+
     public function store(Request $request)
     {
         $this->DATABASE::beginTransaction();
@@ -180,7 +207,7 @@ class WorkOrders extends ApiController
           ], $with)
         )->withTrashed()->findOrFail($id);
 
-        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_productions', 'summary_packings'];
+        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_production', 'summary_packing'];
         $work_order->append($appends);
 
         $work_order->work_order_items->map(function($detail) {
