@@ -51,13 +51,13 @@ class WorkOrder extends Model
         return (double) $this->fresh()->work_order_items->sum('quantity');
     }
 
-    public function getSummaryProductionsAttribute() {
+    public function getSummaryProductionAttribute() {
         return (double) $this->fresh()->work_order_items->sum(function($item) {
             return (double) ($item->amount_process / ($item->unit_rate?? 1));
         });
     }
 
-    public function getSummaryPackingsAttribute() {
+    public function getSummaryPackingAttribute() {
         return (double) $this->fresh()->work_order_items->sum(function($item) {
             return (double) ($item->amount_packing / ($item->unit_rate?? 1));
         });
