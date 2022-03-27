@@ -207,9 +207,13 @@ class WorkOrders extends ApiController
           ], $with)
         )->withTrashed()->findOrFail($id);
 
-        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed', 'summary_items', 'summary_production', 'summary_packing'];
-        $work_order->append($appends);
+        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
 
+        if (request()->has('appends-summary')) {
+            $appends = array_merge($appends, ['summary_items', 'summary_production', 'summary_packing']);
+        }
+
+        $work_order->append($appends);
         $work_order->work_order_items->map(function($detail) {
             $detail->item->append('total_work_order');
             return $detail;
