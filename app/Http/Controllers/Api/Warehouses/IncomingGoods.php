@@ -380,7 +380,7 @@ class IncomingGoods extends ApiController
         $rows = $request->incoming_good_items;
         for ($i=0; $i < count($rows); $i++) {
             $row = $rows[$i];
-            $row['valid'] = $row['quantity'];
+            $row['valid'] = $row['valid'] ?? $row['quantity'];
             $detail = $incoming_good->incoming_good_items()->create($row);
 
             if (isset($row['request_order_item_id'])) {
