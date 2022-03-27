@@ -186,32 +186,35 @@ class WorkOrders extends ApiController
     public function show($id)
     {
         switch (request('mode')) {
-            case 'prelines':
+            case 'summary':
                 $with = [];
+                $appends = ['summary_items', 'summary_production', 'summary_packing'];
+                break;
+
+            case 'prelines':
+                $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
+                $with = [
+                    'line', 'shift',
+                    'work_order_items.unit',
+                    'work_order_items.item.unit',
+                    'work_order_items.item.item_units',
+                ];
                 break;
 
             default:
+                $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
                 $with = [
+                    'line', 'shift',
+                    'work_order_items.unit',
+                    'work_order_items.item.unit',
+                    'work_order_items.item.item_units',
                     'work_order_items.work_production_items.work_production',
                     'work_order_items.packing_item_orders.packing_item.packing',
                 ];
                 break;
         }
 
-        $work_order = WorkOrder::with(
-          array_merge([
-            'line', 'shift',
-            'work_order_items.unit',
-            'work_order_items.item.unit',
-            'work_order_items.item.item_units',
-          ], $with)
-        )->withTrashed()->findOrFail($id);
-
-        $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
-
-        if (request()->has('appends-summary')) {
-            $appends = array_merge($appends, ['summary_items', 'summary_production', 'summary_packing']);
-        }
+        $work_order = WorkOrder::with($with)->withTrashed()->findOrFail($id);
 
         $work_order->append($appends);
         $work_order->work_order_items->map(function($detail) {
@@ -224,7 +227,7 @@ class WorkOrders extends ApiController
 
     public function update(Request $request, $id)
     {
-        if(request('mode') == 'revision') return $this->error('NOT SUPPORTED'); //$this->revision($request, $id);
+        if(request('mode') == 'revision') return $this->error('NOT SUPPORTED');
         if(request('mode') == 'producted') return $this->producted($request, $id);
         if(request('mode') == 'packed') return $this->packed($request, $id);
         if(request('mode') == 'closed') return $this->closed($request, $id);
