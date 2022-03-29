@@ -10,7 +10,7 @@ class PackingItemFault extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'fault_id', 'quantity',
+        'fault_id', 'work_order_item_id', 'quantity',
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
@@ -31,4 +31,13 @@ class PackingItemFault extends Model
         return $this->belongsTo('App\Models\Reference\Fault');
     }
 
+    public function work_order_item()
+    {
+        return $this->belongsTo('App\Models\Factory\WorkOrderItem');
+    }
+
+    public function getUnitAmountAttribute() {
+        $rate = $this->fresh()->packing_item->unit_rate ?? 1;
+        return (double) ($this->quantity * $rate);
+    }
 }

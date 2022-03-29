@@ -43,6 +43,11 @@ class WorkOrderItem extends Model
         return $this->hasMany('App\Models\Factory\PackingItemOrder');
     }
 
+    public function packing_item_faults()
+    {
+        return $this->hasMany('App\Models\Factory\PackingItemFault');
+    }
+
     public function work_order()
     {
         return $this->belongsTo('App\Models\Factory\WorkOrder')->withTrashed();
@@ -144,17 +149,19 @@ class WorkOrderItem extends Model
 
         $process = (double) $this->fresh()->work_production_items->sum('unit_amount');
         $packing = (double) $this->fresh()->packing_item_orders->sum('unit_amount');
+        $faulty = (double) $this->fresh()->packing_item_faults->sum('unit_amount');
 
         $this->amount_process = $process;
         $this->amount_packing = $packing;
+        $this->amount_faulty = $faulty;
         $this->save();
 
         if($error && round($this->unit_amount) < round($this->amount_process)) {
             abort(501, "AMOUNT PROCESS [#". $this->id ."] INVALID");
         }
 
-        if($error && round($this->amount_process) < round($this->amount_packing)) {
-            abort(501, "AMOUNT PACKING [#". $this->id ."] INVALID");
+        if($error && round($this->amount_process) < round($this->amount_packing + $this->amount_faulty)) {
+            abort(501, "AMOUNT PACKING+FAULTY [#". $this->id ."] INVALID");
         }
     }
 }
