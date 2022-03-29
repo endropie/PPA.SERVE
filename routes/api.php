@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,7 +80,11 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::post('delivery-orders/multi-validation', 'Incomes\DeliveryOrders@multiValidation');
             Route::put('delivery-orders/{delivery_order}/validation', 'Incomes\DeliveryOrders@validation');
             Route::put('delivery-orders/{delivery_order}/confirmation', 'Incomes\DeliveryOrders@confirmation');
+            Route::put('delivery-orders/{delivery_order}/reconfirmation', 'Incomes\DeliveryOrders@reconfirmation');
             Route::put('delivery-orders/{delivery_order}/reopen', 'Incomes\DeliveryOrders@reopen');
+            Route::put('delivery-orders/{delivery_order}/multi-revision', 'Incomes\DeliveryOrders@multiRevision');
+            Route::put('delivery-orders/{delivery_order}/revision', 'Incomes\DeliveryOrders@revision');
+            Route::put('delivery-orders/{delivery_order}/item-encasement', 'Incomes\DeliveryOrders@encasementItem');
 
             Route::apiResource('customers', 'Incomes\Customers');
             Route::apiResource('forecasts', 'Incomes\Forecasts');
@@ -99,11 +102,14 @@ Route::prefix('v1')->namespace('Api')->group(function () {
 
             Route::get('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@detail');
             Route::delete('delivery-verifies/{id}/detail', 'Incomes\DeliveryVerifies@destroyDetail');
-            Route::post('delivery-order-internals', 'Incomes\DeliveryOrders@storeInternal');
-            Route::put('delivery-order-internals/{delivery_order}/revision', 'Incomes\DeliveryOrders@revisonInternal');
-            Route::put('delivery-order-internals/{delivery_order}/confirmed', 'Incomes\DeliveryOrders@confirmation');
-            Route::get('delivery-order-internals/{delivery_order}', 'Incomes\DeliveryOrders@show');
-            Route::delete('delivery-order-internals/{delivery_order}', 'Incomes\DeliveryOrders@destroy');
+
+            Route::prefix('delivery-order-internals')->group(function () {
+                Route::post('', 'Incomes\DeliveryOrders@storeInternal');
+                Route::put('{delivery_order}/revision', 'Incomes\DeliveryOrders@revisonInternal');
+                Route::put('{delivery_order}/confirmed', 'Incomes\DeliveryOrders@confirmation');
+                Route::get('{delivery_order}', 'Incomes\DeliveryOrders@show');
+                Route::delete('{delivery_order}', 'Incomes\DeliveryOrders@destroy');
+            });
         });
 
         Route::prefix('warehouses')->name('warehouses.')->group(function () {
