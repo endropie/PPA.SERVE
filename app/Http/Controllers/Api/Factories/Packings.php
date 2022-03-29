@@ -5,8 +5,6 @@ use App\Filters\Factory\Packing as Filters;
 use App\Http\Requests\Factory\Packing as Request;
 use App\Http\Controllers\ApiController;
 use App\Models\Factory\Packing;
-use App\Models\Factory\WorkOrder;
-use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
 
 class Packings extends ApiController
@@ -75,7 +73,7 @@ class Packings extends ApiController
             $faults = $row['packing_item_faults'];
             for ($i=0; $i < count($faults); $i++) {
                 $fault = $faults[$i];
-                if($fault['fault_id'] || $fault['quantity'] ) {
+                if($fault['work_order_item_id'] || $fault['fault_id'] || $fault['quantity'] ) {
                     ## create fault on the Packing Goods Created!
                     $detail->packing_item_faults()->create($fault);
                 }
@@ -97,9 +95,24 @@ class Packings extends ApiController
                 $this->error("PART $partName [WIP] STOCKLESS");
             }
 
+            ## CALCULATE PACKING ITEM ORDERS
             foreach ($detail->packing_item_orders as $packing_item_order) {
                 $packing_item_order->work_order_item->calculate(true);
-                $packing_item_order->work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Created. SPK Detail[#". $packing_item_order->work_order_item->id ."] Part ". $detail->item->part_name .".");
+                $packing_item_order->work_order_item->setCommentLog("
+                    Packing [$packing->fullnumber] has been Created.
+                    SPK Detail[#". $packing_item_order->work_order_item->id ."]
+                    [OK] Part ". $detail->item->part_name ."
+                ");
+            }
+
+            ## CALCULATE PACKING ITEM FAULTS
+            foreach ($detail->packing_item_faults as $packing_item_fault) {
+                $packing_item_fault->work_order_item->calculate(true);
+                $packing_item_fault->work_order_item->setCommentLog("
+                    Packing [$packing->fullnumber] has been Created.
+                    SPK Detail[#". $packing_item_fault->work_order_item->id ."]
+                    [NG] Part ". $detail->item->part_name ."
+                ");
             }
         }
 
@@ -114,7 +127,8 @@ class Packings extends ApiController
         if(request('mode') == 'view') {
             $addWith = [
                 'shift',
-                'packing_items.packing_item_orders.work_order_item.work_order'
+                'packing_items.packing_item_orders.work_order_item.work_order',
+                'packing_items.packing_item_faults.work_order_item.work_order',
             ];
         }
         else $addWith = [];
@@ -124,8 +138,9 @@ class Packings extends ApiController
             'operator',
             'packing_items.item.item_units',
             'packing_items.unit',
+            'packing_items.packing_item_orders.work_order_item',
+            'packing_items.packing_item_faults.work_order_item',
             'packing_items.packing_item_faults.fault',
-            'packing_items.packing_item_orders.work_order_item'
         ], $addWith))->withTrashed()->findOrFail($id);
 
         $packing->append(['has_relationship']);
@@ -182,7 +197,7 @@ class Packings extends ApiController
 
             for ($i=0; $i < count($faults); $i++) {
                 $fault = $faults[$i];
-                if($fault['fault_id'] || $fault['quantity'] ) {
+                if($fault['work_order_item_id'] || $fault['fault_id'] || $fault['quantity'] ) {
                     ## create fault on the Packing Good updated!
                     $packing->packing_items->packing_item_faults()->create($fault);
                 }
@@ -210,7 +225,22 @@ class Packings extends ApiController
             {
                 $packing_item_order->work_order_item->calculate(true);
                 $work_order_item = $packing_item_order->work_order_item;
-                $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated (add row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
+                $work_order_item->setCommentLog("
+                    Packing [$packing->fullnumber] has been Updated.
+                    SPK Detail[#". $work_order_item->id ."]
+                    [OK] Part ". $work_order_item->item->part_name .".
+                ");
+            }
+
+            foreach ($newDetail->packing_item_faults as $packing_item_fault)
+            {
+                $packing_item_fault->work_order_item->calculate(true);
+                $work_order_item = $packing_item_fault->work_order_item;
+                $work_order_item->setCommentLog("
+                    Packing [$packing->fullnumber] has been Updated.
+                    SPK Detail[#". $work_order_item->id ."]
+                    [NG] Part ". $work_order_item->item->part_name .".
+                ");
             }
         }
 

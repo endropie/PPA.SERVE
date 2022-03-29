@@ -23,7 +23,9 @@ class Packing extends Model
 
     protected $relationships = [
         'packing_items.packing_item_orders.work_order_item.work_order_closed',
-        'packing_items.packing_item_orders.work_order_item.work_order_packed'
+        'packing_items.packing_item_orders.work_order_item.work_order_packed',
+        'packing_items.packing_item_faults.work_order_item.work_order_closed',
+        'packing_items.packing_item_faults.work_order_item.work_order_packed',
     ];
 
     public function packing_items()
