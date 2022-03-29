@@ -321,13 +321,9 @@ class IncomingGoods extends ApiController
 
         $incoming_good = IncomingGood::findOrFail($id);
 
-        if (!in_array($incoming_good->transaction, ['REGULER', 'RETURN'])) {
-            $this->error('The availabel Transaction [`REGULER`, `RETURN`]');
-        }
+        if ($incoming_good->transaction !== "INTERNAL") $this->error('The data not "INTERNAL" Transaction');
 
-        if ($incoming_good->status !== "VALIDATED") {
-            $this->error('The data not "VALIDATED" state');
-        }
+        if ($incoming_good->status !== "VALIDATED") $this->error('The data not "VALIDATED" state');
 
         $row = $request->only([
             'transaction', 'order_mode', 'registration', 'reference_number', 'reference_date',
