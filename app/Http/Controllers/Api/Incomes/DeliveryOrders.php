@@ -117,7 +117,7 @@ class DeliveryOrders extends ApiController
 
             if (round($detail->unit_amount) > round($detail->item->getTotalStockist('FG'))) {
                 $partName = $detail->item->part_name;
-                $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                $partName .= $detail->item->part_subname ? "(". $detail->item->part_subname .")" : "";
                 $this->error("PART $partName [FG] STOCKLESS");
             }
 
