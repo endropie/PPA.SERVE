@@ -61,7 +61,7 @@ class WorkOrderItem extends Filter
 
     public function has_amount_packing($value) {
         return $this->builder
-            ->whereRaw('amount_process > amount_packing')
+            ->whereRaw('amount_process > (amount_packing + amount_faulty)')
             ->whereHas('work_order', function($q) {
                 return $q->whereNull('main_id')->where('status', '<>', 'CLOSED')->stateHasNot('PACKED');
             });
