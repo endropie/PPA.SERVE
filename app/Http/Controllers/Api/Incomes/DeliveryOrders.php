@@ -683,8 +683,6 @@ class DeliveryOrders extends ApiController
 
         $revise->setCommentLog("SJ Delivery [$revise->fullnumber] has been revised!");
 
-        $this->error('LOLOS');
-
         $this->DATABASE::commit();
         return response()->json($delivery_order);
     }
