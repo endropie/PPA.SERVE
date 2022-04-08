@@ -166,12 +166,25 @@ class Packings extends ApiController
             if($oldDetail) {
                 ## Calculate stock on before the Packing items updated!
                 $oldDetail->item->distransfer($oldDetail);
+
                 foreach ($oldDetail->packing_item_orders as $packing_item_order)  {
                     if ($work_order_item = $packing_item_order->work_order_item)
                     {
                         if ($work_order_item->work_order_packed) abort(501, "INVALID. SPK has PACKED state.");
 
                         $packing_item_order->forceDelete();
+
+                        $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated(remove row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
+                        $work_order_item->calculate();
+                    }
+                }
+
+                foreach ($oldDetail->packing_item_faults as $packing_item_fault)  {
+                    if ($work_order_item = $packing_item_fault->work_order_item)
+                    {
+                        if ($work_order_item->work_order_packed) abort(501, "INVALID. SPK has PACKED state.");
+
+                        $packing_item_fault->forceDelete();
 
                         $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been Updated(remove row). SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
                         $work_order_item->calculate();
@@ -192,9 +205,6 @@ class Packings extends ApiController
             }
 
             $faults = $row['packing_item_faults'];
-            ## Delete fault on the Packing Good updated!
-            $packing->packing_items->packing_item_faults()->forceDelete();
-
             for ($i=0; $i < count($faults); $i++) {
                 $fault = $faults[$i];
                 if($fault['work_order_item_id'] || $fault['fault_id'] || $fault['quantity'] ) {
@@ -280,7 +290,18 @@ class Packings extends ApiController
         }
 
         ## Delete Packing faults.
-        $detail->packing_item_faults()->delete();
+
+        ## Delete Packing Item order.
+        foreach ($detail->packing_item_faults as $packing_item_fault) {
+
+            $work_order_item = $packing_item_fault->work_order_item;
+
+            $packing_item_fault->delete();
+
+            $work_order_item->setCommentLog("Packing [$packing->fullnumber] has been $mode. SPK Detail[#". $work_order_item->id ."] Part ". $work_order_item->item->part_name .".");
+
+            $work_order_item->calculate();
+        }
 
         $detail->delete();
 

@@ -9,6 +9,8 @@ class PackingItemFault extends Model
 {
     use SoftDeletes;
 
+    protected $appends = ['unit_amount'];
+
     protected $fillable = [
         'fault_id', 'work_order_item_id', 'quantity',
     ];

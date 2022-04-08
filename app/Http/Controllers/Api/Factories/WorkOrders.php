@@ -210,6 +210,7 @@ class WorkOrders extends ApiController
                     'work_order_items.item.item_units',
                     'work_order_items.work_production_items.work_production',
                     'work_order_items.packing_item_orders.packing_item.packing',
+                    'work_order_items.packing_item_faults.packing_item.packing',
                 ];
                 break;
         }
