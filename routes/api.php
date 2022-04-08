@@ -161,6 +161,7 @@ Route::prefix('v1')->namespace('Api')->group(function () {
             Route::apiResource('faults', 'References\Faults');
             Route::apiResource('type-faults', 'References\TypeFaults');
             Route::apiResource('lines', 'References\Lines');
+            Route::apiResource('packareas', 'References\Packareas');
             Route::apiResource('shifts', 'References\Shifts');
             Route::apiResource('provinces', 'References\Provinces');
             Route::apiResource('units', 'References\Units');

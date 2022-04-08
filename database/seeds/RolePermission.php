@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\References\Packareas;
 use App\Models\Auth\Permission;
 use App\Models\Auth\Role;
 use App\Models\Auth\User;
@@ -64,6 +65,7 @@ class RolePermission extends Seeder
             'departments' => ['c', 'r', 'u', 'd'],
             'positions' => ['c', 'r', 'u', 'd'],
             'vehicles'    => ['c', 'r', 'u', 'd'],
+            'packareas'    => ['c', 'r', 'u', 'd'],
         ];
 
         $roles = [
@@ -98,7 +100,7 @@ class RolePermission extends Seeder
                 'brands', 'colors', 'faults', 'lines', 'shifts', 'sizes',
                 'specifications', 'type-faults',
                 'category-items', 'type-items', 'units',
-                'departments', 'positions', 'vehicles'
+                'departments', 'positions', 'vehicles', 'packareas',
             ]
         ];
 
