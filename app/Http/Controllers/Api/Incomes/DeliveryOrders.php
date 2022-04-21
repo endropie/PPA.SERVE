@@ -111,18 +111,22 @@ class DeliveryOrders extends ApiController
 
         $delivery_order = DeliveryOrder::create($request->input());
 
-        foreach ($request->delivery_order_items as $row) {
+        $validator = array();
+        $validtext = array();
+
+        foreach ($request->delivery_order_items as $i => $row) {
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            if (round($detail->unit_amount) > round($detail->item->getTotalStockist('FG'))) {
-                $partName = $detail->item->part_name;
-                $partName .= $detail->item->part_subname ? "(". $detail->item->part_subname .")" : "";
-                $this->error("PART $partName [FG] STOCKLESS");
+            $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, "FG");
+            if ($transfer == false) {
+                $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
+                $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
             }
-
-            $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
         }
+
+        $request->validate($validator, $validtext);
 
         $request->validate([
             'internal_reason_id' => 'required',
@@ -393,7 +397,7 @@ class DeliveryOrders extends ApiController
 
         if ($revise->trashed()) $this->error("[" . $revise->number . "] is trashed. MANY-REVISION Not alowed!");
         if ($revise->is_internal) $this->error("[" . $revise->number . "] is INTERNAL. MANY-REVISION Not alowed!");
-        if (!$request_order) $this->error("[" . $revise->number . "] RequestOrder Failed. MANY-REVISION Not alowed!");
+        if (!$request_order) $this->error("[" . $revise->number . "] Order Failed. MANY-REVISION Not alowed!");
         if ($revise->status != 'OPEN') {
             if ($revise->request_order->status == 'CLOSED') $this->error("[" . $revise->request_order->number . "] has CLOSED. REVISION Not alowed!");
         }
@@ -425,6 +429,8 @@ class DeliveryOrders extends ApiController
         ]);
 
         ## New delivery order of partitions
+        $validator = array();
+        $validtext = array();
         foreach ($request->partitions as $key => $partition) {
             ## Auto generate number of revision
             $max = (int) DeliveryOrder::withTrashed()->where('number', $request->number)->max('revise_number');
@@ -437,11 +443,14 @@ class DeliveryOrders extends ApiController
 
             $delivery_order = DeliveryOrder::create($request->all());
             $request_order = RequestOrder::find($partition['request_order_id']);
-            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:" . $partition["request_order_id"]]);
+
+            if (!$request_order) {
+                $validator["partitions.$key.request_order_id"] = "not_in:" . $partition["request_order_id"];
+                continue;
+            }
 
             $rows = $partition['delivery_order_items'];
-            for ($i = 0; $i < count($rows); $i++) {
-                $row = $rows[$i];
+            foreach ($rows as $i => $row) {
 
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
                 if ($request_order->order_mode == 'ACCUMULATE') {
@@ -456,19 +465,30 @@ class DeliveryOrders extends ApiController
 
                 ## create DeliveryOrder items on the Delivery order revision!
                 $detail = $delivery_order->delivery_order_items()->create($row);
-                $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+                $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+                if ($transfer == false) {
+                    $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
+                    $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                    $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
+                }
 
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
 
-                $request_order_item->calculate();
-
-                if ($detail->request_order_item) {
-                    if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
-                        $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                        $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
+                if (!$detail->request_order_item) {
+                    $validator["partitions.$key.delivery_order_items.$i.request_order_item_id"] = "required|not_in:". $row["request_order_item_id"];
+                    $validtext["partitions.$key.delivery_order_items.$i.quantity.not_in"] = "The order item invalid";
+                }
+                else {
+                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
+                    if (round($detail->unit_amount) > $max) {
+                        $max = round($max / ($detail->unit_rate || 1));
+                        $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:$max";
+                        $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [order item #$detail->request_order_item_id: $max]";
                     }
-                } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
+
+                    $request_order_item->calculate();
+                }
             }
 
             $delivery_order->request_order_id = $partition["request_order_id"];
@@ -477,6 +497,8 @@ class DeliveryOrders extends ApiController
 
             $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn revision $revise->fullnumber.");
         }
+
+        $request->validate($validator, $validtext);
 
         $revise->request_order()->dissociate();
         $revise->status = 'REVISED';
@@ -543,9 +565,10 @@ class DeliveryOrders extends ApiController
         $request_order = RequestOrder::find($request['request_order_id']);
         if (!$request_order) $request->validate(["request_order_id" => "not_in:" . $request["request_order_id"]]);
 
+        $validator = array();
+        $validtext = array();
         $rows = $request->delivery_order_items;
-        for ($i = 0; $i < count($rows); $i++) {
-            $row = $rows[$i];
+        foreach ($rows as $i => $row) {
 
             if ($request_order->order_mode == 'ACCUMULATE') {
                 $request_order_item = $request_order->request_order_items()->create(array_merge($row, ['price' => 0]));
@@ -559,20 +582,35 @@ class DeliveryOrders extends ApiController
 
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
-            $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+
+            $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+            if ($transfer == false) {
+                $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
+                $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
+            }
 
             $detail->request_order_item()->associate($request_order_item);
             $detail->save();
 
-            if ($detail->request_order_item) {
-                if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
-                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                    $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
+            if (!$detail->request_order_item) {
+                $validator["delivery_order_items.$i.request_order_item_id"] = "required|not_in:". $row["request_order_item_id"];
+                $validtext["delivery_order_items.$i.quantity.not_in"] = "The order item invalid";
+            }
+            else {
+                $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
+                if (round($detail->unit_amount) > $max) {
+                    $max = round($max / ($detail->unit_rate || 1));
+                    $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                    $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [order item #$detail->request_order_item_id]: $max";
                 }
-            } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
 
-            $detail->request_order_item->calculate();
+                $detail->request_order_item->calculate();
+            }
+
         }
+
+        $request->validate($validator, $validtext);
 
         $delivery_order->request_order_id = $request->request_order_id;
         $delivery_order->revise_id = $revise->id;
@@ -619,6 +657,9 @@ class DeliveryOrders extends ApiController
             'partitions.*.transaction' => 'required',
         ]);
 
+        $validator = array();
+        $validtext = array();
+
         ## New delivery order of partitions
         foreach ($request->partitions as $key => $partition) {
             ## Auto generate number of revision
@@ -633,11 +674,14 @@ class DeliveryOrders extends ApiController
 
             $delivery_order = DeliveryOrder::create($request->all());
             $request_order = RequestOrder::find($partition['request_order_id']);
-            if (!$request_order) $request->validate(["partitions.$key.request_order_id" => "not_in:" . $partition["request_order_id"]]);
+
+            if (!$request_order) {
+                $validator["partitions.$key.request_order_id"] = "not_in:" . $partition["request_order_id"];
+                continue;
+            }
 
             $rows = $partition['delivery_order_items'];
-            for ($i = 0; $i < count($rows); $i++) {
-                $row = $rows[$i];
+            foreach ($rows as $i => $row) {
 
                 ## IF "ACCUMULATE" create RequestOrder items on the Delivery order revision!
                 if ($request_order->order_mode == 'ACCUMULATE') {
@@ -652,19 +696,30 @@ class DeliveryOrders extends ApiController
 
                 ## create DeliveryOrder items on the Delivery order revision!
                 $detail = $delivery_order->delivery_order_items()->create($row);
-                $detail->item->transfer($detail, $detail->unit_amount, null, 'FG');
+                $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+                if ($transfer == false) {
+                    $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
+                    $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                    $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
+                }
 
                 $detail->request_order_item()->associate($request_order_item);
                 $detail->save();
 
-                $request_order_item->calculate();
-
-                if ($detail->request_order_item) {
-                    if (round($detail->request_order_item->amount_delivery) > round($detail->request_order_item->unit_amount)) {
-                        $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
-                        $this->error("Part [" . $detail->item->part_name . "] unit maximum '$max'");
+                if (!$detail->request_order_item) {
+                    $validator["partitions.$key.delivery_order_items.$i.request_order_item_id"] = "required|not_in:". $row["request_order_item_id"];
+                    $validtext["partitions.$key.delivery_order_items.$i.quantity.not_in"] = "The order item invalid";
+                }
+                else {
+                    $max = round($detail->request_order_item->unit_amount - $detail->request_order_item->amount_delivery);
+                    if (round($detail->unit_amount) > $max) {
+                        $max = round($max / ($detail->unit_rate || 1));
+                        $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:$max";
+                        $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [order item #$detail->request_order_item_id: $max]";
                     }
-                } else $this->error("Part [" . $detail->item->part_name . "] relation [#$detail->request_order_item] undifined!");
+
+                    $request_order_item->calculate();
+                }
             }
 
             $delivery_order->is_internal = 0;
@@ -674,6 +729,8 @@ class DeliveryOrders extends ApiController
 
             $delivery_order->setCommentLog("SJ Delivery [$delivery_order->fullnumber] has been created!\nOn revision [$revise->fullnumber]");
         }
+
+        $request->validate($validator, $validtext);
 
         $revise->status = 'REVISED';
         $revise->reason_id = $request->get('reason_id', null);

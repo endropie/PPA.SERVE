@@ -47,24 +47,30 @@ class DeliveryLoads extends ApiController
         $delivery_load = DeliveryLoad::create($request->input());
 
         $rows = $request->delivery_load_items;
-        for ($i = 0; $i < count($rows); $i++) {
+        $validator = array();
+        $validtext = array();
+
+        foreach ($rows as $i => $row) {
             // create detail item created!
-            $detail = $delivery_load->delivery_load_items()->create($rows[$i]);
+            $detail = $delivery_load->delivery_load_items()->create($row);
 
-            $label = $detail->item->part_name . "(" . $detail->item->code . ")";
-
-            $request->validate(
-                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:" . $detail->maxAmountDetail()],
-                ["delivery_load_items.$i.quantity.lte" => "Maximum (Load) " . $detail->maxAmountDetail() . ". Part: " . $label]
-            );
-
-            $request->validate(
-                ["delivery_load_items.$i.quantity" => "numeric|gt:0|lte:" . $detail->maxFGDetail()],
-                ["delivery_load_items.$i.quantity.lte" => "Maximum (FG) " . $detail->maxFGDetail() . ". Part: " . $label]
-            );
+            if (round($row['quantity']) > $detail->maxFGDetail()) {
+                $max = round($detail->maxFGDetail() / ($detail->unit_rate || 1));
+                $validator["delivery_load_items.$i.quantity"] = "numeric|gt:0|lte:$max";
+                $validtext["delivery_load_items.$i.quantity.lte"] = "Maximum [FG] $max";
+            }
+            if (round($row['quantity']) > $detail->maxAmountDetail()) {
+                $max = round($detail->maxAmountDetail() / ($detail->unit_rate || 1));
+                $validator["delivery_load_items.$i.quantity"] = "numeric|gt:0|lte:$max";
+                $validtext["delivery_load_items.$i.quantity.lte"] = "Maximum [Load] $max";
+            }
 
             $detail->setLoadVerified();
         }
+
+        $request->validate($validator, $validtext);
+
+        $this->error("LOLOS");
 
         if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE")
         {

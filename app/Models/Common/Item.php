@@ -296,7 +296,10 @@ class Item extends Model
             $partName = $this->part_name;
             $partName .= $this->part_subname ? "(". $this->part_subname .")" : "";
 
-            if (!$this->allowTransferStockLess && round($exStock->total) <  0) abort(501, "PART $partName - [$exStockist] STOCKLESS");
+            if ( round($exStock->total) <  0) {
+                if (!$this->allowTransferStockLess) abort(501, "PART $partName - [$exStockist] STOCKLESS");
+                return false;
+            }
 
             $exStock->save();
 
@@ -332,8 +335,6 @@ class Item extends Model
     {
         if ($collect->stockable->count() == 0) return;
 
-        // if(!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
-
         foreach ($collect->stockable as $log) {
             $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
             $stock->total -= $log->unit_amount;
@@ -350,6 +351,12 @@ class Item extends Model
     }
 
     public function allowStockLessTransfer()
+    {
+        $this->allowTransferStockLess = true;
+        return $this;
+    }
+
+    public function handleStockLessTransfer()
     {
         $this->allowTransferStockLess = true;
         return $this;
