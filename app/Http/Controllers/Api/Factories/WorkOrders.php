@@ -128,26 +128,27 @@ class WorkOrders extends ApiController
     {
         if (!$request->has('date')) return $this->error('REQUEST DATE REQUIRED');
 
-        $work_order_lines = WorkOrder::with(['shift'])->whereNull('main_id')
-            ->filter($filter)->get();
+        $work_order_items = WorkOrderItem::whereHas('work_order' , function($q) use ($filter) {
+            return $q->whereNull('main_id')->filter($filter);
+        })->get();
 
-            $work_order_lines = $work_order_lines
-                ->groupBy(function($item, $key){ return $item["date"]."-".$item["shift_id"]; })
+            $work_order_items = $work_order_items
+                ->groupBy(function($item, $key){ return $item["item_id"]; })
                 ->values()
                 ->map(function ($rows) {
 
-                    return array_merge($rows->first()->toArray(), [
-                        "summary_production" => $rows->sum('total_production'),
-                        "summary_packing" => $rows->sum('total_packing'),
-                        "document_total" => $rows->count(),
-                        "document_closed" => $rows->where('status', "CLOSED")->count(),
+                    return array_merge([
+                        'item' => $rows->first()->item,
+                        "summary_production" => $rows->sum('amount_process'),
+                        "summary_packing" => $rows->sum('amount_packing'),
+                        // "document_total" => $rows->count(),
+                        // "document_closed" => $rows->where('status', "CLOSED")->count(),
                     ]);
 
                 })
-                ->sortBy(function ($item) { return $item['date'] ."-". $item['shift_id']; })
                 ->values();
 
-        return response()->json($work_order_lines);
+        return response()->json($work_order_items);
     }
 
     public function store(Request $request)
