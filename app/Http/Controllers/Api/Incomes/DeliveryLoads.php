@@ -70,8 +70,6 @@ class DeliveryLoads extends ApiController
 
         $request->validate($validator, $validtext);
 
-        $this->error("LOLOS");
-
         if ($delivery_load->transaction == "REGULER" && $delivery_load->order_mode == "ACCUMULATE")
         {
             $this->storeRequestOrder($delivery_load->fresh());
