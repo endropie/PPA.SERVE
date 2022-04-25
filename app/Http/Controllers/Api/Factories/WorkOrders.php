@@ -128,25 +128,26 @@ class WorkOrders extends ApiController
     {
         if (!$request->has('date')) return $this->error('REQUEST DATE REQUIRED');
 
-        $work_order_items = WorkOrderItem::whereHas('work_order' , function($q) use ($filter) {
-            return $q->whereNull('main_id')->filter($filter);
-        })->get();
+        $work_order_items = WorkOrderItem::where('amount_process', '>', 0)
+            ->whereHas('work_order' , function($q) use ($filter) {
+                return $q->whereNull('main_id')->filter($filter);
+            })->get();
 
-            $work_order_items = $work_order_items
-                ->groupBy(function($item, $key){ return $item["item_id"]; })
-                ->values()
-                ->map(function ($rows) {
+        $work_order_items = $work_order_items
+            ->groupBy(function($item, $key){ return $item["item_id"]; })
+            ->values()
+            ->map(function ($rows) {
 
-                    return array_merge([
-                        'item' => $rows->first()->item,
-                        "summary_production" => $rows->sum('amount_process'),
-                        "summary_packing" => $rows->sum('amount_packing'),
-                        // "document_total" => $rows->count(),
-                        // "document_closed" => $rows->where('status', "CLOSED")->count(),
-                    ]);
+                return array_merge([
+                    'item' => $rows->first()->item,
+                    "summary_production" => $rows->sum('amount_process'),
+                    "summary_packing" => $rows->sum('amount_packing'),
+                    // "document_total" => $rows->count(),
+                    // "document_closed" => $rows->where('status', "CLOSED")->count(),
+                ]);
 
-                })
-                ->values();
+            })
+            ->values();
 
         return response()->json($work_order_items);
     }
