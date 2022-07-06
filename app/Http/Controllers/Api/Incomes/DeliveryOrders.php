@@ -118,11 +118,15 @@ class DeliveryOrders extends ApiController
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, "FG");
-            if ($transfer == false) {
-                $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
-                $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
-                $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
+            try {
+                $detail->item->transfer($detail, $detail->unit_amount, null, "FG");
+            } catch (\Throwable $th) {
+                if ($th->getStatusCode() == 511) {
+                    $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
+                    $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
+                    $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
+                }
+                else $this->error($th->getMessage());
             }
         }
 
@@ -465,8 +469,8 @@ class DeliveryOrders extends ApiController
 
                 ## create DeliveryOrder items on the Delivery order revision!
                 $detail = $delivery_order->delivery_order_items()->create($row);
-                $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
-                if ($transfer == false) {
+                $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+                if ($detail->item->isStockLess("FG")) {
                     $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
                     $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
                     $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
@@ -583,8 +587,9 @@ class DeliveryOrders extends ApiController
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
-            $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
-            if ($transfer == false) {
+            $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+            // abort(501, "job->isStockLess ". ($transfer->job()->isStockLess()));
+            if ($detail->item->isStockLess("FG")) {
                 $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
                 $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
                 $validtext["delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";
@@ -609,6 +614,8 @@ class DeliveryOrders extends ApiController
             }
 
         }
+
+        $this->error('LOLOS');
 
         $request->validate($validator, $validtext);
 
@@ -696,8 +703,8 @@ class DeliveryOrders extends ApiController
 
                 ## create DeliveryOrder items on the Delivery order revision!
                 $detail = $delivery_order->delivery_order_items()->create($row);
-                $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
-                if ($transfer == false) {
+                $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+                if ($detail->item->isStockLess("FG")) {
                     $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
                     $validator["partitions.$key.delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);
                     $validtext["partitions.$key.delivery_order_items.$i.quantity.lte"] = "Maximum [FG: $max]";

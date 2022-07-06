@@ -26,18 +26,30 @@ Route::middleware('auth')->group(function () {
 Auth::routes();
 Accurate::routes();
 
-// Route::get('/accurate-test', function () {
-//     // $customer = \App\Models\Income\Customer::first();
-//     // $response = $customer->accurate()->push();
-//     $customers = \App\Models\Income\Customer::whereNull('accurate_model_id')->get();
-//     $customers->each(function($customer) {
-//         $customer->accurate()->push();
-//     });
-//     return response()->json(['status' => true, 'counter' => $customers->count()]);
-// });
-
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/home', 'HomeController@index')->name('home');
+
+
+Route::get('/check-job', function () {
+    Cache::lock('foo')->get(function () {
+        echo "TEST LOCK";
+    });
+});
+Route::get('/test-job', function () {
+
+    \DB::beginTransaction();
+    $id = request('id', 400001);
+    $number = request('number', 0);
+    $item = \App\Models\Common\Item::findOrFail($id);
+    $item->update(["description" => null]);
+
+    $x = \App\Jobs\TestJob::dispatch($item, $number)->onQueue($item->id);
+    \DB::commit();
+
+
+
+    return dd($x->job()->item);
+});

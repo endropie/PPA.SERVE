@@ -56,7 +56,7 @@ class Item extends Model
     ];
 
     protected $relationships = [
-        'item_stockables', 'item_stocks', 'incoming_good_items',
+        'stockables', 'stocks', 'incoming_good_items',
         'work_order_items', 'work_production_items', 'packing_items',
         'forecast_items', 'request_order_items', 'delivery_order_items',
     ];
@@ -131,12 +131,12 @@ class Item extends Model
         return $this->belongsTo('App\Models\Common\CategoryItemPrice');
     }
 
-    public function item_stocks()
+    public function stocks()
     {
         return $this->hasMany('App\Models\Common\ItemStock');
     }
 
-    public function item_stockables()
+    public function stockables()
     {
         return $this->hasMany('App\Models\Common\ItemStockable');
     }
@@ -264,7 +264,7 @@ class Item extends Model
     {
         $stockist = ItemStock::getValidStockist($stockist);
 
-        $stock = $this->fresh()->item_stocks()->where('stockist', $stockist)->get()->first();
+        $stock = $this->fresh()->stocks()->where('stockist', $stockist)->get()->first();
 
         return (double) ($stock->total ?? 0);
     }
@@ -281,16 +281,16 @@ class Item extends Model
         }
     }
 
-    public function transfer($collect, $number, $stockist = false, $exStockist = false)
+    public function xxxtransfer($model, $number, $stockist, $exStockist = false)
     {
 
         if (!$this->enable && !$this->allowTransferDisabled) abort(501, "PART [$this->code] DISABLED");
 
-        $collect = $collect->fresh();
+        $model = $model->fresh();
 
         if ($exStockist) {
             $exStockist = ItemStock::getValidStockist($exStockist);
-            $exStock = $this->item_stocks()->firstOrCreate(['stockist' => $exStockist]);
+            $exStock = $this->stocks()->firstOrCreate(['stockist' => $exStockist]);
             $exStock->total = $exStock->total - $number;
 
             $partName = $this->part_name;
@@ -303,9 +303,9 @@ class Item extends Model
 
             $exStock->save();
 
-            $this->item_stockables()->create([
-                'base_id' => $collect->id,
-                'base_type' => get_class($collect),
+            $this->stockables()->create([
+                'base_id' => $model->id,
+                'base_type' => get_class($model),
                 'unit_amount' => (-1) * ($number),
                 'stockist' => $exStockist,
             ]);
@@ -316,13 +316,12 @@ class Item extends Model
         if ($stockist !== false) {
 
             $stockist = ItemStock::getValidStockist($stockist);
-            $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
-            $stock->total = $stock->total + $number;
-            $stock->save();
+            $stock = $this->stocks()->firstOrCreate(['stockist' => $stockist]);
+            $stock->increment('total', $number);
 
-            $this->item_stockables()->create([
-                'base_id' => $collect->id,
-                'base_type' => get_class($collect),
+            $this->stockables()->create([
+                'base_id' => $model->id,
+                'base_type' => get_class($model),
                 'unit_amount' => ($number),
                 'stockist' => $stockist,
             ]);
@@ -331,14 +330,18 @@ class Item extends Model
         }
     }
 
-    public function distransfer($collect, $delete = true)
+    public function transfer($model, $number, $stockist, $exStockist = false)
     {
-        if ($collect->stockable->count() == 0) return;
+        return \App\Jobs\StockTransfer::dispatch($this, $model, $number, $stockist, $exStockist)->onQueue("STOCK-". $this->id);
+    }
 
-        foreach ($collect->stockable as $log) {
-            $stock = $this->item_stocks()->firstOrCreate(['stockist' => $log->stockist]);
-            $stock->total -= $log->unit_amount;
-            $stock->save();
+    public function distransfer($model, $delete = true)
+    {
+        if ($model->stockable->count() == 0) return;
+
+        foreach ($model->stockable as $log) {
+            $stock = $this->stocks()->firstOrCreate(['stockist' => $log->stockist]);
+            $stock->decrement('total', $log->unit_amount);
 
             if ($delete) $log->delete();
         }
@@ -360,5 +363,15 @@ class Item extends Model
     {
         $this->allowTransferStockLess = true;
         return $this;
+    }
+
+    public function allowTransferStockLess()
+    {
+        return $this->allowTransferStockLess;
+    }
+
+    public function isStockLess($stockist)
+    {
+        return (boolean) round($this->getTotalStockist($stockist)) < 0;
     }
 }
