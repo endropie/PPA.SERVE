@@ -34,12 +34,14 @@ class Item extends Filter
 
     public function delivery_date($value = '')
     {
-        // if (!strlen($value)) return $this->builder;
-        return $this->builder->whereHas('delivery_task_items', function ($q) use ($value) {
-            return $q->whereHas('delivery_task', function ($q) use ($value) {
-                return $q->where('date', $value);
-            });
-        });
+        if (!strlen($value)) return $this->builder;
+        
+        $items = app('App\Models\Income\DeliveryTaskItem')->whereHas('delivery_task', function ($q) use ($value){
+            if ($cid = request('customer_id')) $q->where('customer_id', $cid);
+            return $q->where('date', $value);
+        })->get()->pluck('item_id');
+
+        return $this->builder->whereIn('id', $items);
     }
 
     public function delivery_verify_date($value = '')
