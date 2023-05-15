@@ -4,6 +4,8 @@ namespace App\Filters\Common;
 
 use App\Filters\Filter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Item extends Filter
 {
@@ -35,13 +37,11 @@ class Item extends Filter
     public function delivery_date($value = '')
     {
         if (!strlen($value)) return $this->builder;
-        
-        $items = app('App\Models\Income\DeliveryTaskItem')->whereHas('delivery_task', function ($q) use ($value){
-            if ($cid = request('customer_id')) $q->where('customer_id', $cid);
-            return $q->where('date', $value);
-        })->get()->pluck('item_id');
-
-        return $this->builder->whereIn('id', $items);
+        return $this->builder->whereHas('delivery_task_items', function ($q) use ($value) {
+            return $q->whereHas('delivery_task', function ($q) use ($value) {
+                return $q->where('date', $value);
+            });
+        });
     }
 
     public function delivery_verify_date($value = '')
@@ -110,7 +110,7 @@ class Item extends Filter
         if (!in_array($value, ['SINGLE', 'MULTI'])) return $this->builder;
         return $this->builder->whereHas('item_prelines', function ($q) use ($value) {
             $a = $value == 'SINGLE' ? "=" : "<";
-            return $q->whereRaw(\DB::raw("1 $a (SELECT COUNT(*) FROM `item_prelines` WHERE `items`.`id` = `item_prelines`.`item_id`)"));
+            return $q->whereRaw(DB::raw("1 $a (SELECT COUNT(*) FROM `item_prelines` WHERE `items`.`id` = `item_prelines`.`item_id`)"));
         });
     }
 
@@ -119,7 +119,7 @@ class Item extends Filter
         $stockists = '"FM", "WO", "WIP", "FG", "NC", "NCR"';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT SUM(total) FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist IN ($stockists)) as fieldsort")
+            DB::raw("(SELECT SUM(total) FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist IN ($stockists)) as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -129,7 +129,7 @@ class Item extends Filter
         $stockist = 'FM';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -139,7 +139,7 @@ class Item extends Filter
         $stockist = 'WO';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -149,7 +149,7 @@ class Item extends Filter
         $stockist = 'WIP';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -159,7 +159,7 @@ class Item extends Filter
         $stockist = 'FG';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -169,7 +169,7 @@ class Item extends Filter
         $stockist = 'NC';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -179,7 +179,7 @@ class Item extends Filter
         $stockist = 'NCR';
         return $this->builder->select(
             'items.*',
-            \DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
+            DB::raw("(SELECT total FROM item_stocks WHERE items.id = item_stocks.item_id AND item_stocks.stockist = '$stockist') as fieldsort")
         )
             ->orderBy('fieldsort', $order);
     }
@@ -193,7 +193,7 @@ class Item extends Filter
         } else {
 
             $tableName = $this->builder->getQuery()->from;
-            $fields = \Schema::getColumnListing($tableName);
+            $fields = Schema::getColumnListing($tableName);
             $except = [$this->builder->getModel()->getKeyName()];
             $fields = array_diff_key($fields, $except);
         }
