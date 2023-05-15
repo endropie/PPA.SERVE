@@ -20,14 +20,22 @@ class Items extends ApiController
         $collection = function ($item) {
             if (request()->has('delivery_date')) {
                 $date = request('delivery_date');
-                $item->amount_delivery = [
-                    "FG" => $item->totals["FG"],
-                    "VERIFY" => $item->amount_delivery_verify($date),
-                    "TASK.REG" => $item->amount_delivery_task($date, 'REGULER'),
-                    "TASK.RET" => $item->amount_delivery_task($date, 'RETURN'),
-                    "LOAD.REG" => $item->amount_delivery_load($date, 'REGULER'),
-                    "LOAD.RET" => $item->amount_delivery_load($date, 'RETURN')
-                ];
+                if (request()->has('amount_delivery_to_load')) {
+                    $item->amount_delivery = (double) ($item->amount_delivery_verify($date) - $item->amount_delivery_load($date));
+                }
+                else if (request()->has('amount_delivery_to_verify')) {
+                    $item->amount_delivery = (double) ( $item->amount_delivery_task($date) - $item->amount_delivery_verify($date));
+                }
+                else {
+                    $item->amount_delivery = [
+                        "FG" => $item->totals["FG"],
+                        "VERIFY" => $item->amount_delivery_verify($date),
+                        "TASK.REG" => $item->amount_delivery_task($date, 'REGULER'),
+                        "TASK.RET" => $item->amount_delivery_task($date, 'RETURN'),
+                        "LOAD.REG" => $item->amount_delivery_load($date, 'REGULER'),
+                        "LOAD.RET" => $item->amount_delivery_load($date, 'RETURN')
+                    ];
+                }
             }
             if (request('appends')) {
                 $item->append(explode(',', request('appends')));
