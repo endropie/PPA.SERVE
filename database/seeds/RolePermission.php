@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\References\Packareas;
 use App\Models\Auth\Permission;
 use App\Models\Auth\Role;
 use App\Models\Auth\User;
@@ -31,7 +30,7 @@ class RolePermission extends Seeder
             'work-productions' => ['c', 'r', 'u', 'd', 'close', 'void'],
             'work-process' => ['r', 'confirm'],
             // Incomes
-            'forecasts' => ['c', 'r', 'u', 'd', 'close', 'void'],
+            'forecasts' => ['c', 'r', 'u', 'd', 'close', 'void', 'amount'],
             'request-orders' => ['c', 'r', 'u', 'd', 'close', 'revision', 'void', 'push'],
             'acc-invoices' => ['c', 'r', 'u', 'd', 'confirm', 'reopen'],
             // Warehouses
