@@ -11,7 +11,7 @@ class DeliveryOrderItem extends Model
     use Filterable, SoftDeletes;
 
     protected $fillable = [
-        'item_id', 'unit_id', 'unit_rate', 'quantity', 'encasement'
+        'item_id', 'unit_id', 'unit_rate', 'quantity', 'quantity_nc', 'encasement'
     ];
 
     protected $appends = ['unit_amount', 'number_lots'];

@@ -12,6 +12,8 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+
 Route::get('dev/accurate-customer-list', function (\App\Http\Requests\Request $request) {
     if ($request->get('token') != '0102030405') abort('RUNNING FAILED. CODE INVALID!');
 

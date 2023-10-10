@@ -13,7 +13,7 @@ class DeliveryOrder extends Model
     use Filterable, SoftDeletes, WithUserBy, HasCommentable;
 
     protected $fillable = [
-        'number', 'indexed_number', 'revise_number', 'customer_id', 'description', 'is_internal',
+        'number', 'indexed_number', 'revise_number', 'revise_nc', 'customer_id', 'description', 'is_internal',
         'transaction', 'date', 'vehicle_id', 'rit',
         'customer_name', 'customer_phone', 'customer_address', 'customer_note'
     ];
@@ -28,7 +28,8 @@ class DeliveryOrder extends Model
     ];
 
     protected $casts = [
-        'is_internal' => 'bool'
+        'is_internal' => 'bool',
+        'revise_nc' => 'bool',
     ];
 
     public function delivery_order_items()

@@ -95,7 +95,9 @@ class CreateSchemaDeliveryTables extends Migration
         });
 
         Schema::table('delivery_orders', function (Blueprint $table) {
-            $table->foreignId('delivery_load_id')->nullable()->after('revise_number');
+            if (!Schema::hasColumn('delivery_orders', 'delivery_load_id')) {
+                $table->foreignId('delivery_load_id')->nullable()->after('revise_number');
+            }
         });
     }
 

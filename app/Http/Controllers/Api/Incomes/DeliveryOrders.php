@@ -583,7 +583,15 @@ class DeliveryOrders extends ApiController
             ## create DeliveryOrder items on the Delivery order revision!
             $detail = $delivery_order->delivery_order_items()->create($row);
 
+            if ($delivery_order->revise_nc) {
+                if (($dividen = ($detail->quantity_nc) * $detail->unit_rate) > 0) {
+                    $detail->item->handleStockLessTransfer()->transfer($detail, $dividen, 'NCR', 'FG');
+                }
+            }
+
             $transfer = $detail->item->handleStockLessTransfer()->transfer($detail, $detail->unit_amount, null, 'FG');
+
+
             if ($transfer == false) {
                 $max = round($detail->item->getTotalStockist('FG') / ($detail->unit_rate || 1));
                 $validator["delivery_order_items.$i.quantity"] = "required|numeric|gt:0|lte:" . round($max);

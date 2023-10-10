@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\Passport;
 use App\Http\Controllers\ApiController;
 use App\Models\Auth\User;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class Authentication extends ApiController
 {
@@ -33,6 +33,7 @@ class Authentication extends ApiController
     }
 
     protected function result($data) {
+        /**  @var \App\Models\Auth\User $user */
         $user = Auth::user();
         $user->all_permission = $user->getAllPermissions()->pluck(['name']);
 
@@ -86,6 +87,7 @@ class Authentication extends ApiController
 
     public function setChangePassword(Request $request)
     {
+        /** @var \App\Models\Auth\User $user */
         $user = Auth::user();
 
         $validator = Validator::make($request->all(), [
