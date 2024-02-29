@@ -10,6 +10,7 @@ use App\Models\Income\DeliveryLoad;
 use App\Models\Income\RequestOrder;
 use App\Models\Income\RequestOrderItem;
 use App\Traits\GenerateNumber;
+use Illuminate\Support\Carbon;
 
 class DeliveryLoads extends ApiController
 {
@@ -194,7 +195,7 @@ class DeliveryLoads extends ApiController
 
             $detail->restore();
 
-            $label = $detail->item->part_name . "(" . $detail->item->code . ")";
+            $label = $detail->item->part_name . "[" . $detail->item->part_number . "]";
 
             if ($detail->maxAmountDetail() < $detail->quantity) {
                 $this->error("Maximum (Load) " . $detail->maxAmountDetail() . ". Part: " . $label);
@@ -270,8 +271,8 @@ class DeliveryLoads extends ApiController
             $request_order->order_mode   = $delivery_load->order_mode;
             $request_order->transaction   = 'REGULER';
 
-            $begin = \Carbon::parse($delivery_load->date)->startOfMonth()->format('Y-m-d');
-            $until = \Carbon::parse($delivery_load->date)->endOfMonth()->format('Y-m-d');
+            $begin = Carbon::parse($delivery_load->date)->startOfMonth()->format('Y-m-d');
+            $until = Carbon::parse($delivery_load->date)->endOfMonth()->format('Y-m-d');
             $request_order->description   = "ACCUMULATE P/O. $begin - $until";
             // For model update
             if (!$request_order->id) {
@@ -555,8 +556,8 @@ class DeliveryLoads extends ApiController
 
 
             if (round($delivery_order_item->unit_amount) > $delivery_order_item->item->getTotalStockist('FG')) {
-                $partName = $delivery_order_item->item->part_name;
-                $partName .= $this->part_subname ? "(". $delivery_order_item->item->part_subname .")" : "";
+                $item = $delivery_order_item->item;
+                $partName = $item->part_name  ."[". $item->part_number ."]";
                 return $this->error("PART $partName [FG] STOCKLESS");
             }
 
@@ -587,8 +588,7 @@ class DeliveryLoads extends ApiController
                 if (!$request_order_item) $this->error("SJDO Detail[#$detail->id] hasn`t order relation. Not allowed to be restored");
 
                 if (round($detail->unit_amount) > $detail->item->getTotalStockist('FG')) {
-                    $partName = $detail->item->part_name;
-                    $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                    $partName = $detail->item->part_name . "[". $detail->item->part_number ."]";
                     return $this->error("PART $partName [FG] STOCKLESS");
                 }
 

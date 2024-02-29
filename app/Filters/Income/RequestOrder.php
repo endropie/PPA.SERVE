@@ -24,7 +24,9 @@ class RequestOrder extends Filter
 
     public function actived($value) {
         if (!boolval($value)) return $this->builder;
-        return $this->builder->where('actived_date', '>=',  date('Y-m-d'));
+        if (strtolower($value) == 'now') return $this->builder->where('actived_date', '>=',  date('Y-m-d'));
+
+        return $this->builder->where('actived_date', '>=',  $value);
     }
 
     public function invoicing($order = 'true') {
