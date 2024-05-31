@@ -3,6 +3,8 @@ namespace App\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+
 class Filter
 {
     protected $request;
@@ -21,12 +23,12 @@ class Filter
     public function apply(Builder $builder)
     {
         $this->builder = $builder;
-        $fields = \Schema::getColumnListing($builder->getQuery()->from);
+        $fields = Schema::getColumnListing($builder->getQuery()->from);
 
         foreach ($this->filters() as $name => $value) {
 
             if ( ! method_exists($this, $name)) {
-                if(strlen($value) && in_array($name, $fields)) {
+                if(boolval($value) && in_array($name, $fields)) {
                     $this->builder->where($name, $value);
                 }
                 continue;
@@ -95,7 +97,7 @@ class Filter
 
     public function sort($value) {
         $order = $this->request->has('descending') ? 'desc' : 'asc';
-        $fields = \Schema::getColumnListing($this->builder->getQuery()->from);
+        $fields = Schema::getColumnListing($this->builder->getQuery()->from);
 
         if(method_exists($this, 'sort_'. $value)) {
             $function = 'sort_'. $value;
@@ -111,7 +113,7 @@ class Filter
         if(!strlen($value)) return $this->builder;
 
         $tableName = $this->builder->getQuery()->from;
-        $fields = \Schema::getColumnListing($tableName);
+        $fields = Schema::getColumnListing($tableName);
 
 
         $except = [$this->builder->getModel()->getKeyName()];

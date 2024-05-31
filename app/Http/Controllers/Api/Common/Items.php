@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Common;
 use App\Filters\Common\Item as Filter;
 use App\Http\Requests\Common\Item as Request;
 use App\Http\Controllers\ApiController;
+use App\Http\Resources\Common\ItemResource;
 use App\Models\Common\Item;
 use App\Models\Common\ItemStockable;
 use App\Models\Income\AccInvoice;
@@ -44,18 +45,20 @@ class Items extends ApiController
         };
 
         switch (request('mode')) {
+          case 'resource':
+            $items = Item::filter($filter)->get();
+            return ItemResource::collection($items);
+
           case 'all':
             $items = Item::with(['item_prelines','item_units','unit'])->filter($filter)->get()->map($collection);
           break;
 
           case 'datagrid':
             $items = Item::with(['item_prelines','item_units', 'brand', 'customer', 'specification'])->filter($filter)->latest()->get();
-
           break;
 
           case 'itemstock':
             $items = Item::filter($filter)->get(['id'])->map->append('totals');
-
           break;
 
           case 'stockables':
@@ -216,7 +219,7 @@ class Items extends ApiController
             $date = explode(',', request('date'));
             return $q->where('date', '>=', $date[0])->where('status', 'VALIDATED');
           })
-          ->sum(\DB::raw('quantity * unit_rate'));
+          ->sum(app('db')->raw('quantity * unit_rate'));
 
 
         $sum_delivery_order = (double) DeliveryOrderItem::where('item_id', $item->id)
@@ -224,7 +227,7 @@ class Items extends ApiController
             $date = explode(',', request('date'));
             return $q->where('date', '>=', $date[0]);
           })
-          ->sum(\DB::raw('quantity * unit_rate'));
+          ->sum(app('db')->raw('quantity * unit_rate'));
 
         $e_delivery_order = DeliveryOrderItem::where('item_id', $item->id)
           ->whereHas('delivery_order', function($q) {
