@@ -56,7 +56,7 @@ class Item extends Model
     ];
 
     protected $relationships = [
-        'item_stockables', 'item_stocks', 'incoming_good_items',
+        'incoming_good_items',
         'work_order_items', 'work_production_items', 'packing_items',
         'forecast_items', 'request_order_items', 'delivery_order_items',
     ];
@@ -221,6 +221,24 @@ class Item extends Model
             })
             ->map(function ($items) {
                 return $items->sum('unit_amount') - $items->sum('amount_process');
+            });
+    }
+
+    public function setCalculateWO()
+    {
+        return $this->hasMany('App\Models\Factory\WorkOrderItem')
+            ->whereHas('work_order', function ($q) {
+                return $q->where('status', 'OPEN')->whereNull('main_id');
+            })
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->work_order->stockist_from;
+            })
+            ->each(function ($items, $key) {
+                $stockist = ItemStock::getValidStockist($stockist = "WO_$key");
+                $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
+                $stock->total = $items->sum('unit_amount') - $items->sum('amount_process');
+                $stock->save();
             });
     }
 

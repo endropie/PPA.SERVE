@@ -7,6 +7,9 @@ use App\Models\Model;
 class ItemStock extends Model
 {
     static $stockists = [
+        'WO_FM' => 'Plan Work FM',
+        'WO_NC' => 'Plan Work NC',
+        'WO_NCR' => 'Plan Work NCR',
         'FM' => 'Fresh',
         'WIP' => 'Work In Process',
         'PFG' => 'Pre-Finish Good',

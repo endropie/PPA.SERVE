@@ -29,9 +29,9 @@ class WorkProductions extends ApiController
                     ->filter($filter)->latest()->collect();
 
                 $work_productions->getCollection()->transform(function($row) {
-                        $row->append(['is_relationship']);
-                        return $row;
-                    });
+                    // $row->append(['is_relationship']);
+                    return $row;
+                });
                 break;
         }
 
@@ -108,9 +108,7 @@ class WorkProductions extends ApiController
             'work_production_items.unit'
         ])->withTrashed()->findOrFail($id);
 
-
-        $work_production->append(['is_relationship', 'has_relationship']);
-
+        $work_production->append(['is_relationship']);
 
         return response()->json($work_production);
     }

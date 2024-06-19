@@ -20,8 +20,8 @@ class WorkOrder extends Model
     protected $appends = ['fullnumber'];
 
     protected $relationships = [
-        'work_order_items.packing_item_orders',
         'work_order_items.work_production_items',
+        'work_order_items.packing_item_orders',
         'sub_work_orders.work_order_items.work_production_items',
     ];
 

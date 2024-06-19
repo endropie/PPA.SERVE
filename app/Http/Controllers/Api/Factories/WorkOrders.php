@@ -7,6 +7,7 @@ use App\Filters\Factory\WorkOrderItem as FilterItem;
 use App\Http\Requests\Factory\WorkOrder as Request;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\Request as BaseRequest;
+use App\Http\Resources\Factory\WorkOrderResource;
 use App\Models\Factory\WorkOrder;
 use App\Models\Factory\WorkOrderItem;
 use App\Traits\GenerateNumber;
@@ -17,6 +18,10 @@ class WorkOrders extends ApiController
     public function index(Filter $filter, FilterItem $filterItem)
     {
         switch (request('mode')) {
+            case 'resource' :
+            $rs = WorkOrder::filter($filter)->latest()->get();
+            return WorkOrderResource::collection($rs);
+
             case 'all':
             $work_orders = WorkOrder::filter($filter)->latest()->get();
             break;
@@ -28,7 +33,7 @@ class WorkOrders extends ApiController
             break;
 
             case 'items':
-            $work_orders = WorkOrderItem::with(['item','work_order'])->filter($filterItem)->get();
+            $work_orders = WorkOrderItem::with(['item.item_units','work_order'])->filter($filterItem)->get();
             break;
 
 
@@ -168,8 +173,9 @@ class WorkOrders extends ApiController
             if (!$work_order->stockist_direct) {
                 $FROM = $work_order->stockist_from;
 
+                $detail->item->setCalculateWO();
                 $detail->item->refresh();
-                if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
+                if (round($detail->item->totals[$FROM]) < round($detail->item->totals["WO_$FROM"] ?? 0)) {
                     $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                 }
             }
@@ -188,13 +194,17 @@ class WorkOrders extends ApiController
     public function show($id)
     {
         switch (request('mode')) {
+            case 'resource' :
+                $record = WorkOrder::withTrashed()->findOrFail($id);
+                return new WorkOrderResource($record);
+
             case 'summary':
                 $with = [];
                 $appends = ['summary_items', 'summary_production', 'summary_packing'];
                 break;
 
             case 'prelines':
-                $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
+                $appends = ['is_relationship', 'has_producted', 'has_packed'];
                 $with = [
                     'line', 'shift',
                     'work_order_items.unit',
@@ -204,7 +214,7 @@ class WorkOrders extends ApiController
                 break;
 
             default:
-                $appends = ['is_relationship', 'has_relationship', 'has_producted', 'has_packed'];
+                $appends = ['is_relationship', 'has_producted', 'has_packed'];
                 $with = [
                     'line', 'shift',
                     'work_order_items.unit',
@@ -220,10 +230,6 @@ class WorkOrders extends ApiController
         $work_order = WorkOrder::with($with)->withTrashed()->findOrFail($id);
 
         $work_order->append($appends);
-        $work_order->work_order_items->map(function($detail) {
-            $detail->item->append('total_work_order');
-            return $detail;
-        });
 
         return response()->json($work_order);
     }
@@ -251,8 +257,10 @@ class WorkOrders extends ApiController
         $rows = $request->work_order_items;
 
         foreach ($work_order->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
+            $item = $detail->item;
+            $item->distransfer($detail);
             $detail->forceDelete();
+            $item->setCalculateWO();
         }
 
         for ($i=0; $i < count($rows); $i++) {
@@ -263,8 +271,9 @@ class WorkOrders extends ApiController
             if (!$work_order->stockist_direct) {
                 ## Calculate stock on after Detail item updated!
                 $FROM = $work_order->stockist_from;
+                $detail->item->setCalculateWO();
                 $detail->item->refresh();
-                if (round($detail->item->totals[$FROM]) < round($detail->item->total_work_order[$FROM])) {
+                if (round($detail->item->totals[$FROM]) < round($detail->item->totals["WO_$FROM"] ?? 0)) {
                     $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
                 }
             }
@@ -293,8 +302,10 @@ class WorkOrders extends ApiController
         if ($mode == "VOID") $work_order->moveState('VOID');
 
         foreach ($work_order->work_order_items as $detail) {
-            $detail->item->distransfer($detail);
+            $item = $detail->item;
+            $item->distransfer($detail);
             $detail->delete();
+            $item->setCalculateWO();
         }
 
         foreach ($work_order->sub_work_orders as $sub_work_order) {
@@ -319,17 +330,15 @@ class WorkOrders extends ApiController
         if($work_order->trashed()) $this->error("SPK [#$work_order->number] has trashed. Not allowed to be PRODUCTED!");
         if($work_order->status == 'OPEN') $this->error("SPK [#$work_order->number] has state 'OPEN'. Not allowed to be PRODUCTED!");
 
-        if(!$work_order->main_id) {
-            $FROM = $work_order->stockist_from;
-            $work_order->work_order_items->each(function($detail) use ($FROM) {
-                $detail->item->distransfer($detail);
-            });
-            $work_order->stateable()->delete();
-        }
+        $work_order->stateable()->delete();
 
         $work_order->moveState('OPEN');
 
-
+        if(!$work_order->main_id) {
+            $work_order->work_order_items->each(function($detail) {
+                $detail->item->setCalculateWO();
+            });
+        }
 
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been Re-OPEN!.");
 
@@ -345,6 +354,7 @@ class WorkOrders extends ApiController
 
         $work_order->work_order_items->each(function($detail) {
             $detail->calculate($error = false);
+            $detail->item->setCalculateWO();
         });
 
         $this->DATABASE::commit();
@@ -375,6 +385,11 @@ class WorkOrders extends ApiController
 
         $work_order->moveState('PRODUCTED');
 
+        $work_order->work_order_items->each(function($detail) {
+            $detail->calculate($error = false);
+            $detail->item->setCalculateWO();
+        });
+
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been PRODUCTED!");
 
         $this->DATABASE::commit();
@@ -391,6 +406,11 @@ class WorkOrders extends ApiController
         if($work_order->status !== 'PRODUCTED') $this->error("SPK [#$work_order->number] has state $work_order->status. Not allowed to be PACKED!");
 
         $work_order->moveState('PACKED');
+
+        $work_order->work_order_items->each(function($detail) {
+            $detail->calculate($error = false);
+            $detail->item->setCalculateWO();
+        });
 
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been PACKED!");
 
@@ -422,6 +442,12 @@ class WorkOrders extends ApiController
         }
 
         $work_order->moveState('CLOSED');
+
+        $work_order->work_order_items->each(function($detail) {
+            $detail->calculate($error = false);
+            $detail->item->setCalculateWO();
+        });
+
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been CLOSED!");
 
         $this->DATABASE::commit();
