@@ -80,6 +80,7 @@ class WorkProductions extends ApiController
                     $FROM = $work_order_item->work_order->stockist_from;
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                     $work_order_item->calculate();
+                    $work_order_item->item->setCalculateWO();
 
                     $detail->item->refresh();
                     if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
@@ -124,11 +125,15 @@ class WorkProductions extends ApiController
 
         foreach ($work_production->work_production_items as $detail) {
 
+            $work_order_item = $detail->work_order_item;
             $detail->item->distransfer($detail);
 
-            if($detail->work_order_item) $detail->work_order_item->calculate(false);
-
             $detail->forceDelete();
+
+            if($work_order_item) {
+                $work_order_item->calculate(false);
+                $work_order_item->item->setCalculateWO();
+            }
         }
 
         $work_production->update($request->input());
@@ -158,6 +163,7 @@ class WorkProductions extends ApiController
                     $FROM = $work_order_item->work_order->stockist_from;
                     $detail->item->transfer($detail, $detail->unit_amount,'WIP', $FROM);
                     $work_order_item->calculate();
+                    $work_order_item->item->setCalculateWO();
 
                     $detail->item->refresh();
                     if (round($detail->item->totals[$FROM]) < 0) $this->error("Stock [". $detail->item->part_name ."] invalid. Not Allowed to be CREATED!");
@@ -200,6 +206,8 @@ class WorkProductions extends ApiController
             $detail->delete();
 
             $work_order_item->calculate();
+            $work_order_item->item->setCalculateWO();
+
             $work_order_item->setCommentLog("Production [$work_production->fullnumber] has been $mode. SPK Detail[#$work_order_item->id] Part ". $work_order_item->item->part_name .".");
 
         }

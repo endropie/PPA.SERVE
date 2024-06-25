@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Resources\factory;
+namespace App\Http\Resources\Factory;
 
 use App\Http\Resources\Common\ItemResource;
 use App\Http\Resources\Resource;
