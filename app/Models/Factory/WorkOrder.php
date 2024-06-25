@@ -104,4 +104,13 @@ class WorkOrder extends Model
 
         return $this->number;
     }
+
+    public function getIsRelationshipAttribute()
+    {
+        (bool) $this->work_order_items()->where(function($q) {
+            return $q->where('amount_process', '>', 0)
+            ->orWhere('amount_packing', '>', 0)
+            ->orWhere('amount_faulty', '>', 0);
+        })->count();
+    }
 }
