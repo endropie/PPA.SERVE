@@ -318,6 +318,7 @@ class WorkOrders extends ApiController
         $work_order->setCommentLog("WO [$work_order->fullnumber] has been $mode!");
 
         $this->DATABASE::commit();
+
         return response()->json(['success' => true]);
     }
 

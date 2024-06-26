@@ -224,22 +224,33 @@ class Item extends Model
             });
     }
 
-    public function setCalculateWO()
+    public function setCalculateWO($whereFn = null)
     {
-        return $this->hasMany('App\Models\Factory\WorkOrderItem')
-            ->whereHas('work_order', function ($q) {
+        $fn = $whereFn ?? function ($q) {
+            return $q->whereHas('work_order', function ($q) {
                 return $q->where('status', 'OPEN')->whereNull('main_id');
-            })
+            });
+        };
+
+        $data = $this->hasMany('App\Models\Factory\WorkOrderItem')
+            ->where($fn)
             ->get()
             ->groupBy(function ($item) {
                 return $item->work_order->stockist_from;
-            })
-            ->each(function ($items, $key) {
-                $stockist = ItemStock::getValidStockist($stockist = "WO_$key");
-                $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
+            });
+
+        foreach (['FM', 'NC', 'NCR'] as $key) {
+            $stockist = ItemStock::getValidStockist($stockist = "WO_$key");
+            $stock = $this->item_stocks()->firstOrCreate(['stockist' => $stockist]);
+            if ($items = $data[$key] ?? false) {
                 $stock->total = $items->sum('unit_amount') - $items->sum('amount_process');
                 $stock->save();
-            });
+            }
+            else {
+                $stock->total = 0;
+                $stock->save();
+            }
+        }
     }
 
     public function getCustomerCodeAttribute()
@@ -252,8 +263,15 @@ class Item extends Model
 
     public function amount_delivery_verify($date = null)
     {
+
+        // $query = $this->delivery_verify_items()->setAppends([]);
+        // dd(
+        //     $query->where('date', $date)->get()->sum('unit_amount')
+        // );
         if (!$date) return 0;
-        return (float) $this->delivery_verify_items()->where('date', $date)->get()->sum('unit_amount');
+        return (float) $this->delivery_verify_items()->where('date', $date)->sum(
+            app('db')->raw('delivery_verify_items.quantity * delivery_verify_items.unit_rate')
+        );
     }
 
     public function amount_delivery_task($date = null, $trans = null)
