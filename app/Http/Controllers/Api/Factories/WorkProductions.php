@@ -44,7 +44,7 @@ class WorkProductions extends ApiController
 
         $multiple = $request->input('isMultiple', false) ? $request->input('multiple', 1) : 1;
         $works = collect();
-        $number =  $this->getNextWorkProductionNumber();
+        $number =  $this->getNextWorkProductionNumber(null, $request->get('line_id'));
 
         while ($multiple > 0) {
 

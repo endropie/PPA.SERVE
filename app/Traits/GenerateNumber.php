@@ -170,11 +170,12 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextPackingNumber($date = null)
+    public function getNextPackingNumber($date = null, $addPrefix = "")
     {
         $modul = 'packing';
         $digit = (int) setting()->get("$modul.number_digit", 5);
         $prefix = $this->prefixParser($modul);
+        if ($addPrefix) $prefix = $this->addPrefix($prefix, $addPrefix);
         $prefix = $this->dateParser($prefix, $date);
 
         $next = \App\Models\Factory\Packing::withTrashed()
@@ -208,14 +209,15 @@ trait GenerateNumber
         return $number;
     }
 
-    public function getNextWorkProductionNumber($date = null)
+    public function getNextWorkProductionNumber($date = null, $addPrefix = "")
     {
         $modul = 'work_production';
         $digit = (int) setting()->get("$modul.number_digit", 5);
         $prefix = $this->prefixParser($modul);
+        if ($addPrefix) $prefix = $this->addPrefix($prefix, $addPrefix);
         $prefix = $this->dateParser($prefix, $date);
 
-        $prefix = $this->dateParser($prefix, $date);
+
 
         $next = \App\Models\Factory\WorkProduction::withTrashed()
             ->selectRaw('MAX(REPLACE(number, "'.$prefix.'", "") * 1) AS N')
@@ -393,6 +395,15 @@ trait GenerateNumber
 
         if ($interval = setting()->get("$modul.number_interval", $default_interval)) {
             $result_number .= $interval . setting()->get("general.prefix_separator",'/');
+        }
+
+        return $result_number;
+    }
+
+    protected function addPrefix ($result_number, $code)
+    {
+        if ($code) {
+            $result_number .= $code . setting()->get("general.prefix_separator",'/');
         }
 
         return $result_number;

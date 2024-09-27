@@ -50,7 +50,8 @@ class Packings extends ApiController
     {
 
         $this->DATABASE::beginTransaction();
-        if(!$request->number) $request->merge(['number'=> $this->getNextPackingNumber()]);
+        $customer = \App\Models\Income\Customer::find($request->customer_id);
+        if (!$request->number) $request->merge(['number'=> $this->getNextPackingNumber(null, $customer ? $customer->code : '')]);
 
         ## Create the Packing Goods.
         $packing = Packing::create($request->all());
@@ -91,7 +92,7 @@ class Packings extends ApiController
 
             if ($detail->item->getTotalStockist('WIP') < -1) {
                 $partName = $detail->item->part_name;
-                $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                $partName .= $$detail->item->part_subname ? "(". $detail->item->part_subname .")" : "";
                 $this->error("PART $partName [WIP] STOCKLESS");
             }
 
@@ -225,7 +226,7 @@ class Packings extends ApiController
 
             if ($newDetail->item->getTotalStockist('WIP') < -1) {
                 $partName = $newDetail->item->part_name;
-                $partName .= $this->part_subname ? "(". $newDetail->item->part_subname .")" : "";
+                $partName .= $newDetail->item->part_subname ? "(". $newDetail->item->part_subname .")" : "";
                 $this->error("PART $partName [WIP] STOCKLESS");
             }
 
