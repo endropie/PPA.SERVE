@@ -29,8 +29,8 @@ class Model extends Eloquent
 
     public static function relate ($relationship, $model)
     {
-        $find = $model->has($relationship)->find($model->getKey());
-        return  (boolean) $find;
+        // return  (boolean) $model->has($relationship)->find($model->getKey());
+        return  (boolean) $model->has($relationship)->where($model->getKeyName(), $model->getKey())->limit(1)->count();
     }
 
     public function getRelationships ($parameter = null)

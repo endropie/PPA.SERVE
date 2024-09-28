@@ -11,33 +11,23 @@
 |
 */
 
+use Endropie\AccurateClient\Facade as Accurate;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->get('/user', function () {
     return auth()->user;
 });
 
-Route::middleware('auth')->group(function () {
-
-    Route::get('/test-incoming-good', function () {
-        // vendor/bin/phpunit --testdox --filter 'Tests\\Feature\\IncomingGoodTest'
-    });
-});
 
 Auth::routes();
 Accurate::routes();
-
-// Route::get('/accurate-test', function () {
-//     // $customer = \App\Models\Income\Customer::first();
-//     // $response = $customer->accurate()->push();
-//     $customers = \App\Models\Income\Customer::whereNull('accurate_model_id')->get();
-//     $customers->each(function($customer) {
-//         $customer->accurate()->push();
-//     });
-//     return response()->json(['status' => true, 'counter' => $customers->count()]);
-// });
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/health', function () {
+    app('db')->connection()->getPdo();
+    return 'OK';
+ });
