@@ -146,10 +146,9 @@ class AccInvoiceObserver
             $record = array_merge($record, ['branchId' => $branchId]);
         }
 
-        $record = array_merge($record, [
-            // "saveAsStatusType" => "UNAPPROVED",
-            // "paymentTermName" => "net 30",
-        ]);
+        if (!$model->accurate_model_id) {
+            $record = array_merge($record, ["saveAsStatusType" => "DRAFT"]);
+        }
 
         return array_merge($record, $detailItems);
     }
