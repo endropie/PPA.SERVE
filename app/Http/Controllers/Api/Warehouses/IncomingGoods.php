@@ -90,6 +90,10 @@ class IncomingGoods extends ApiController
             ]);
         }
 
+        if ($request->reference_number && IncomingGood::where('reference_number', $request->reference_number)->exists()) {
+            abort(406, "The number [". $request->reference_number ."] has been used!");
+        }
+
         $incoming_good = IncomingGood::create($request->all());
 
         $rows = $request->incoming_good_items;
@@ -512,7 +516,7 @@ class IncomingGoods extends ApiController
                 if (round($detail->item->getTotalStockist($to)) < 0) {
 
                     $partName = $detail->item->part_name;
-                    $partName .= $this->part_subname ? "(". $detail->item->part_subname .")" : "";
+                    $partName .= $detail->item->part_subname ? "(". $detail->item->part_subname .")" : "";
                     $this->error("PART $partName [$to] STOCKLESS");
                 }
             }
