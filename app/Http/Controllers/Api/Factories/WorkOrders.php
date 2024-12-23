@@ -296,7 +296,13 @@ class WorkOrders extends ApiController
         $work_order = WorkOrder::findOrFail($id);
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
+
+        if ($work_order->work_production_items) $this->error("The data has production, is not allowed to be $mode!");
+
+        if ($work_order->summary_packing) $this->error("The data has packing, is not allowed to be $mode!");
+
         if($work_order->is_relationship) $this->error("[$work_order->number] has RELATIONSHIP, is not allowed to be $mode!");
+
         if($mode == "DELETED" && $work_order->status != "OPEN") $this->error("The data $work_order->status state, is not allowed to be $mode!");
 
         if ($mode == "VOID") $work_order->moveState('VOID');
