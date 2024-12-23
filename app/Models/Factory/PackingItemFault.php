@@ -39,7 +39,7 @@ class PackingItemFault extends Model
     }
 
     public function getUnitAmountAttribute() {
-        $rate = $this->fresh()->packing_item->unit_rate ?? 1;
+        $rate = $this->fresh()->packing_item ? $this->fresh()->packing_item->unit_rate : 1;
         return (double) ($this->quantity * $rate);
     }
 }

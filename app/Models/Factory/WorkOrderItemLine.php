@@ -36,7 +36,8 @@ class WorkOrderItemLine extends Model
     }
 
     public function getUnitAmountAttribute() {
-        return  (double) $this->work_order_item->quantity * $this->work_order_item->unit_rate;
+        $rate = $this->work_order_item ? $this->work_order_item->unit_rate : 1;
+        return  (double) $this->work_order_item->quantity * $rate;
     }
 
     public function calculate ($error = true) {

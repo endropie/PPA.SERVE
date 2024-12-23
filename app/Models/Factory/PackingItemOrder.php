@@ -33,7 +33,7 @@ class PackingItemOrder extends Model
 
     public function getUnitAmountAttribute() {
         // return false when rate is not valid
-        $rate = $this->fresh()->packing_item->unit_rate;
+        $rate = $this->fresh()->packing_item ? $this->fresh()->packing_item->unit_rate : 1;
         return (double) ($this->quantity * $rate);
     }
 }
