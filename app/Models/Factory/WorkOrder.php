@@ -36,7 +36,7 @@ class WorkOrder extends Model
     }
 
     public function work_production_items() {
-        return $this->hasManyThrough('App\Models\Factory\WorkProductionItem', 'App\Models\Factory\WorkProduction');
+        return $this->hasManyThrough('App\Models\Factory\WorkProductionItem', 'App\Models\Factory\WorkOrderItem');
     }
 
     public function line() {
