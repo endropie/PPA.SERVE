@@ -297,7 +297,7 @@ class WorkOrders extends ApiController
 
         $mode = strtoupper(request('mode') ?? 'DELETED');
 
-        if ($work_order->work_production_items) $this->error("The data has production, is not allowed to be $mode!");
+        if ($work_order->summary_production) $this->error("The data has production, is not allowed to be $mode!");
 
         if ($work_order->summary_packing) $this->error("The data has packing, is not allowed to be $mode!");
 
