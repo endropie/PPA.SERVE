@@ -24,7 +24,7 @@ class AccInvoiceObserver
 
         $detailItems = $detailItems->map(function ($details, $key) use ($mode, $serviceModel, $isPriceCategory, $detailItems) {
 
-            $quantity = collect($details)->sum('quantity');
+            $quantity = $this->number_normalize(collect($details)->sum('quantity') ?? 0);
             $detail = $details->first();
 
             if ($isPriceCategory && !$detail->item->category_item_price) abort(501, "INVOICED FAILED. ". $detail->item->part_name ." [#". $detail->item->id ."] not has category price");
@@ -44,20 +44,20 @@ class AccInvoiceObserver
             $senService = (double) ($detail->item->customer->sen_service) / 100;
 
             $price = (double) ($isPriceCategory
-                ? $this->number_normalize($detail->item->category_item_price->price, 7)
-                : $this->number_normalize($detail->item->price, 7)
+                ? $this->number_normalize($detail->item->category_item_price->price, 2)
+                : $this->number_normalize($detail->item->price, 2)
             );
 
             if ($mode == 'SUMMARY') {
 
                 if ($detail->item->customer->exclude_service) {
                     $v = (100 + $detail->item->customer->sen_service) / 100;
-                    $priceMaterial = $this->number_normalize($price / $v, 7, true);
+                    $priceMaterial = $this->number_normalize($price / $v, 2, true);
                     $priceService  = $this->number_normalize($price - $priceMaterial);
                 }
                 else {
-                    $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
-                    $priceService  = $this->number_normalize($price - $priceMaterial, 7);
+                    $priceMaterial = $this->number_normalize($price * (1 - $senService), 2, true);
+                    $priceService  = $this->number_normalize($price - $priceMaterial, 2);
                 }
 
                 return [
@@ -73,8 +73,8 @@ class AccInvoiceObserver
             else if ($mode == 'DETAIL') {
                 $length = $detailItems->count();
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
-                $priceService  = $this->number_normalize($price - $priceMaterial, 7);
+                $priceMaterial = $this->number_normalize($price * (1 - $senService), 2, true);
+                $priceService  = $this->number_normalize($price - $priceMaterial, 2);
 
                 return [
 
@@ -95,8 +95,8 @@ class AccInvoiceObserver
             }
             else if ($mode == 'SEPARATE') {
                 $senService = (double) ($detail->item->customer->sen_service / 100);
-                $priceMaterial = $this->number_normalize($price * (1 - $senService), 7, true);
-                $priceService  = $this->number_normalize($price - $priceMaterial, 7);
+                $priceMaterial = $this->number_normalize($price * (1 - $senService), 2, true);
+                $priceService  = $this->number_normalize($price - $priceMaterial, 2);
                 $detailPrice = $serviceModel ? $priceService : $priceMaterial;
                 $detailNo = ($serviceModel ? 'ITEM-JASA' : 'ITEM-MATERIAL');
                 $detailName = ($serviceModel ? '[JASA] ' : '[MATERIAL] '). $detailName;
@@ -130,7 +130,7 @@ class AccInvoiceObserver
         if ($mode == 'SUMMARY')
         {
             $key = $detailItems->count();
-            $sum = (double) $this->number_normalize($detailItems->sum('SUMMARY_JASA'), 7);
+            $sum = (double) $this->number_normalize($detailItems->sum('SUMMARY_JASA'), 2);
             $detailItems = $detailItems->push([
                 "detailItem[$key].itemNo" => 'ITEM-JASA-TOTAL',
                 "detailItem[$key].detailName" => 'JASA Part',
@@ -153,7 +153,7 @@ class AccInvoiceObserver
         return array_merge($record, $detailItems);
     }
 
-    protected function number_normalize($value, $max = 7, $ROUNDUP = false)
+    protected function number_normalize($value, $max = 2, $ROUNDUP = false)
     {
         $pow = (double) pow(10, $max);
         return strlen(explode('.', (string) $value)[1] ?? "") > $max && $ROUNDUP

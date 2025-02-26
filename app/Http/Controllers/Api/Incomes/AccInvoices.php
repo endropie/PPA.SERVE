@@ -10,6 +10,7 @@ use App\Models\Income\AccInvoice;
 use App\Models\Income\DeliveryOrder;
 use App\Models\Income\RequestOrder;
 use App\Traits\GenerateNumber;
+use Endropie\AccurateClient\Facade as Accurate;
 
 class AccInvoices extends ApiController
 {
@@ -316,7 +317,7 @@ class AccInvoices extends ApiController
 
         if ($acc_invoice->status !== 'INVOICED') $this->error('The data has not INVOICED state, Not allowed to be SYNC');
 
-        $response = \Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->accurate_model_id]);
+        $response = Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->accurate_model_id]);
         if (!$response['s']) {
             return $this->error($response['d']);
         }
@@ -326,7 +327,7 @@ class AccInvoices extends ApiController
 
         if ($acc_invoice->service_model_id)
         {
-            $response2 = \Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->service_model_id]);
+            $response2 = Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->service_model_id]);
             if (!$response2['s']) {
                 return $this->error($response2['d']);
             }
