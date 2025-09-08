@@ -34,7 +34,7 @@ class AccInvoiceObserver
             $subnameLabel = setting()->get('item.subname_label', null);
             $detailNotes = !$subnameMode || $isPriceCategory ? null : (string) $subnameLabel ." ". $detail->item->part_subname;
 
-            $unit = ucfirst($detail->item->unit->code);
+            $unit = ucfirst(strtolower($detail->item->unit->code));
 
             $useTax1 = (boolean) $detail->item->customer->with_ppn;
             $useTax3 = (boolean) $detail->item->customer->with_pph;
