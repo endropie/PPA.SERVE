@@ -214,7 +214,7 @@ class AccInvoices extends ApiController
 
             $response = $acc_invoice->accurate()->forget();
             if (!$response['s']) {
-                return $this->error($response['d']);
+                return $this->error(['message' => $response['d']]);
             }
             $acc_invoice->accurate_model_id = null;
             $acc_invoice->save();
@@ -230,7 +230,7 @@ class AccInvoices extends ApiController
             $acc_invoice2->accurate_primary_key = 'service_model_id';
             $response2 = $acc_invoice2->accurate()->forget();
             if (!$response2['s']) {
-                return $this->error($response2['d']);
+                return $this->error(['message' => $response2['d']]);
             }
 
             $acc_invoice->service_model_id = null;
@@ -255,8 +255,9 @@ class AccInvoices extends ApiController
         if ($acc_invoice->status !== 'OPEN') $this->error('The data has not OPEN state, Not allowed to be INVOICED');
 
         $response = $acc_invoice->accurate()->push();
+
         if (!$response['s']) {
-            return $this->error($response['d']);
+            return $this->error(['message' => $response['d']]);
         }
 
         $acc_invoice->invoiced_number = $response['r']['number'];
@@ -271,7 +272,7 @@ class AccInvoices extends ApiController
                 'is_model_service' => true,
             ]);
             if (!$response2['s']) {
-                return $this->error($response2['d']);
+                return $this->error(['message' => $response2['d']]);
             }
 
             $acc_invoice2->serviced_number = $response2['r']['number'];
@@ -319,7 +320,7 @@ class AccInvoices extends ApiController
 
         $response = Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->accurate_model_id]);
         if (!$response['s']) {
-            return $this->error($response['d']);
+            return $this->error(['message' => $response['d']]);
         }
 
         $acc_invoice->invoiced_number = $response['d']['number'];
@@ -329,7 +330,7 @@ class AccInvoices extends ApiController
         {
             $response2 = Accurate::on('sales-invoice', 'detail', ['id' => $acc_invoice->service_model_id]);
             if (!$response2['s']) {
-                return $this->error($response2['d']);
+                return $this->error(['message' => $response2['d']]);
             }
 
             $acc_invoice->serviced_number = $response2['d']['number'];
